@@ -1,4 +1,4 @@
-name: anime_recommendation
+name: anime_recommendations
 channels:
   - conda-forge
   - defaults
