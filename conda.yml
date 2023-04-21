@@ -1,4 +1,4 @@
-name: rental_prices
+name: anime_recommendation
 channels:
   - conda-forge
   - defaults
