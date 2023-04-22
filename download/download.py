@@ -21,8 +21,9 @@ def go(args):
     all_anime_basename = pathlib.Path(
         args.all_anime_url).name.split("?")[0].split("#")[0]
 
-    logger.info(
-        f"Downloading {args.stats}, {args.synopses}, and {args.all_anime}")
+    logger.info(f"Downloading {args.stats_artifact}")
+    logger.info(f"Downloading {args.synopses_artifact}")
+    logger.info(f"Downloading {args.all_anime_artifact}")
 
     stats_file = os.path.join(os.getcwd(), f"{args.stats_artifact}")
     synopses_file = os.path.join(os.getcwd(), f"{args.synopses_artifact}")
