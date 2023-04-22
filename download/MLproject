@@ -57,7 +57,7 @@ entry_points:
                               --synopses_artifact_type {synopses_artifact_type} \
                               --synopses_artifact_description {synopses_artifact_description} \
                               --all_anime_url {all_anime_url} \
-                              --save_raw_locally {save_raw_locally}
+                              --save_raw_locally {save_raw_locally} \
                               --all_anime_artifact {all_anime_artifact} \
                               --all_anime_type {all_anime_type} \
                               --all_anime_description {all_anime_description}
