@@ -11,34 +11,30 @@ main:
     - similar_users
     - recommendation
     - API
-    - test_regression_model
     #- EDA
   random_seed: 42
 data:
-  stats_file: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet?raw=True"
-  synopses_file: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/synopses.csv?raw=True"
-  all_anime_file: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/all_anime.csv?raw=True"
+  stats_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet?raw=True"
+  synopses_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/synopses.csv?raw=True"
+  all_anime_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/all_anime.csv?raw=True"
 
-  stats_data_name: "user_stats.parquet"
-  stats_data_type: "raw_data"
-  stats_data_description: "Main statistics file. Contains columns 'user_id', 'anime_id', 'watched_episodes', 'rating', 'watching_status'"
-  stats_data_artifact: "user_stats.parquet:latest"
-  save_stats_locally: False
+  stats_artifact: "user_stats.parquet"
+  stats_artifact_type: "raw_data"
+  stats_artifact_description: "Main statistics file. Contains columns 'user_id', 'anime_id', 'watched_episodes', 'rating', 'watching_status'"
+  stats_artifact_latest: "user_stats.parquet:latest"
 
-  synopses_data_name: "synopses.csv"
-  synopses_data_type: "raw_data"
-  synopses_data_description: "File containing synopses"
-  synopses_data_artifact: "synopses.csv:latest"
-  save_synopses_locally: False
+  synopses_artifact: "synopses.csv"
+  synopses_artifact_type: "raw_data"
+  synopses_artifact_description: "File containing synopses"
+  synopses_artifact_latest: "synopses.csv:latest"
 
-  all_anime_name: "all_anime.csv"
+  all_anime_artifact: "all_anime.csv"
   all_anime_type: "raw_data"
   all_anime_description: "File containing descriptive stats for all anime"
-  all_anime_artifact: "all_anime.csv:latest"
-  save_all_anime_locally: False
+  all_anime_artifact_latest: "all_anime.csv:latest"
 
   preprocessed_stats: "preprocessed_stats.parquet"
   preprocessed_stats_type: "preprocessed_data"
   preprocessed_stats_description: "Preprocessed stats file to be used for model training"
   preprocessed_stats_artifact: "preprocessed_stats.parquet:latest"
-  save_preprocessed_locally: False
+  save_locally: False
