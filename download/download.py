@@ -96,17 +96,17 @@ def go(args):
             stats_artifact = run.use_artifact(args.stats_artifact)
             stats_artifact_path = stats_artifact.file()
             stats_df = pd.read_parquet(stats_artifact_path, low_memory=False)
-            stats_df.to_parquet(stats_file)
+            stats_df.to_parquet(stats_file, index=False)
 
             synopses_artifact = run.use_artifact(args.synopses_artifact)
             synopses_artifact_path = synopses_artifact.file()
             synopses_df = pd.read_csv(synopses_artifact_path, low_memory=False)
-            synopses_df.to_csv(synopses_file)
+            synopses_df.to_csv(synopses_file, index=False)
 
             all_anime_artifact = run.use_artifact(args.all_anime_artifact)
             all_anime_path = all_anime_artifact.file()
             all_anime_df = pd.read_csv(all_anime_path, low_memory=False)
-            all_anime_df.to_csv(all_anime_file)
+            all_anime_df.to_csv(all_anime_file, index=False)
 
 
 if __name__ == "__main__":
