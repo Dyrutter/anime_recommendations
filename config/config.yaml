@@ -34,7 +34,12 @@ data:
   all_anime_artifact_latest: "all_anime.csv:latest"
 
   preprocessed_stats: "preprocessed_stats.parquet"
-  preprocessed_stats_type: "preprocessed_data"
-  preprocessed_stats_description: "Preprocessed stats file to be used for model training"
-  preprocessed_stats_artifact: "preprocessed_stats.parquet:latest"
+  preprocessed_artifact_type: "preprocessed_data"
+  preprocessed_artifact_description: "Preprocessed stats file to be used for model training"
+  preprocessed_artifact_latest: "preprocessed_stats.parquet:latest"
+
+  num_reviews: 50
+  drop_half_watched: True
+
   save_raw_locally: False
+  save_clean_locally: False
