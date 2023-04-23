@@ -18,7 +18,7 @@ def go(config: DictConfig):
     os.environ["ANIME_PROJECT"] = config["main"]["project_name"]
     os.environ["ANIME_GROUP"] = config["main"]["experiment_name"]
 
-    # root_path = hydra.utils.get_original_cwd()
+    root_path = hydra.utils.get_original_cwd()
     if isinstance(config["main"]["execute_steps"], str):
         steps_to_execute = config["main"]["execute_steps"].split(",")
     else:
@@ -58,6 +58,21 @@ def go(config: DictConfig):
                 "all_anime_description": config["data"]
                     ["all_anime_description"],
                 "save_raw_locally": config["data"]["save_raw_locally"]})
+
+    if "preprocess" in steps_to_execute:
+        _ = mlflow.run(
+            os.path.join(root_path, "preprocess"),
+            entry_point="main",
+            parameters={
+                "raw_stats": config["data"]["stats_artifact_latest"],
+                "preprocessed_stats": config["data"]["preprocessed_stats"],
+                "preprocessed_artifact_type": config["data"]
+                ["preprocessed_artifact_type"],
+                "preprocessed_artifact_description": config["data"]
+                ["preprocessed_artifact_description"],
+                "num_reviews": config["data"]["num_reviews"],
+                "drop_half_watched": config["data"]["drop_half_watched"],
+                "save_clean_locally": config["data"]["save_clean_locally"]})
 
 
 if __name__ == "__main__":
