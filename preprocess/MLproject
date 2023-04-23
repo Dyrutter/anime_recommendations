@@ -1,0 +1,37 @@
+name: preprocess
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      raw_stats:
+        description: Most recent version of raw statistics data
+        type: str
+      preprocessed_stats:
+        description: Name for the W&B preprocessed stats artifact to be created
+        type: str
+      preprocessed_artifact_type:
+        description: Type of preprocessed data to create
+        type: str
+        default: preprocessed_data
+      preprocessed_artifact_description:
+        description: Cleaned statistics data to be used for training model
+        type: str
+      num_reviews:
+        description: Minimum number of reviews a user should have in order to be considered
+        type: str
+      drop_half_watched:
+        description: Decide whether or not to drop samples in which under half the anime's episodes have been watched
+        type: str:
+      save_clean_locally:
+        description: Decide whether or not to save preprocessed data to local machine
+        type: str
+
+    command: >-
+      python download.py --raw_stats {raw_stats} \
+                              --preprocessed_stats {preprocessed_stats} \
+                              --preprocessed_artifact_type {preprocessed_artifact_type} \
+                              --preprocessed_artifact_description {preprocessed_artifact_description} \
+                              --num_reviews {num_reviews} \
+                              --drop_half_watched {drop_half_watched} \
+                              --save_clean_locally {save_clean_locally}
