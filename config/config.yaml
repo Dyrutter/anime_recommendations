@@ -42,4 +42,4 @@ data:
   drop_half_watched: True
 
   save_raw_locally: False
-  save_clean_locally: False
+  save_clean_locally: True
