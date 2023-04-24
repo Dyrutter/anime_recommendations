@@ -30,6 +30,8 @@ def go(config: DictConfig):
             version="main",
             entry_point="main",
             parameters={
+                # Name of project
+                "project_name": config["main"]["project_name"],
                 # URL to stats data sample
                 "stats_url": config["data"]["stats_url"],
                 # "user_stats.parquet",
@@ -65,6 +67,7 @@ def go(config: DictConfig):
             entry_point="main",
             parameters={
                 "raw_stats": config["data"]["stats_artifact_latest"],
+                "project_name": config["main"]["project_name"],
                 "preprocessed_stats": config["data"]["preprocessed_stats"],
                 "preprocessed_artifact_type": config["data"]
                 ["preprocessed_artifact_type"],
