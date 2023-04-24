@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-import tempfile
 import wandb
 from distutils.util import strtobool
 import pandas as pd
@@ -35,7 +34,7 @@ def drop_useless(df):
     # n_ratings is a Pandas Series showing the # reviews associated w/a userid
     n_ratings = df['user_id'].value_counts(dropna=True)
     df = df[df['user_id'].isin(
-        n_ratings[n_ratings >= args.num_reviews].index)].copy()
+        n_ratings[n_ratings >= int(args.num_reviews)].index)].copy()
     return df
 
 
@@ -125,43 +124,44 @@ def go(args):
     logger.info("Downloading artifact")
     artifact = run.use_artifact(args.raw_stats, type='raw_data')
     artifact_path = artifact.file()
-    df = pd.read_parquet(artifact_path, low_memory=False)
+    df = pd.read_parquet(artifact_path)
 
-    # Drop unused features, duplicates, and outliers
+    # Basic cleaning
     logger.info("Dropping useless data")
     df = drop_useless(df)
 
+    # Drop instances where less than half the episodes had been watched
     if args.drop_half_watched is True:
         logger.info("Dropping samples with too few episodes watched")
         df = drop_half_watched(df)
 
+    # Scale ratings
     logger.info("Scaling ratings")
     df = scale_ratings(df)
+
+    # Save clean df to local machine if desired
     filename = args.preprocessed_stats
     curr_dir = os.getcwd()
-    with tempfile.TemporaryDirectory() as tmp_dir:
+    if args.save_clean_locally is True:
+        logger.info("Saving processed df to local machine")
+        df2 = df.copy()
+        local = args.preprocessed_stats
+        df2.to_parquet(os.path.join(curr_dir, local), index=False)
 
-        # Save clean df to local machine if desired
-        if args.save_clean_locally is True:
-            df2 = df.copy()
-            local = 'preprocessed_data.parquet'
-            df2.to_parquet(os.path.join(curr_dir, local))
-        df.to_parquet(
-            os.path.join(tmp_dir, args.preprocessed_stats), index=False)
+    # Create artifact
+    df.to_parquet(args.preprocessed_stats, index=False)
+    logger.info("creating artifact")
+    artifact = wandb.Artifact(
+        name=args.preprocessed_stats,
+        type=args.preprocessed_artifact_type,
+        description=args.preprocessed_artifact_description,
+        metadata={"Was data saved locally?": args.save_clean_locally})
 
-        # Create artifact and upload to wandb
-        artifact = wandb.Artifact(
-            name=args.preprocessed_stats,
-            type=args.preprocessed_artifact_type,
-            description=args.preprocessed_artifact_description,
-            metadata={"Was data saved locally?": args.save_clean_locally}
-        )
-
-        artifact.add_file(filename)
-        logger.info("Logging artifact")
-        run.log_artifact(artifact)
-        artifact.wait()
-
+    # Upload artifact to wandb
+    artifact.add_file(filename)
+    logger.info("Logging artifact")
+    run.log_artifact(artifact)
+    artifact.wait()
     os.remove(filename)
 
 
