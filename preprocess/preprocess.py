@@ -101,7 +101,6 @@ def drop_half_watched(df):
     # Create data frame of only samples who have watched more than
     # or equal to half the number of available episodes
     df = df[df['watched_episodes'] >= df['half_eps']]
-    # df = df.drop(['half_eps'], axis=1)
     return df
 
 
@@ -120,7 +119,9 @@ def scale_ratings(df):
 def go(args):
 
     # Instantiate wandb, run, and get raw data artifact
-    run = wandb.init(job_type="preprocess_data")
+    run = wandb.init(
+        job_type="preprocess_data",
+        project=args.project_name)
     logger.info("Downloading artifact")
     artifact = run.use_artifact(args.raw_stats, type='raw_data')
     artifact_path = artifact.file()
@@ -175,6 +176,13 @@ if __name__ == "__main__":
         type=str,
         help="Fully-qualified name for the input artifact",
         required=True,
+    )
+
+    parser.add_argument(
+        "--project_name",
+        type=str,
+        help="Name of wandb project",
+        required=True
     )
 
     parser.add_argument(
