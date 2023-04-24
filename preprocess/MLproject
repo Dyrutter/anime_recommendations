@@ -4,6 +4,9 @@ conda_env: conda.yml
 entry_points:
   main:
     parameters:
+      project_name:
+        description: name of wandb project
+        type: str
       raw_stats:
         description: Most recent version of raw statistics data
         type: str
@@ -22,13 +25,14 @@ entry_points:
         type: str
       drop_half_watched:
         description: Decide whether or not to drop samples in which under half the anime's episodes have been watched
-        type: str:
+        type: str
       save_clean_locally:
         description: Decide whether or not to save preprocessed data to local machine
         type: str
 
     command: >-
-      python download.py --raw_stats {raw_stats} \
+      python preprocess.py --raw_stats {raw_stats} \
+                              --project_name {project_name} \
                               --preprocessed_stats {preprocessed_stats} \
                               --preprocessed_artifact_type {preprocessed_artifact_type} \
                               --preprocessed_artifact_description {preprocessed_artifact_description} \
