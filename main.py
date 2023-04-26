@@ -77,6 +77,40 @@ def go(config: DictConfig):
                 "drop_half_watched": config["data"]["drop_half_watched"],
                 "save_clean_locally": config["data"]["save_clean_locally"]})
 
+    if "neural_network" in steps_to_execute:
+        _ = mlflow.run(
+            os.path.join(root_path, "neural_network"),
+            entry_point="main",
+            parameters={
+                "test_size": config["model"]["test_size"],
+                "TPU_INIT": config["model"]["TPU_INIT"],
+                "embedding_size": config["model"]["embedding_size"],
+                "kernel_initializer": config["model"]["kernel_initializer"],
+                "activation_function": config["model"]["activation_function"],
+                "model_loss": config["model"]["model_loss"],
+                "optimizer": config["model"]["optimizer"],
+                "start_lr": config["model"]["start_lr"],
+                "min_lr": config["model"]["min_lr"],
+                "max_lr": config["model"]["max_lr"],
+                "batch_size": config["model"]["batch_size"],
+                "rampup_epochs": config["model"]["rampup_epochs"],
+                "sustain_epochs": config["model"]["sustain_epochs"],
+                "exp_decay": config["model"]["exp_decay"],
+                "weights_artifact": config["model"]["weights_artifact"],
+                "save_weights_only": config["model"]["save_weights_only"],
+                "checkpoint_metric": config["model"]["checkpoint_metric"],
+                "save_freq": config["model"]["save_freq"],
+                "save_best_weights": config["model"]["save_best_weights"],
+                "mode": config["model"]["mode"],
+                "verbose": config["model"]["verbose"],
+                "epochs": config["model"]["epochs"],
+                "save_model": config["model"]["save_model"],
+                "model_name": config["model"]["model_name"],
+                "input_data": config["data"]["preprocessed_artifact_latest"],
+                "project_name": config["main"]["project_name"],
+                "model_artifact": config["model"]["model_artifact"],
+                "history_csv": config["model"]["history_csv"]})
+
 
 if __name__ == "__main__":
     go()
