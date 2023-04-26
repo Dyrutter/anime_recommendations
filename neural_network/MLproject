@@ -1,0 +1,122 @@
+name: neural_network
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      test_size:
+        description: Size of test set to use in train test split
+        type: int
+      TPU_INIT:
+        description: Boolean of whether or not to use a TPU for model training
+        type: str
+      embedding_size:
+        description: size of embedding to use in enural network
+        type: str
+      kernel_initializer:
+        description: kernal initializer to use for neural network
+        type: str
+      activation_function:
+        description: type of activation function to use for neural network
+        type: str
+      model_loss:
+        description: loss type to use in neural network
+        type: str
+      optimizer:
+        description: optimizer to use in neural network
+        type: str
+      start_lr:
+        description: beginning learning rate in model
+        type: str
+      min_lr:
+        description: minimum learning rate to use in neural network
+        type: str
+      max_lr:
+        description: maximum learning rate to use in neural network
+        type: str
+      batch_size:
+        description: batch size to use in training
+        type: str
+      rampup_epochs:
+        description: rampup epochs to use in training
+        type: str
+      sustain_epochs:
+        description: sustain epochs to use in training
+        type: str
+      exp_decay:
+        description: exponential decay to use in learning rate
+        type: str
+      weights_artifact:
+        description: pathname of weights artifact to save and or upload to wandb
+        type: str
+      save_weights_only:
+        description: Whether to save weights only in checkpoint
+        type: str
+      checkpoint_metric:
+        description: Metric to analyze at checkpoints
+        type: str
+      save_freq:
+        description: frequency with which to save weights
+        type: str
+      save_best_weights:
+        description: Boolean of whether or not to save the best weights only
+        type: str
+      mode:
+        description: how to monitor the metric of success per epoch (e.g. min or max)
+        type: str
+      verbose:
+        description: boolean of whether or not to print status updates during model training
+        type: str
+      epochs:
+        description: number of epochs to run in training model
+        type: str
+      save_model:
+        description: Boolean of whether or not to save model to local machine
+        type: str
+      model_name:
+        description: path and filename of model to save
+        type: str
+      input_data:
+        description: wandb preprocessed data artifact to use for training
+        type: str
+      project_name:
+        description: name of wandb project
+        type: str
+      model_artifact:
+        description: name of model artifact to save to wandb
+        type: str
+      history_csv:
+        description: filename of model's history csv
+        type: str
+
+
+
+    command: >-
+      python neural_network.py --test_size {test_size} \
+                              --TPU_INIT {TPU_INIT} \
+                              --embedding_size {embedding_size} \
+                              --kernel_initializer {kernel_initializer} \
+                              --activation_function {activation_function} \
+                              --model_loss {model_loss} \
+                              --optimizer {optimizer} \
+                              --start_lr {start_lr} \
+                              --min_lr {min_lr} \
+                              --max_lr {max_lr} \
+                              --batch_size {batch_size} \
+                              --rampup_epochs {rampup_epochs} \
+                              --sustain_epochs {sustain_epochs} \
+                              --exp_decay {exp_decay} \
+                              --weights_artifact {weights_artifact} \
+                              --save_weights_only {save_weights_only} \
+                              --checkpoint_metric {checkpoint_metric} \
+                              --save_freq {save_freq} \
+                              --save_best_weights {save_best_weights} \
+                              --mode {mode} \
+                              --verbose {verbose} \
+                              --epochs {epochs} \
+                              --save_model {save_model} \
+                              --model_name {model_name} \
+                              --input_data {input_data} \
+                              --project_name {project_name} \
+                              --model_artifact {model_artifact} \
+                              --history_csv {history_csv}
