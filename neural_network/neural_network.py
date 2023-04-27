@@ -125,11 +125,6 @@ def extract_weights(name, model):
     weights = weight_layer.get_weights()[0]
     weights = weights / np.linalg.norm(weights, axis=1).reshape((-1, 1))
     return weights
-# Get min and max ratings
-# logger.info(f'Num of users: {n_users}, Num of animes: {n_animes}')
-# logger.info(
-#    f"Min rating: {min(df['rating'])}, Max rating: {max(df['rating'])}")
-
 
 def go(args):
     if args.TPU_INIT is True:
