@@ -11,7 +11,7 @@ main:
     - recommendation
     - API
   random_seed: 42
-  
+
 data:
   stats_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet?raw=True"
   synopses_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/synopses.csv?raw=True"
@@ -57,7 +57,7 @@ model:
   embedding_size: 128
   model_loss: 'binary_crossentropy'
   optimizer: 'Adam'
-  weights_artifact: './anime_weights.h5'
+  weights_artifact: 'wandb_anime_weights.h5'
   epochs: 20
   activation_function: 'sigmoid'
   checkpoint_metric: 'val_loss'
@@ -65,9 +65,9 @@ model:
   save_best_weights: True
   save_freq: 'epoch'
   save_model: True
-  model_name: './anime_nn.h5' # Path to use if you want to save model to your local machine
+  model_name: './wandb_anime_nn.h5' # Path to use if you want to save model to your local machine
   verbose: 1
-  model_artifact: './anime_nn.h5'
-  history_csv: 'anime_nn_history.csv'
+  model_artifact: 'wandb_anime_nn.h5'
+  history_csv: 'wandb_anime_nn_history.csv'
   monitor: 'val_loss'
   mode: 'min'
