@@ -4,9 +4,9 @@ This is an example of creating anime an recommendation system. The workflow is:
 
 1) Download raw data
 2) Clean and engineer data
-3) Create and train a neural network
-4) Recommend anime based on similar anime
-5) Recommend anime based on similar users
+3) Create and train an embedding-based neural network
+4) Recommend anime according to similar anime
+5) Recommend anime according to similar users
 6) Recommend anime for specific users
 7) Create an API for live recommendations
 
