@@ -6,7 +6,7 @@ entry_points:
     parameters:
       test_size:
         description: Size of test set to use in train test split
-        type: int
+        type: str
       TPU_INIT:
         description: Boolean of whether or not to use a TPU for model training
         type: str
@@ -88,7 +88,6 @@ entry_points:
       history_csv:
         description: filename of model's history csv
         type: str
-
 
 
     command: >-
