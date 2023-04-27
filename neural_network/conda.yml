@@ -17,5 +17,5 @@ dependencies:
       - setuptools==66.1.1
       - protobuf==3.19.0
       - omegaconf==2.2
-      - mlflow==2.1.1
+      - mlflow==2.3.0
       - tensorflow==2.12.0
