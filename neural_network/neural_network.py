@@ -1,6 +1,5 @@
 import argparse
 import logging
-# import os
 import wandb
 from distutils.util import strtobool
 import pandas as pd
@@ -36,10 +35,6 @@ def get_df():
     reverse_encoded_user_ids = {x: i for i, x in enumerate(user_ids)}
     reverse_encoded_anime = {x: i for i, x in enumerate(anime_ids)}
 
-    # Dict of format  {count_number: user_id}
-    # encoded_user_ids = {i: x for i, x in enumerate(user_ids)}
-    # encoded_anime = {i: x for i, x in enumerate(anime_ids)}
-
     # Convert values of format id to count_number
     df["user"] = df["user_id"].map(reverse_encoded_user_ids)
     df["anime"] = df["anime_id"].map(reverse_encoded_anime)
@@ -53,11 +48,7 @@ def get_df():
     to_drop = ['watching_status', 'watched_episodes', 'max_eps', 'half_eps']
     df = df.drop(to_drop, axis=1)
 
-    # Holdout test set is approximately 10% of data set
-    # test_df = rating_df[38000000:]
-    # train_df = rating_df[:38000000]
-
-    return df, n_users, n_animes  # train_df test_df
+    return df, n_users, n_animes
 
 
 def neural_network():
@@ -70,8 +61,8 @@ def neural_network():
     # Both inputs are 1-dimensional
     user = tfkl.Input(name='user', shape=[1])
     user_embedding = tfkl.Embedding(name='user_embedding',
-    	input_dim=n_users,
-    	output_dim=int(args.embedding_size))(user)
+                                    input_dim=n_users,
+                                    output_dim=int(args.embedding_size))(user)
 
     anime = tfkl.Input(name='anime', shape=[1])
     anime_embedding = tfkl.Embedding(
@@ -125,6 +116,7 @@ def extract_weights(name, model):
     weights = weight_layer.get_weights()[0]
     weights = weights / np.linalg.norm(weights, axis=1).reshape((-1, 1))
     return weights
+
 
 def go(args):
     if args.TPU_INIT is True:
@@ -280,9 +272,6 @@ def go(args):
     run.log_artifact(wandb_user_weights_artifact)
     wandb_user_weights_artifact.wait()
 
-    # model = tf.keras.models.load_model('./anime_nn.h5')
-    # weight = model.load_weights('./anime_weights.h5')
-    # #args.checkpoint_artifact
     plt.plot(history.history["loss"][0:-2])
     plt.plot(history.history["val_loss"][0:-2])
     plt.title("model loss")
