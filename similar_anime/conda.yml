@@ -1,4 +1,4 @@
-name: neural_network
+name: similar_anime
 channels:
   - conda-forge
   - defaults
