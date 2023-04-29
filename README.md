@@ -22,3 +22,28 @@ Note: If using M1 or M2 Mac, install tensorflow with the commands:
 
 `SYSTEM_VERSION_COMPAT=0 python -m pip install tensorflow-metal`
 
+# THE DATA
+
+The data were scraped from [myanimelist.net](https://myanimelist.net), an online database containing nearly 18,000 anime and 350,000 users, and were
+uploaded to [kaggle.com](https://www.kaggle.com/datasets/hernan4444/anime-recommendation-database-2020?select=animelist.csv) by the user HERNAN VALDIVIESO. The size of the main data set in csv format is 2.03 GB, far too large to store in github. For the sake of reproducibility, I shrunk the data set from 109 million rows to roughly seven million rows, taking care to ensure all anime remained included, and stored it in parquet format [here](https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet).     
+
+The [main data set, user_stats.parquet](https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet) contains information about 17.562 anime and the preference from 325.772 different users. It is formatted as such:
+
+![](https://github.com/Dyrutter/anime_recommendations/blob/main/data/main_data_set_example.png)
+
+Where "watching status" includes
++ Currently watching (1)
++ Completed (2)
++ On hold (3)
++ Dropped (4)
++ Plan to watch (6)
+ 
+
+Warning: this dataset includes information about anime for adults (hentai).
+
+[all_anime.csv](https://github.com/Dyrutter/anime_recommendations/blob/main/data/all_anime.csv) scontain general information of every anime including genre, average score, English name, Japanese name, type (TV, movie, OVA, or ONA), Number of episodes, Broadcast date, Season premier, producers, liscensors, studios, source (Manga, light novel, book, original), episode duration, age rating, rank, popularity, members, number of favorites, watching statuses, and scores.
+
+
+Special thanks to:
+myanimelist.net for storing the data
+HERNAN VALDIVIESO for scraping the data
