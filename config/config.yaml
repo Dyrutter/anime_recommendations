@@ -7,9 +7,9 @@ main:
     - preprocess
     - neural_network
     - similar_anime
-    - similar_users
-    - recommendation
-    - API
+    #- similar_users
+    #- recommendation
+    #- API
   random_seed: 42
 
 data:
@@ -67,7 +67,18 @@ model:
   save_model: True
   model_name: './wandb_anime_nn.h5' # Path to use if you want to save model to your local machine
   verbose: 1
-  model_artifact: 'wandb_anime_nn.h5'
+  model_artifact: 'wandb_anime_nn.h5' # Artifact name for the model
   history_csv: 'wandb_anime_nn_history.csv'
   monitor: 'val_loss'
   mode: 'min'
+  anime_weights: 'wandb_anime_weights.csv' # Numpy array of anime weights
+  user_weights: 'wandb_user_weights.csv' # Numpy array of user weights
+  an_weights_fn: './wandb_anime_weights.csv'
+  id_weights_fn: './wandb_user_weights.csv'
+
+nn_arts:
+  main_anime_weights: "wandb_anime_weights.csv:v2"
+  main_user_weights: "wandb_user_weights.csv:v2"
+  main_weights_art: "wandb_anime_weights.h5:v4"
+  main_history: "wandb_anime_nn_history.csv:v4"
+  main_model: "wandb_anime_nn.h5:v2"
