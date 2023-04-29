@@ -1,0 +1,41 @@
+name: similar_anime
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      main_data:
+        description: Wandb artifact of main data frame
+        type: str
+      synopses:
+        description: Wandb artifact of anime synopses
+        type: str
+      all_anime:
+        description: Wandb artifact containing list of all anime
+        type: str
+      anime_weights:
+        description: Wandb artifact containing numpy array of anime weights
+        type: str
+      user_weights:
+        description: Wandb artifact containing numpy array of user weights
+        type: str
+      weights:
+        description: Wandb artifact with .h5 file of all neural network weights
+        type: str
+      history:
+        description: Wandb artifact with .csv file of neural network run history
+        type: str
+      model:
+        description: Wandb artifact with .h5 file of neural network
+        type: str
+
+
+    command: >-
+      python similar_anime.py --main_data {main_data} \
+                              --synopses {synopses} \
+                              --all_anime {all_anime} \
+                              --anime_weights {anime_weights} \
+                              --user_weights {user_weights} \
+                              --weights {weights} \
+                              --history {history} \
+                              --model {model}
