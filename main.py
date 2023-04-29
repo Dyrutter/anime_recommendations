@@ -11,8 +11,8 @@ def go(config: DictConfig):
     Run MLflow project. From main directory, download step can be run using:
     mlflow run . -P hydra_options="main.execute_steps='download'"
     Can be run in github using:
-    mlflow run https://github.com/DyRutter/rental_prices.git -v 1.0.3 -P
-    hydra_options="data.sample='sample2.csv'"
+    mlflow run https://github.com/DyRutter/anime_recommendations.git -v 1.X -P
+    hydra_options="data.sample='sampleX.csv'"
     """
     # Setup the wandb experiment. All runs will be grouped under this name
     os.environ["ANIME_PROJECT"] = config["main"]["project_name"]
@@ -110,6 +110,48 @@ def go(config: DictConfig):
                 "project_name": config["main"]["project_name"],
                 "model_artifact": config["model"]["model_artifact"],
                 "history_csv": config["model"]["history_csv"]})
+
+    if "similar_anime" in steps_to_execute:
+        _ = mlflow.run(
+            os.path.join(root_path, "similar_anime"),
+            entry_point="main",
+            parameters={
+                "main_data": config["data"]["preprocessed_artifact_latest"],
+                "synopses": config["data"]["synopses_artifact_latest"],
+                "all_anime": config["data"]["all_anime_artifact_latest"],
+                "anime_weights": config["nn_arts"]["main_anime_weights"],
+                "user_weights": config["nn_arts"]["main_user_weights"],
+                "weights": config["nn_arts"]["main_weights_arc"],
+                "history": config["nn_arts"]["main_history"],
+                "model": config["nn_arts"]["main_model"]})
+
+    if "similar_users" in steps_to_execute:
+        _ = mlflow.run(
+            os.path.join(root_path, "similar_users"),
+            entry_point="main",
+            parameters={
+                "main_data": config["data"]["preprocessed_artifact_latest"],
+                "synopses": config["data"]["synopses_artifact_latest"],
+                "all_anime": config["data"]["all_anime_artifact_latest"],
+                "anime_weights": config["nn_arts"]["main_anime_weights"],
+                "user_weights": config["nn_arts"]["main_user_weights"],
+                "weights": config["nn_arts"]["main_weights_arc"],
+                "history": config["nn_arts"]["main_history"],
+                "model": config["nn_arts"]["main_model"]})
+
+    if "recommend" in steps_to_execute:
+        _ = mlflow.run(
+            os.path.join(root_path, "recommend"),
+            entry_point="main",
+            parameters={
+                "main_data": config["data"]["preprocessed_artifact_latest"],
+                "synopses": config["data"]["synopses_artifact_latest"],
+                "all_anime": config["data"]["all_anime_artifact_latest"],
+                "anime_weights": config["nn_arts"]["main_anime_weights"],
+                "user_weights": config["nn_arts"]["main_user_weights"],
+                "weights": config["nn_arts"]["main_weights_arc"],
+                "history": config["nn_arts"]["main_history"],
+                "model": config["nn_arts"]["main_model"]})
 
 
 if __name__ == "__main__":
