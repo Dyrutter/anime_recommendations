@@ -24,14 +24,16 @@ def drop_useless(df):
     """
     df = df.drop_duplicates()
     df = df.dropna()
+
     # Drop unwatched samples
-    df = df[df['watched_episodes'] != 0]
+    if args.drop_unwatched is True:
+        df = df[df['watched_episodes'] != 0]
 
     # Drop planned to watch
-    df = df[df['watching_status'] != 6]
+    if args.drop_plan is True:
+        df = df[df['watching_status'] != 6]
 
     # Drop users with an insufficient number of ratings
-    # n_ratings is a Pandas Series showing the # reviews associated w/a userid
     n_ratings = df['user_id'].value_counts(dropna=True)
     df = df[df['user_id'].isin(
         n_ratings[n_ratings >= int(args.num_reviews)].index)].copy()
@@ -224,6 +226,20 @@ if __name__ == "__main__":
         "--save_clean_locally",
         type=lambda x: bool(strtobool(x)),
         help='Choose whether or not to save clean data frame to local file',
+        required=True
+    )
+
+    parser.add_argument(
+        "--drop_unwatched",
+        type=lambda x: bool(strtobool(x)),
+        help="Choose whether to drop instances if no episodes were watched",
+        required=True
+    )
+
+    parser.add_argument(
+        "--drop_plan",
+        type=lambda x: bool(strtobool(x)),
+        help="Choose whether to drop instances where users plan to watch",
         required=True
     )
 
