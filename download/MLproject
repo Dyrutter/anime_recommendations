@@ -46,6 +46,15 @@ entry_points:
       save_raw_locally:
         description: Boolean of whether or not to save raw data to local machine
         type: str
+      project_name:
+        description: Name of wandb project
+        type: str
+      from_local:
+        description: Whether to upload data set from local machine
+        type: str
+      local_fname:
+        description: Filename containing file on local machine to upload
+        type: str
 
     command: >-
       python download.py --stats_url {stats_url} \
@@ -60,4 +69,7 @@ entry_points:
                               --save_raw_locally {save_raw_locally} \
                               --all_anime_artifact {all_anime_artifact} \
                               --all_anime_type {all_anime_type} \
-                              --all_anime_description {all_anime_description}
+                              --project_name {project_name} \
+                              --from_local {from_local} \
+                              --local_fname {local_fname} \
+                              --all_anime_description {all_anime_description} \
