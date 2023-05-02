@@ -96,6 +96,28 @@ def go(args):
             run.log_artifact(artifact)
             artifact.wait()
 
+    if args.from_local is True:
+        logger.info("Creating run for downloading full file from local cmp")
+        run = wandb.init(
+            job_type="download_data",
+            project=args.project_name,
+            name="Full data")
+        logger.info("Creating full data artifact")
+        fname = args.local_fname
+        df = pd.read_csv(fname)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            temp_path = os.path.join(tmp_dir, fname)
+            df.to_parquet(temp_path, index=False)
+            artifact = wandb.Artifact(
+                name="Full data set",
+                type="Raw data",
+                description="Full data set",
+                metadata={'Filename of full data': fname})
+            artifact.add_file(temp_path, name='Full data file')
+            logger.info("Logging full data file artifact")
+            run.log_artifact(artifact)
+            artifact.wait()
+
     # Save files to local system if desired
     if args.save_raw_locally is True:
         with wandb.init(
@@ -210,6 +232,20 @@ if __name__ == "__main__":
         "--all_anime_description",
         type=str,
         help="Description for the new artifact",
+        required=True
+    )
+
+    parser.add_argument(
+        "--from_local",
+        type=lambda x: bool(strtobool(x)),
+        help="Whether to upload data frame from local machine",
+        required=True
+    )
+
+    parser.add_argument(
+        "--local_fname",
+        type=str,
+        help="File path to local main file to upload",
         required=True
     )
 
