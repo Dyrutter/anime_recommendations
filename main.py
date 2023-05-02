@@ -59,7 +59,9 @@ def go(config: DictConfig):
                 # "Main statistics file"
                 "all_anime_description": config["data"]
                     ["all_anime_description"],
-                "save_raw_locally": config["data"]["save_raw_locally"]})
+                "save_raw_locally": config["data"]["save_raw_locally"],
+                "from_local": config["data"]["from_local"],
+                "local_fname": config['data']['local_fname']})
 
     if "preprocess" in steps_to_execute:
         _ = mlflow.run(
