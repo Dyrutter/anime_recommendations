@@ -101,7 +101,7 @@ def go(args):
         run = wandb.init(
             job_type="download_data",
             project=args.project_name,
-            name="Full data")
+            name="Full_data")
         logger.info("Creating full data artifact")
         fname = args.local_fname
         df = pd.read_csv(fname)
@@ -109,11 +109,11 @@ def go(args):
             temp_path = os.path.join(tmp_dir, fname)
             df.to_parquet(temp_path, index=False)
             artifact = wandb.Artifact(
-                name="Full data set",
+                name="full_data_set.parquet",
                 type="Raw data",
                 description="Full data set",
                 metadata={'Filename of full data': fname})
-            artifact.add_file(temp_path, name='Full data file')
+            artifact.add_file(temp_path, name='full_data_set.parquet')
             logger.info("Logging full data file artifact")
             run.log_artifact(artifact)
             artifact.wait()
