@@ -43,7 +43,7 @@ data:
   save_raw_locally: False
   save_clean_locally: False
   from_local: True
-  local_fname: './data/animelist.csv'
+  local_fname: '/Applications/python_files/anime_recommendations/archive/animelist.csv'
 
 model:
   test_size: 0.3
