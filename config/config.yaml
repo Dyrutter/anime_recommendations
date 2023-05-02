@@ -37,11 +37,13 @@ data:
   preprocessed_artifact_description: "Preprocessed stats file to be used for model training"
   preprocessed_artifact_latest: "preprocessed_stats.parquet:latest"
 
-  num_reviews: 50
-  drop_half_watched: True
+  num_reviews: 400
+  drop_half_watched: False
 
   save_raw_locally: False
-  save_clean_locally: True
+  save_clean_locally: False
+  from_local: True
+  local_fname: './data/animelist.csv'
 
 model:
   test_size: 0.3
@@ -79,6 +81,6 @@ model:
 nn_arts:
   main_anime_weights: "wandb_anime_weights.csv:v2"
   main_user_weights: "wandb_user_weights.csv:v2"
-  main_weights_art: "wandb_anime_weights.h5:v4"
-  main_history: "wandb_anime_nn_history.csv:v4"
-  main_model: "wandb_anime_nn.h5:v2"
+  main_weights_art: "wandb_anime_weights.h5:v5"
+  main_history: "wandb_anime_nn_history.csv:v5"
+  main_model: "wandb_anime_nn.h5:v3"
