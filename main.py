@@ -77,7 +77,9 @@ def go(config: DictConfig):
                 ["preprocessed_artifact_description"],
                 "num_reviews": config["data"]["num_reviews"],
                 "drop_half_watched": config["data"]["drop_half_watched"],
-                "save_clean_locally": config["data"]["save_clean_locally"]})
+                "save_clean_locally": config["data"]["save_clean_locally"],
+                "drop_plan": config["data"]["drop_plan"],
+                "drop_unwatched": config["data"]["drop_unwatched"]})
 
     if "neural_network" in steps_to_execute:
         _ = mlflow.run(
