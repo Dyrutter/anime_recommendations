@@ -39,6 +39,8 @@ data:
 
   num_reviews: 400
   drop_half_watched: False
+  drop_unwatched: False
+  drop_plan: False
 
   save_raw_locally: False
   save_clean_locally: False
