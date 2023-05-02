@@ -29,6 +29,12 @@ entry_points:
       save_clean_locally:
         description: Decide whether or not to save preprocessed data to local machine
         type: str
+      drop_unwatched:
+        description: Decide whether or not to drop instances where the user hasn't watched any episodes
+        type: str
+      drop_plan:
+        description: Decide whether or not to drop instances where the user only plans to watch the anime
+        type: str
 
     command: >-
       python preprocess.py --raw_stats {raw_stats} \
@@ -38,4 +44,6 @@ entry_points:
                               --preprocessed_artifact_description {preprocessed_artifact_description} \
                               --num_reviews {num_reviews} \
                               --drop_half_watched {drop_half_watched} \
-                              --save_clean_locally {save_clean_locally}
+                              --save_clean_locally {save_clean_locally} \
+                              --drop_unwatched {drop_unwatched} \
+                              --drop_plan {drop_plan}
