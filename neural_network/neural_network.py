@@ -5,7 +5,6 @@ from distutils.util import strtobool
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Model
 import tensorflow.keras.layers as tfkl
 import tensorflow.keras.callbacks as tfkc
@@ -13,11 +12,11 @@ import matplotlib.pyplot as plt
 
 
 logging.basicConfig(
-    filename='./neural_network.log', #Path to log file
-    level=logging.INFO, #Log info, warnings, errors, and critical errors
-    filemode='a', #Create log file if one doesn't already exist and add 
+    filename='./neural_network.log',  # Path to log file
+    level=logging.INFO,  # Log info, warnings, errors, and critical errors
+    filemode='a',  # Create log file if one doesn't already exist and add
     format='%(asctime)s-%(name)s - %(levelname)s - %(message)s',
-    datefmt='%d %b %Y %H:%M:%S %Z', #Format date
+    datefmt='%d %b %Y %H:%M:%S %Z',  # Format date
     force=True)
 logger = logging.getLogger()
 
@@ -145,7 +144,7 @@ def go(args):
 
     # Split
     rating_df = rating_df.sample(frac=1, random_state=73)
-    train_indices = rating_df.shape[0] - args.test_size 
+    train_indices = rating_df.shape[0] - int(args.test_size)
     X_train, X_test, y_train, y_test = (
         X[:train_indices],
         X[train_indices:],
@@ -219,6 +218,12 @@ def go(args):
     with open(hist_csv_file, mode='w') as f:
         hist_df.to_csv(f)
 
+    # Save anime weights and user weights
+    # anime_weights = extract_weights('anime_embedding', model)
+    # user_weights = extract_weights('user_embedding', model)
+    # anime_weights.tofile('./wandb_anime_weights.csv', sep=',')
+    # user_weights.tofile('./wandb_user_weights.csv', sep=',')
+
     # Log all weights
     logger.info("creating all weights artifact")
     wandb_weights_artifact = wandb.Artifact(
@@ -251,6 +256,30 @@ def go(args):
     run.log_artifact(wandb_model_artifact)
     logger.info("Model logged!")
     wandb_model_artifact.wait()
+    """
+
+    # Log anime weights
+    logger.info("creating anime weights artifact")
+    wandb_anime_weights_artifact = wandb.Artifact(
+        name='wandb_anime_weights.csv',
+        type='numpy_array',
+        description='numpy array of anime weights')
+    wandb_anime_weights_artifact.add_file('wandb_anime_weights.csv')
+    logger.info('Logging anime weights array')
+    run.log_artifact(wandb_anime_weights_artifact)
+    wandb_anime_weights_artifact.wait()
+
+    # Log user weights
+    logger.info("creating user weights artifact")
+    wandb_user_weights_artifact = wandb.Artifact(
+        name='wandb_user_weights.csv',
+        type='numpy_array',
+        description='numpy array of user id weights')
+    wandb_user_weights_artifact.add_file('wandb_user_weights.csv')
+    logger.info("Logging id weights array")
+    run.log_artifact(wandb_user_weights_artifact)
+    wandb_user_weights_artifact.wait()
+    """
 
     plt.plot(history.history["loss"][0:-2])
     plt.plot(history.history["val_loss"][0:-2])
