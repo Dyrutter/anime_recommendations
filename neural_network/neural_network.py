@@ -135,7 +135,7 @@ def go(args):
     run = wandb.init(
         job_type="neural_network",
         project=args.project_name,
-        name="Fullest_nn_run")
+        name="400_nn_run")
     rating_df, n_users, n_anime = get_df()
     logger.info("Data frame loaded")
 
@@ -143,16 +143,9 @@ def go(args):
     X = rating_df[['user', 'anime']].values
     y = rating_df["rating"]
 
-    # Split into train and validation sets
-    # X_train, X_test, y_train, y_test = train_test_split(
-    #    X,
-    #    y,
-    #    test_size=float(args.test_size),
-    #    random_state=42)
-
     # Split
-    test_set_size = 10000 #10k for test set
-    train_indices = rating_df.shape[0] - test_set_size 
+    rating_df = rating_df.sample(frac=1, random_state=73)
+    train_indices = rating_df.shape[0] - args.test_size 
     X_train, X_test, y_train, y_test = (
         X[:train_indices],
         X[train_indices:],
@@ -226,12 +219,6 @@ def go(args):
     with open(hist_csv_file, mode='w') as f:
         hist_df.to_csv(f)
 
-    # Save anime weights and user weights
-    #anime_weights = extract_weights('anime_embedding', model)
-    #user_weights = extract_weights('user_embedding', model)
-  #  anime_weights.tofile('./wandb_anime_weights.csv', sep=',')
-  #  user_weights.tofile('./wandb_user_weights.csv', sep=',')
-
     # Log all weights
     logger.info("creating all weights artifact")
     wandb_weights_artifact = wandb.Artifact(
@@ -264,30 +251,6 @@ def go(args):
     run.log_artifact(wandb_model_artifact)
     logger.info("Model logged!")
     wandb_model_artifact.wait()
-    """
-
-    # Log anime weights
-    logger.info("creating anime weights artifact")
-    wandb_anime_weights_artifact = wandb.Artifact(
-        name='wandb_anime_weights.csv',
-        type='numpy_array',
-        description='numpy array of anime weights')
-    wandb_anime_weights_artifact.add_file('wandb_anime_weights.csv')
-    logger.info('Logging anime weights array')
-    run.log_artifact(wandb_anime_weights_artifact)
-    wandb_anime_weights_artifact.wait()
-
-    # Log user weights
-    logger.info("creating user weights artifact")
-    wandb_user_weights_artifact = wandb.Artifact(
-        name='wandb_user_weights.csv',
-        type='numpy_array',
-        description='numpy array of user id weights')
-    wandb_user_weights_artifact.add_file('wandb_user_weights.csv')
-    logger.info("Logging id weights array")
-    run.log_artifact(wandb_user_weights_artifact)
-    wandb_user_weights_artifact.wait()
-    """
 
     plt.plot(history.history["loss"][0:-2])
     plt.plot(history.history["val_loss"][0:-2])
