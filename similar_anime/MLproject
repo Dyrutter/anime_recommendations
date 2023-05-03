@@ -4,21 +4,6 @@ conda_env: conda.yml
 entry_points:
   main:
     parameters:
-      main_data:
-        description: Wandb artifact of main data frame
-        type: str
-      synopses:
-        description: Wandb artifact of anime synopses
-        type: str
-      all_anime:
-        description: Wandb artifact containing list of all anime
-        type: str
-      anime_weights:
-        description: Wandb artifact containing numpy array of anime weights
-        type: str
-      user_weights:
-        description: Wandb artifact containing numpy array of user weights
-        type: str
       weights:
         description: Wandb artifact with .h5 file of all neural network weights
         type: str
@@ -28,14 +13,28 @@ entry_points:
       model:
         description: Wandb artifact with .h5 file of neural network
         type: str
-
+      project_name:
+        description: Name of Wandb project
+        type: str
+      main_df:
+        description: Main preprocessed data frame artifact
+        type: str
+      sypnopses_df:
+        description: Sypnopses data frame
+        type: str
+      anime_df:
+        description: Anime data frame
+        type: str
+      anime_query:
+        description: List of anime to query of formant ['anime1', 'anime2'...]
+        type: str
 
     command: >-
-      python similar_anime.py --main_data {main_data} \
-                              --synopses {synopses} \
-                              --all_anime {all_anime} \
-                              --anime_weights {anime_weights} \
-                              --user_weights {user_weights} \
-                              --weights {weights} \
+      python similar_anime.py --weights {weights} \
                               --history {history} \
-                              --model {model}
+                              --model {model} \
+                              --project_name {project_name} \
+                              --main_df {main_df} \
+                              --sypnopses_df {sypnopses_df} \
+                              --anime_df {anime_df} \
+                              --anime_query {anime_df}
