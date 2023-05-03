@@ -123,14 +123,14 @@ def go(args):
     run = wandb.init(
         job_type="preprocess_data",
         project=args.project_name)
-    logger.info("Downloading artifact")
-    artifact = run.use_artifact(args.raw_stats, type='raw_data')
+    artifact = run.use_artifact(args.raw_stats, type='Raw data')
+    logger.info("Artifact downloaded!")
     artifact_path = artifact.file()
     df = pd.read_parquet(artifact_path)
 
     # Basic cleaning
-    logger.info("Dropping useless data")
     df = drop_useless(df)
+    logger.info("Useless data dropped!")
 
     # Drop instances where less than half the episodes had been watched
     if args.drop_half_watched is True:
@@ -140,6 +140,8 @@ def go(args):
     # Scale ratings
     logger.info("Scaling ratings")
     df = scale_ratings(df)
+    logger.info("Final df shape is %s", df.shape)
+    logger.info("Final df columns are %s", df.columns)
 
     # Save clean df to local machine if desired
     filename = args.preprocessed_stats
