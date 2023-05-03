@@ -89,7 +89,6 @@ entry_points:
         description: filename of model's history csv
         type: str
 
-
     command: >-
       python neural_network.py --test_size {test_size} \
                               --TPU_INIT {TPU_INIT} \
