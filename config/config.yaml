@@ -17,15 +17,15 @@ data:
   synopses_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/synopses.csv?raw=True"
   all_anime_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/all_anime.csv?raw=True"
 
-  stats_artifact: "user_stats.parquet"
+  stats_artifact: "full_data_set.parquet"
   stats_artifact_type: "raw_data"
-  stats_artifact_description: "Main statistics file. Contains columns 'user_id', 'anime_id', 'watched_episodes', 'rating', 'watching_status'"
-  stats_artifact_latest: "user_stats.parquet:latest"
+  stats_artifact_description: "Main statistics file."
+  stats_artifact_latest: "full_data_set.parquet:v0"
 
   synopses_artifact: "synopses.csv"
   synopses_artifact_type: "raw_data"
   synopses_artifact_description: "File containing synopses"
-  synopses_artifact_latest: "synopses.csv:latest"
+  sypnopses_artifact_latest: "synopses.csv:latest"
 
   all_anime_artifact: "all_anime.csv"
   all_anime_type: "raw_data"
@@ -35,7 +35,7 @@ data:
   preprocessed_stats: "preprocessed_stats.parquet"
   preprocessed_artifact_type: "preprocessed_data"
   preprocessed_artifact_description: "Preprocessed stats file to be used for model training"
-  preprocessed_artifact_latest: "preprocessed_stats.parquet:latest"
+  preprocessed_artifact_latest: "preprocessed_stats.parquet:v1"
 
   num_reviews: 400
   drop_half_watched: False
@@ -44,8 +44,8 @@ data:
 
   save_raw_locally: False
   save_clean_locally: False
-  from_local: True
-  local_fname: '/Applications/python_files/anime_recommendations/data/animelist.csv'
+  from_local: True # Use local raw data for download step
+  local_fname: '/Applications/python_files/anime_recommendations/data/animelist.csv' # Filename of local raw data
 
 model:
   test_size: 0.3
@@ -81,8 +81,11 @@ model:
   id_weights_fn: './wandb_user_weights.csv'
 
 nn_arts:
-  main_anime_weights: "wandb_anime_weights.csv:v2"
+  main_anime_weights: "wandb_anime_weights.csv:v7"
   main_user_weights: "wandb_user_weights.csv:v2"
   main_weights_art: "wandb_anime_weights.h5:v5"
-  main_history: "wandb_anime_nn_history.csv:v5"
-  main_model: "wandb_anime_nn.h5:v3"
+  main_history: "wandb_anime_nn_history.csv:v7"
+  main_model: "wandb_anime_nn.h5:v5"
+
+similarity:
+  anime_query: "[Rental Magica]"
