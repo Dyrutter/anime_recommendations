@@ -120,42 +120,40 @@ def go(config: DictConfig):
             os.path.join(root_path, "similar_anime"),
             entry_point="main",
             parameters={
-                "main_data": config["data"]["preprocessed_artifact_latest"],
-                "synopses": config["data"]["synopses_artifact_latest"],
-                "all_anime": config["data"]["all_anime_artifact_latest"],
-                "anime_weights": config["nn_arts"]["main_anime_weights"],
-                "user_weights": config["nn_arts"]["main_user_weights"],
-                "weights": config["nn_arts"]["main_weights_arc"],
+                "weights": config["nn_arts"]["main_weights_art"],
                 "history": config["nn_arts"]["main_history"],
-                "model": config["nn_arts"]["main_model"]})
+                "model": config["nn_arts"]["main_model"],
+                "project_name": config["main"]["project_name"],
+                "main_df": config["data"]["preprocessed_artifact_latest"],
+                "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
+                "anime_df": config["data"]["all_anime_artifact_latest"],
+                "anime_query": config["similarity"]["anime_query"]})
 
     if "similar_users" in steps_to_execute:
         _ = mlflow.run(
             os.path.join(root_path, "similar_users"),
             entry_point="main",
             parameters={
-                "main_data": config["data"]["preprocessed_artifact_latest"],
-                "synopses": config["data"]["synopses_artifact_latest"],
-                "all_anime": config["data"]["all_anime_artifact_latest"],
-                "anime_weights": config["nn_arts"]["main_anime_weights"],
-                "user_weights": config["nn_arts"]["main_user_weights"],
-                "weights": config["nn_arts"]["main_weights_arc"],
+                "weights": config["nn_arts"]["main_weights_art"],
                 "history": config["nn_arts"]["main_history"],
-                "model": config["nn_arts"]["main_model"]})
+                "model": config["nn_arts"]["main_model"],
+                "project_name": config["main"]["project_name"],
+                "main_df": config["data"]["preprocessed_artifact_latest"],
+                "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
+                "anime_df": config["data"]["all_anime_artifact_latest"]})
 
     if "recommend" in steps_to_execute:
         _ = mlflow.run(
             os.path.join(root_path, "recommend"),
             entry_point="main",
             parameters={
-                "main_data": config["data"]["preprocessed_artifact_latest"],
-                "synopses": config["data"]["synopses_artifact_latest"],
-                "all_anime": config["data"]["all_anime_artifact_latest"],
-                "anime_weights": config["nn_arts"]["main_anime_weights"],
-                "user_weights": config["nn_arts"]["main_user_weights"],
-                "weights": config["nn_arts"]["main_weights_arc"],
+                "weights": config["nn_arts"]["main_weights_art"],
                 "history": config["nn_arts"]["main_history"],
-                "model": config["nn_arts"]["main_model"]})
+                "model": config["nn_arts"]["main_model"],
+                "project_name": config["main"]["project_name"],
+                "main_df": config["data"]["preprocessed_artifact_latest"],
+                "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
+                "anime_df": config["data"]["all_anime_artifact_latest"]})
 
 
 if __name__ == "__main__":
