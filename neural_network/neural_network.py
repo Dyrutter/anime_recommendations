@@ -12,7 +12,13 @@ import tensorflow.keras.callbacks as tfkc
 import matplotlib.pyplot as plt
 
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logging.basicConfig(
+    filename='./neural_network.log', #Path to log file
+    level=logging.INFO, #Log info, warnings, errors, and critical errors
+    filemode='a', #Create log file if one doesn't already exist and add 
+    format='%(asctime)s-%(name)s - %(levelname)s - %(message)s',
+    datefmt='%d %b %Y %H:%M:%S %Z', #Format date
+    force=True)
 logger = logging.getLogger()
 
 
@@ -45,8 +51,8 @@ def get_df():
 
     # Shuffle, because currently sorted according to user ID
     df = df.sample(frac=1, random_state=42)
-    to_drop = ['watching_status', 'watched_episodes', 'max_eps', 'half_eps']
-    df = df.drop(to_drop, axis=1)
+    df = df[['user', 'anime', 'rating']]
+    logger.info("Final df shape is %s", df.shape)
 
     return df, n_users, n_animes
 
@@ -88,7 +94,7 @@ def neural_network():
     model.compile(loss=args.model_loss,
                   metrics=["mae", "mse"],
                   optimizer=args.optimizer)
-
+    logger.info("Model compiled!")
     return model
 
 
@@ -128,7 +134,8 @@ def go(args):
 
     run = wandb.init(
         job_type="neural_network",
-        project=args.project_name)
+        project=args.project_name,
+        name="Fullest_nn_run")
     rating_df, n_users, n_anime = get_df()
     logger.info("Data frame loaded")
 
@@ -137,12 +144,20 @@ def go(args):
     y = rating_df["rating"]
 
     # Split into train and validation sets
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=float(args.test_size),
-        random_state=42)
+    # X_train, X_test, y_train, y_test = train_test_split(
+    #    X,
+    #    y,
+    #    test_size=float(args.test_size),
+    #    random_state=42)
 
+    # Split
+    test_set_size = 10000 #10k for test set
+    train_indices = rating_df.shape[0] - test_set_size 
+    X_train, X_test, y_train, y_test = (
+        X[:train_indices],
+        X[train_indices:],
+        y[:train_indices],
+        y[train_indices:])
     # Get arrays of anime IDs and User IDs
     X_train_array = [X_train[:, 0], X_train[:, 1]]
     X_test_array = [X_test[:, 0], X_test[:, 1]]
@@ -212,10 +227,10 @@ def go(args):
         hist_df.to_csv(f)
 
     # Save anime weights and user weights
-    anime_weights = extract_weights('anime_embedding', model)
-    user_weights = extract_weights('user_embedding', model)
-    anime_weights.tofile('./wandb_anime_weights.csv', sep=',')
-    user_weights.tofile('./wandb_user_weights.csv', sep=',')
+    #anime_weights = extract_weights('anime_embedding', model)
+    #user_weights = extract_weights('user_embedding', model)
+  #  anime_weights.tofile('./wandb_anime_weights.csv', sep=',')
+  #  user_weights.tofile('./wandb_user_weights.csv', sep=',')
 
     # Log all weights
     logger.info("creating all weights artifact")
@@ -224,8 +239,8 @@ def go(args):
         type="h5",
         description='file containing all weights')
     wandb_weights_artifact.add_file(args.weights_artifact)
-    logger.info("logging all weights")
     run.log_artifact(wandb_weights_artifact)
+    logger.info("Weights logged!")
     wandb_weights_artifact.wait()
 
     # Log history csv
@@ -235,8 +250,8 @@ def go(args):
         type='history_csv',
         description='csv file of neural network training history')
     hist_artifact.add_file(args.history_csv)
-    logger.info('logging history')
     run.log_artifact(hist_artifact)
+    logger.info('History logged!')
     hist_artifact.wait()
 
     # log model
@@ -246,9 +261,10 @@ def go(args):
         type='h5',
         description='h5 file of trained neural network')
     wandb_model_artifact.add_file(args.model_artifact)
-    logger.info('logging model')
     run.log_artifact(wandb_model_artifact)
+    logger.info("Model logged!")
     wandb_model_artifact.wait()
+    """
 
     # Log anime weights
     logger.info("creating anime weights artifact")
@@ -271,6 +287,7 @@ def go(args):
     logger.info("Logging id weights array")
     run.log_artifact(wandb_user_weights_artifact)
     wandb_user_weights_artifact.wait()
+    """
 
     plt.plot(history.history["loss"][0:-2])
     plt.plot(history.history["val_loss"][0:-2])
@@ -284,7 +301,7 @@ def go(args):
             "results": wandb.Image(fig),
         }
     )
-    plt.show()
+    logger.info("Figure logged!")
 
 
 if __name__ == "__main__":
