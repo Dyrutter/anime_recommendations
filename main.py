@@ -127,7 +127,8 @@ def go(config: DictConfig):
                 "main_df": config["data"]["preprocessed_artifact_latest"],
                 "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
                 "anime_df": config["data"]["all_anime_artifact_latest"],
-                "anime_query": config["similarity"]["anime_query"]})
+                "anime_query": config["similarity"]["anime_query"],
+                "a_query_number": config["similarity"]["a_query_number"]})
 
     if "similar_users" in steps_to_execute:
         _ = mlflow.run(
