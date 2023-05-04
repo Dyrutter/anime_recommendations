@@ -26,7 +26,10 @@ entry_points:
         description: Anime data frame
         type: str
       anime_query:
-        description: List of anime to query of formant ['anime1', 'anime2'...]
+        description: Anime of which to find similar animes to
+        type: str
+      a_query_number:
+        description: Number of similar anime to return
         type: str
 
     command: >-
@@ -37,4 +40,5 @@ entry_points:
                               --main_df {main_df} \
                               --sypnopses_df {sypnopses_df} \
                               --anime_df {anime_df} \
-                              --anime_query {anime_df}
+                              --anime_query {anime_query} \
+                              --a_query_number {a_query_number}
