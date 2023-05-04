@@ -61,7 +61,7 @@ model:
   embedding_size: 128
   model_loss: 'binary_crossentropy'
   optimizer: 'Adam'
-  weights_artifact: 'wandb_anime_weights.h5'
+  weights_artifact: 'wandb_main_weights.h5'
   epochs: 20
   activation_function: 'sigmoid'
   checkpoint_metric: 'val_loss'
@@ -81,11 +81,12 @@ model:
   id_weights_fn: './wandb_user_weights.csv'
 
 nn_arts:
-  main_anime_weights: "wandb_anime_weights.csv:v7"
+  main_anime_weights: "wandb_anime_weights.csv:v2"
   main_user_weights: "wandb_user_weights.csv:v2"
-  main_weights_art: "wandb_anime_weights.h5:v5"
-  main_history: "wandb_anime_nn_history.csv:v7"
-  main_model: "wandb_anime_nn.h5:v5"
+  main_weights_art: "wandb_anime_weights.h5:v8"
+  main_history: "wandb_anime_nn_history.csv:v8"
+  main_model: "wandb_anime_nn.h5:v6"
 
 similarity:
-  anime_query: "[Rental Magica]"
+  anime_query: "Rental Magica"
+  a_query_number: 10 # Number of similar anime to return
