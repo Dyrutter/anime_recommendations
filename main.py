@@ -141,7 +141,11 @@ def go(config: DictConfig):
                 "project_name": config["main"]["project_name"],
                 "main_df": config["data"]["preprocessed_artifact_latest"],
                 "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
-                "anime_df": config["data"]["all_anime_artifact_latest"]})
+                "anime_df": config["data"]["all_anime_artifact_latest"],
+                "user_query": config["similarity"]["user_query"],
+                "id_query_number": config["similarity"]["id_query_number"],
+                "max_ratings": config["similarity"]["max_ratings"],
+                "random_user": config["similarity"]["random_user"]})
 
     if "recommend" in steps_to_execute:
         _ = mlflow.run(
@@ -154,7 +158,9 @@ def go(config: DictConfig):
                 "project_name": config["main"]["project_name"],
                 "main_df": config["data"]["preprocessed_artifact_latest"],
                 "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
-                "anime_df": config["data"]["all_anime_artifact_latest"]})
+                "anime_df": config["data"]["all_anime_artifact_latest"],
+                "anime_query": config["similarity"]["anime_query"],
+                "a_query_number": config["similarity"]["a_query_number"]})
 
 
 if __name__ == "__main__":
