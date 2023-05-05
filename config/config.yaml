@@ -7,7 +7,7 @@ main:
     - preprocess
     - neural_network
     - similar_anime
-    #- similar_users
+    - similar_users
     #- recommendation
     #- API
   random_seed: 42
