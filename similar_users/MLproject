@@ -1,0 +1,52 @@
+name: similar_users
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      weights:
+        description: Wandb artifact with .h5 file of all neural network weights
+        type: str
+      history:
+        description: Wandb artifact with .csv file of neural network run history
+        type: str
+      model:
+        description: Wandb artifact with .h5 file of neural network
+        type: str
+      project_name:
+        description: Name of Wandb project
+        type: str
+      main_df:
+        description: Main preprocessed data frame artifact
+        type: str
+      sypnopses_df:
+        description: Sypnopses data frame
+        type: str
+      anime_df:
+        description: Anime data frame
+        type: str
+      user_query:
+        description: User of which to find similar animes to
+        type: str
+      id_query_number:
+        description: Number of similar users to return
+        type: str
+      max_ratings:
+        description: Maximum ratings you want a random user to have
+        type: str
+      random_user:
+        description: Whether to use a random user for the input
+        type: str
+
+    command: >-
+      python similar_anime.py --weights {weights} \
+                              --history {history} \
+                              --model {model} \
+                              --project_name {project_name} \
+                              --main_df {main_df} \
+                              --sypnopses_df {sypnopses_df} \
+                              --anime_df {anime_df} \
+                              --user_query {user_query} \
+                              --id_query_number {id_query_number} \
+                              --max_ratings {max_ratings} \
+                              --random_user {random_user}
