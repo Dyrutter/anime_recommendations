@@ -90,3 +90,7 @@ nn_arts:
 similarity:
   anime_query: "Rental Magica"
   a_query_number: 10 # Number of similar anime to return
+  user_query: 10000
+  id_query_number: 10
+  max_ratings: 600 # Limit to this many ratings if random_user is True
+  random_user: False
