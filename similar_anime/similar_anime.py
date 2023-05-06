@@ -81,7 +81,7 @@ def get_anime_df():
                    kind='quicksort',
                    na_position='last')
     keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
-                 "Premiered", "Studios", "japanese_name", "Name"]
+                 "Premiered", "Studios", "japanese_name", "Name", "Type"]
     df = df[keep_cols]
     # logger.info("Final anime df head is %s", df.head())
     logger.info("Final anime df shape is %s", df.shape)
@@ -121,7 +121,6 @@ def get_sypnopses_df():
     cols = ["MAL_ID", "Name", "Genres", "sypnopsis"]
     df = pd.read_csv(artifact_path, usecols=cols)
     logger.info("Anime df shape is %s", df.shape)
-    logger.info("Anime df head is %s", df.head())
     return df
 
 
@@ -181,7 +180,7 @@ def find_similar_anime(name, count):
         name = name
 
     # Strip all Escape characters and spaces
-    filename = name.translate(
+    filename = str(name).translate(
         {ord(c): None for c in string.whitespace}) + '.csv'
 
     index = get_anime_frame(name, anime_df).anime_id.values[0]
@@ -192,8 +191,6 @@ def find_similar_anime(name, count):
 
     count = count + 1
     closest = sorted_dists[-count:]
-
-    logger.info("Anime closest to %s", name)
     SimilarityArr = []
 
     for close in closest:
