@@ -31,6 +31,8 @@ entry_points:
       a_query_number:
         description: Number of similar anime to return
         type: str
+      random_anime:
+        description: Boolean of whether or not to use a random anime as input
 
     command: >-
       python similar_anime.py --weights {weights} \
@@ -41,4 +43,5 @@ entry_points:
                               --sypnopses_df {sypnopses_df} \
                               --anime_df {anime_df} \
                               --anime_query {anime_query} \
-                              --a_query_number {a_query_number}
+                              --a_query_number {a_query_number} \
+                              --random_anime {random_anime}
