@@ -8,7 +8,9 @@ main:
     - neural_network
     - similar_anime
     - similar_users
-    #- recommendation
+    #- user_prefs
+    #- user_recs
+    #- ranking_recs
     #- API
   random_seed: 42
 
@@ -89,8 +91,9 @@ nn_arts:
 
 similarity:
   anime_query: "Rental Magica"
+  random_anime: True
   a_query_number: 10 # Number of similar anime to return
-  user_query: 10000
+  user_query: 109160
   id_query_number: 10
   max_ratings: 600 # Limit to this many ratings if random_user is True
-  random_user: False
+  random_user: True
