@@ -7,17 +7,18 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from distutils.util import strtobool
-
+import random
 
 
 logging.basicConfig(
-    filename='./similar_anime.log',  # Path to log file
+    filename='./similar_users.log',  # Path to log file
     level=logging.INFO,  # Log info, warnings, errors, and critical errors
     filemode='a',  # Create log file if one doesn't already exist and add
     format='%(asctime)s-%(name)s - %(levelname)s - %(message)s',
     datefmt='%d %b %Y %H:%M:%S %Z',  # Format date
     force=True)
 logger = logging.getLogger()
+
 
 def get_main_df():
     """
@@ -59,6 +60,7 @@ def get_model():
     model = tf.keras.models.load_model(artifact_path)
     return model
 
+
 def get_weights():
     logger.info("Getting weights")
     model = get_model()
@@ -74,53 +76,90 @@ def get_weights():
     logger.info("Weights extracted!")
     return anime_weights, user_weights
 
-def get_random_user(df):
-    ratings = df.groupby('user_id').size()
-    random_user = ratings[ratings < int(args.max_ratings)].sample(1).index[0]
+
+def get_random_user():
+    df, user_to_index, index_to_user = get_main_df()
+    possible_users = list(user_to_index.keys())
+    random_user = random.choice(possible_users)
     return random_user
 
 
 pd.set_option("max_colwidth", None)
 
-def find_similar_users(item=None, n=args.id_query_number):
+
+def find_similar_users(user_id, n_users):
     rating_df, user_to_index, index_to_user = get_main_df()
     anime_weights, user_weights = get_weights()
     weights = user_weights
 
-    if item is None:
-        item = get_random_user(rating_df)
-    else:
-        item=item
+    # Specify filename here in case the a random ID is used
+    filename = 'User_' + str(user_id).translate(
+        {ord(c): None for c in string.whitespace}) + '.csv'
 
     try:
-        index = item
+        index = user_id
         encoded_index = user_to_index.get(index)
-    
+
         dists = np.dot(weights, weights[encoded_index])
         sorted_dists = np.argsort(dists)
-        
+        n_users = n_users + 1
+        closest = sorted_dists[-n_users:]
+
         SimilarityArr = []
-        
+
         for close in closest:
             similarity = dists[close]
+            decoded_id = index_to_user.get(close)
+            if decoded_id != user_id:
+                SimilarityArr.append(
+                    {"similar_users": decoded_id,
+                     "similarity": similarity})
 
-            if isinstance(item, int):
-                decoded_id = index_to_user.get(close)
-                SimilarityArr.append({"similar_users": decoded_id, 
-                                      "similarity": similarity})
-
-        Frame = pd.DataFrame(SimilarityArr).sort_values(by="similarity", 
+        Frame = pd.DataFrame(SimilarityArr).sort_values(by="similarity",
                                                         ascending=False)
-        
-        return Frame
-    
-    except:
-        print('{}!, Not Found in User list'.format(name))
-        
+
+        return Frame, filename, user_id
+
+    except BaseException:
+        logger.info('%s Not Found in User list', user_id)
+
+
+def go(args):
+    # Initialize run
+    run = wandb.init(
+        project=args.project_name,
+        name="similar_users")
+
+    if args.random_user is True:
+        user_id = get_random_user()
+        logger.info("Using user ID %s", user_id)
+    else:
+        user_id = int(args.user_query)
+
+    # Create data frame file
+    df, filename, user_id = find_similar_users(
+        int(user_id), int(args.id_query_number))
+    df.to_csv(filename, index=False)
+
+    # Create artifact
+    logger.info("Creating artifact")
+    description = "Users most similar to: " + str(args.user_query)
+    artifact = wandb.Artifact(
+        name=filename,
+        type="csv",
+        description=description,
+        metadata={"Queried user: ": user_id, "Filename: ": filename})
+
+    # Upload artifact to wandb
+    artifact.add_file(filename)
+    logger.info("Logging artifact")
+    run.log_artifact(artifact)
+    artifact.wait()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Train an anime recommendation neural network",
+        description="Get similar users",
         fromfile_prefix_chars="@",
     )
 
@@ -160,23 +199,9 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--sypnopses_df",
-        type=str,
-        help="Sypnopses df",
-        required=True
-    )
-
-    parser.add_argument(
-        "--anime_df",
-        type=str,
-        help="anime df",
-        required=True
-    )
-
-    parser.add_argument(
         "--user_query",
         type=str,
-        help="list of input names of anime to query",
+        help="input user id to query",
         required=True
     )
 
