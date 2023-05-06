@@ -128,7 +128,8 @@ def go(config: DictConfig):
                 "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
                 "anime_df": config["data"]["all_anime_artifact_latest"],
                 "anime_query": config["similarity"]["anime_query"],
-                "a_query_number": config["similarity"]["a_query_number"]})
+                "a_query_number": config["similarity"]["a_query_number"],
+                "random_anime": config["similarity"]["random_anime"]})
 
     if "similar_users" in steps_to_execute:
         _ = mlflow.run(
@@ -140,8 +141,6 @@ def go(config: DictConfig):
                 "model": config["nn_arts"]["main_model"],
                 "project_name": config["main"]["project_name"],
                 "main_df": config["data"]["preprocessed_artifact_latest"],
-                "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
-                "anime_df": config["data"]["all_anime_artifact_latest"],
                 "user_query": config["similarity"]["user_query"],
                 "id_query_number": config["similarity"]["id_query_number"],
                 "max_ratings": config["similarity"]["max_ratings"],
