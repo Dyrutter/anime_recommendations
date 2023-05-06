@@ -19,12 +19,6 @@ entry_points:
       main_df:
         description: Main preprocessed data frame artifact
         type: str
-      sypnopses_df:
-        description: Sypnopses data frame
-        type: str
-      anime_df:
-        description: Anime data frame
-        type: str
       user_query:
         description: User of which to find similar animes to
         type: str
@@ -39,13 +33,11 @@ entry_points:
         type: str
 
     command: >-
-      python similar_anime.py --weights {weights} \
+      python similar_users.py --weights {weights} \
                               --history {history} \
                               --model {model} \
                               --project_name {project_name} \
                               --main_df {main_df} \
-                              --sypnopses_df {sypnopses_df} \
-                              --anime_df {anime_df} \
                               --user_query {user_query} \
                               --id_query_number {id_query_number} \
                               --max_ratings {max_ratings} \
