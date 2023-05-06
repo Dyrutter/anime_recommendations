@@ -6,6 +6,8 @@ import string
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+from distutils.util import strtobool
+import random
 
 
 logging.basicConfig(
@@ -156,6 +158,13 @@ def get_weights():
     return anime_weights, user_weights
 
 
+def get_random_anime():
+    anime_df = get_anime_df()
+    possible_anime = anime_df['eng_version'].unique().tolist()
+    random_anime = random.choice(possible_anime)
+    return random_anime
+
+
 pd.set_option("max_colwidth", None)
 
 
@@ -164,8 +173,17 @@ def find_similar_anime(name, count):
     anime_weights, user_weights = get_weights()
     weights = anime_weights
     anime_df = get_anime_df()
-    # sypnopsis_df = get_sypnopses_df()
-    # try:
+
+    if args.random_anime is True:
+        name = get_random_anime()
+        logger.info("Using %s as input anime", name)
+    else:
+        name = name
+
+    # Strip all Escape characters and spaces
+    filename = name.translate(
+        {ord(c): None for c in string.whitespace}) + '.csv'
+
     index = get_anime_frame(name, anime_df).anime_id.values[0]
     encoded_index = anime_to_index.get(index)
 
@@ -175,7 +193,7 @@ def find_similar_anime(name, count):
     count = count + 1
     closest = sorted_dists[-count:]
 
-    logger.info("Animes closest to %s", name)
+    logger.info("Anime closest to %s", name)
     SimilarityArr = []
 
     for close in closest:
@@ -190,6 +208,7 @@ def find_similar_anime(name, count):
         premiered = anime_frame['Premiered'].values[0]
         studios = anime_frame['Studios'].values[0]
         score = anime_frame["Score"].values[0]
+        Type = anime_frame['Type'].values[0]
 
         similarity = dists[close]
         SimilarityArr.append(
@@ -197,14 +216,17 @@ def find_similar_anime(name, count):
              "Similarity": similarity, "Genre": genre,
              'Sypnopsis': sypnopsis, "Episodes": episodes,
              "Japanese name": japanese_name, "Studios": studios,
-             "Premiered": premiered, "Score": score})
+             "Premiered": premiered, "Score": score,
+             "Type": Type})
 
     Frame = pd.DataFrame(SimilarityArr).sort_values(
         by="Similarity", ascending=False)
-    return Frame[Frame.anime_id != index].drop(['anime_id'], axis=1)
+    Frame = Frame[Frame.anime_id != index].drop(['anime_id'], axis=1)
+    return Frame, filename, name
 
 # with open(ingestedfiles, 'r') as fp:
 #    dataset_list = ast.literal_eval(fp.read())
+
 
 def go(args):
     # Initialize run
@@ -212,11 +234,16 @@ def go(args):
         project=args.project_name,
         name="similar_anime")
 
+    if args.random_anime is True:
+        name = get_random_anime()
+        logger.info("Using %s as input anime", name)
+    else:
+        name = name
+
     # Create data frame file
-    df = find_similar_anime(args.anime_query, int(args.a_query_number))
+    df, filename, name = find_similar_anime(name, int(args.a_query_number))
+
     # Strip all Escape characters and spaces
-    filename = args.anime_query.translate(
-        {ord(c): None for c in string.whitespace}) + '.csv'
     df.to_csv(filename, index=False)
 
     # Create artifact
@@ -226,7 +253,7 @@ def go(args):
         name=filename,
         type="csv",
         description=description,
-        metadata={"Queried name: ": args.anime_query})
+        metadata={"Queried name: ": name})
 
     # Upload artifact to wandb
     artifact.add_file(filename)
@@ -237,7 +264,7 @@ def go(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Train an anime recommendation neural network",
+        description="Get recommendations based on similar anime",
         fromfile_prefix_chars="@",
     )
 
@@ -301,6 +328,13 @@ if __name__ == "__main__":
         "--a_query_number",
         type=str,
         help="Number of similar anime to return",
+        required=True
+    )
+
+    parser.add_argument(
+        "--random_anime",
+        type=lambda x: bool(strtobool(x)),
+        help="Whether to use a random anime",
         required=True
     )
 
