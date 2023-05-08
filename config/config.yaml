@@ -97,3 +97,5 @@ similarity:
   id_query_number: 10
   max_ratings: 600 # Limit to this many ratings if random_user is True
   random_user: True
+  genres: ["Action", "Comedy", None]
+  spec_genres: True
