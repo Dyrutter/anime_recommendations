@@ -8,6 +8,7 @@ import numpy as np
 import tensorflow as tf
 from distutils.util import strtobool
 import random
+import ast
 
 
 logging.basicConfig(
@@ -164,6 +165,12 @@ def get_random_anime():
     return random_anime
 
 
+# def by_genre(anime_df):
+# genres = ast.literal_eval(args.genres)
+# logger.info("Genres are %s", genres)
+# logger.info("Genres type is %s", genres)
+
+
 pd.set_option("max_colwidth", None)
 
 
@@ -236,6 +243,12 @@ def go(args):
         logger.info("Using %s as input anime", name)
     else:
         name = name
+    genres = ast.literal_eval(args.genres)
+    logger.info("Genres are %s", genres)
+    logger.info("Genres type is %s", type(genres))
+    logger.info("Genres[0] is %s", genres[0])
+    logger.info("Type of Action genre is %s", type(genres[0]))
+    logger.info("Type of None genre is %s", type(genres[2]))
 
     # Create data frame file
     df, filename, name = find_similar_anime(name, int(args.a_query_number))
@@ -333,6 +346,20 @@ if __name__ == "__main__":
         type=lambda x: bool(strtobool(x)),
         help="Whether to use a random anime",
         required=True
+    )
+
+    parser.add_file(
+        "--genres",
+        type=str,
+        help="List of genres to narrow down return values",
+        required=True
+    )
+
+    parser.add_argument(
+        "--spec_genres",
+        type=lambda x: bool(strtobool(x)),
+        help="Boolean of whether or not to narrow down by specific genres",
+        requried=True
     )
 
     args = parser.parse_args()
