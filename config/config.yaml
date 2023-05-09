@@ -99,3 +99,5 @@ similarity:
   random_user: True
   genres: ["Action", "Comedy", None]
   spec_genres: True
+  types: ["TV", "Movie", 'OVA'] # Potentially ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
+  spec_types: True
