@@ -122,8 +122,7 @@ def get_sypnopses_df():
     return df
 
 
-def get_sypnopsis(anime):
-    sypnopsis_df = get_sypnopses_df()
+def get_sypnopsis(anime, sypnopsis_df):
     if isinstance(anime, int):
         return sypnopsis_df[sypnopsis_df.MAL_ID == anime].sypnopsis.values[0]
     if isinstance(anime, str):
@@ -257,6 +256,7 @@ def anime_recommendations(name, count):
     rating_df, anime_to_index, index_to_anime = get_main_df()
     weights, _ = get_weights()
     anime_df = get_anime_df()
+    sypnopsis_df = get_sypnopses_df()
     use_types = get_types(anime_df)
 
     # Strip all Escape characters and spaces & produce filename
@@ -280,7 +280,7 @@ def anime_recommendations(name, count):
 
         # Some anime do not have sypnopses
         try:
-            sypnopsis = get_sypnopsis(decoded_id)
+            sypnopsis = get_sypnopsis(decoded_id, sypnopsis_df)
         except BaseException:
             sypnopsis = "None"
 
