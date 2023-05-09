@@ -40,6 +40,12 @@ entry_points:
       spec_genres:
         description: Boolean of whether or not to narrow down returned anime by genre
         type: str
+      types:
+        description: List of types of anime to return. OVA, Movie, TV, etc.
+        type: str
+      spec_types:
+        description: Boolean of whether or not to specify types of anime to return
+        type: str
 
     command: >-
       python similar_anime.py --weights {weights} \
@@ -53,4 +59,6 @@ entry_points:
                               --a_query_number {a_query_number} \
                               --random_anime {random_anime} \
                               --genres {genres} \
-                              --spec_genres {spec_genres}
+                              --spec_genres {spec_genres} \
+                              --types {types} \
+                              --spec_types {spec_types}
