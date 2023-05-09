@@ -131,7 +131,9 @@ def go(config: DictConfig):
                 "a_query_number": config["similarity"]["a_query_number"],
                 "random_anime": config["similarity"]["random_anime"],
                 "genres": config["similarity"]["genres"],
-                "spec_genres": config["similarity"]["spec_genres"]})
+                "spec_genres": config["similarity"]["spec_genres"],
+                "types": config["similarity"]["types"],
+                "spec_types": config["similarity"]["spec_types"]})
 
     if "similar_users" in steps_to_execute:
         _ = mlflow.run(
