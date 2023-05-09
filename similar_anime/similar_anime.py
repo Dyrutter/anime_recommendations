@@ -9,6 +9,7 @@ import tensorflow as tf
 from distutils.util import strtobool
 import random
 import ast
+import re
 
 
 logging.basicConfig(
@@ -32,7 +33,6 @@ def get_main_df():
     artifact_path = artifact.file()
     df = pd.read_parquet(artifact_path)
     logger.info("Main preprocessed df shape is %s", df.shape)
-    # logger.info("Main preprocessed df head is %s", df.head())
 
     # Encoding categorical data
     user_ids = df["user_id"].unique().tolist()
@@ -43,7 +43,6 @@ def get_main_df():
     user_to_index = {value: count for count, value in enumerate(user_ids)}
 
     # Dicts of format {count_number: id}
-    # index_to_user = {count: value for count, value in enumerate(user_ids)}
     index_to_anime = {count: value for count, value in enumerate(anime_ids)}
 
     # Convert values of format id to count_number
@@ -75,7 +74,6 @@ def get_anime_df():
     df["eng_version"] = df['English name']
     logger.info("Original English version is %s", df["eng_version"].head())
     df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
-    # logger.info("New English version is %s", df["eng_version"].head())
     df.sort_values(by=['Score'],
                    inplace=True,
                    ascending=False,
@@ -84,7 +82,6 @@ def get_anime_df():
     keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
                  "Premiered", "Studios", "japanese_name", "Name", "Type"]
     df = df[keep_cols]
-    # logger.info("Final anime df head is %s", df.head())
     logger.info("Final anime df shape is %s", df.shape)
     return df
 
@@ -165,46 +162,129 @@ def get_random_anime():
     return random_anime
 
 
-# def by_genre(anime_df):
-# genres = ast.literal_eval(args.genres)
-# logger.info("Genres are %s", genres)
-# logger.info("Genres type is %s", genres)
+def get_genres():
+    """
+    Get a list of all possible anime genres
+    """
+    anime_df = get_anime_df()
+    genres = anime_df['Genres'].unique().tolist()
+    # Get genres individually (instances have lists of genres)
+    possibilities = list(set(str(genres).split()))
+    # Remove non alphanumeric characters
+    possibilities = sorted(
+        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
+    # Convert incomplete categories to their proper names
+    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
+    fixed = possibilities + \
+        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
+    genre_list = sorted([i for i in fixed if i not in rem])
+    return genre_list
+
+
+def by_genre(anime_df):
+    """
+    Restrict the potential anime recommendations according to genre
+    """
+    # Get genres to use and possible genres
+    use_genres = ast.literal_eval(args.genres)
+    genres = get_genres()
+    # Ensure the input genres are valid genres
+    for genre in use_genres:
+        try:
+            assert genre in genres
+        except AssertionError:
+            return logger.info(
+                "An invalid genre was input. Select genres from %s", genres)
+
+    g1, g2, g3 = use_genres
+    arr1, arr2, arr3, empty = [], [], [], []
+
+    # Iterate through anime df
+    for index, row in anime_df.iterrows():
+        i = 0
+        # Append an anime to its specific array if it is of the desired genre
+        if g1 in str(row['Genres']) and g1 not in arr1[:i] and g1 != "None":
+            arr1.append(row)
+        if g2 in str(row['Genres']) and g2 not in arr2[:i] and g2 != "None":
+            arr2.append(row)
+        if g3 in str(row['Genres']) and g3 not in arr3[:i] and g3 != "None":
+            arr3.append(row)
+        i += 1
+    # Initialize empty df
+    df = None
+    # If array 1 was created, convert to data frame
+    if arr1 != empty:
+        df = pd.DataFrame(arr1)
+    # If array 2 was created, convert to data frame
+    if arr2 != empty:
+        df2 = pd.DataFrame(arr2)
+        # If the first data frame exists, concatenate with it
+        if arr1 != empty:
+            df = pd.concat([df, df2]).drop_duplicates()
+        else:
+            df = df2
+    # Create third array and concatenate in same manner
+    if arr3 != empty:
+        df3 = pd.DataFrame(arr3)
+        if df is not None:
+            df = pd.concat([df, df3]).drop_duplicates()
+        else:
+            df = df3
+    return df
+
+
+def get_types(df):
+    """
+    Modify data frame to include only anime of specified genre
+    """
+    possibilities = ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
+    use_types = ast.literal_eval(args.types)
+    for anime_type in use_types:
+        try:
+            assert anime_type in possibilities
+        except AssertionError:
+            return logger.info(
+                "An invalid type was input. Select from %s", possibilities)
+    return use_types
 
 
 pd.set_option("max_colwidth", None)
 
 
-def find_similar_anime(name, count):
+def anime_recommendations(name, count):
+
+    # Get dfs and weights
     rating_df, anime_to_index, index_to_anime = get_main_df()
-    anime_weights, user_weights = get_weights()
-    weights = anime_weights
+    weights, _ = get_weights()
     anime_df = get_anime_df()
+    use_types = get_types(anime_df)
 
-    if args.random_anime is True:
-        name = get_random_anime()
-        logger.info("Using %s as input anime", name)
-    else:
-        name = name
-
-    # Strip all Escape characters and spaces
+    # Strip all Escape characters and spaces & produce filename
     filename = str(name).translate(
         {ord(c): None for c in string.whitespace}) + '.csv'
 
+    # Get ID and encoded index of input anime
     index = get_anime_frame(name, anime_df).anime_id.values[0]
     encoded_index = anime_to_index.get(index)
 
+    # Get and sort dists
     dists = np.dot(weights, weights[encoded_index])
     sorted_dists = np.argsort(dists)
+    closest = sorted_dists[:]
+    arr = []
 
-    count = count + 1
-    closest = sorted_dists[-count:]
-    SimilarityArr = []
-
+    # Sequentially append closest animes to empty array
     for close in closest:
         decoded_id = index_to_anime.get(close)
-        sypnopsis = get_sypnopsis(decoded_id)
         anime_frame = get_anime_frame(decoded_id, anime_df)
 
+        # Some anime do not have sypnopses
+        try:
+            sypnopsis = get_sypnopsis(decoded_id)
+        except BaseException:
+            sypnopsis = "None"
+
+        # Get desired column values for anime
         anime_name = anime_frame['eng_version'].values[0]
         genre = anime_frame['Genres'].values[0]
         japanese_name = anime_frame['japanese_name'].values[0]
@@ -213,23 +293,38 @@ def find_similar_anime(name, count):
         studios = anime_frame['Studios'].values[0]
         score = anime_frame["Score"].values[0]
         Type = anime_frame['Type'].values[0]
-
         similarity = dists[close]
-        SimilarityArr.append(
-            {"anime_id": decoded_id, "Name": anime_name,
-             "Similarity": similarity, "Genre": genre,
-             'Sypnopsis': sypnopsis, "Episodes": episodes,
-             "Japanese name": japanese_name, "Studios": studios,
-             "Premiered": premiered, "Score": score,
-             "Type": Type})
 
-    Frame = pd.DataFrame(SimilarityArr).sort_values(
-        by="Similarity", ascending=False)
+        # Don't include anime if they aren't of a specified type
+        if args.spec_types is True:
+            if Type in use_types:
+                arr.append(
+                    {"anime_id": decoded_id, "Name": anime_name,
+                     "Similarity": similarity, "Genres": genre,
+                     'Sypnopsis': sypnopsis, "Episodes": episodes,
+                     "Japanese name": japanese_name, "Studios": studios,
+                     "Premiered": premiered, "Score": score,
+                     "Type": Type})
+        else:
+            arr.append(
+                {"anime_id": decoded_id, "Name": anime_name,
+                 "Similarity": similarity, "Genres": genre,
+                 'Sypnopsis': sypnopsis, "Episodes": episodes,
+                 "Japanese name": japanese_name, "Studios": studios,
+                 "Premiered": premiered, "Score": score,
+                 "Type": Type})
+
+    # Convert array to data frame
+    Frame = pd.DataFrame(arr)
     Frame = Frame[Frame.anime_id != index].drop(['anime_id'], axis=1)
-    return Frame, filename, name
 
-# with open(ingestedfiles, 'r') as fp:
-#    dataset_list = ast.literal_eval(fp.read())
+    # Remove anime not of specified genre if so desired
+    if args.spec_genres is True:
+        Frame = by_genre(Frame).sort_values(
+            by="Similarity", ascending=False).drop(['Genres'], axis=1)
+    else:
+        Frame = Frame.sort_values(by="Similarity", ascending=False)
+    return Frame[:count], filename, name
 
 
 def go(args):
@@ -240,18 +335,12 @@ def go(args):
 
     if args.random_anime is True:
         name = get_random_anime()
-        logger.info("Using %s as input anime", name)
+        logger.info("Using %s as random input anime", name)
     else:
         name = name
-    genres = ast.literal_eval(args.genres)
-    logger.info("Genres are %s", genres)
-    logger.info("Genres type is %s", type(genres))
-    logger.info("Genres[0] is %s", genres[0])
-    logger.info("Type of Action genre is %s", type(genres[0]))
-    logger.info("Type of None genre is %s", type(genres[2]))
 
     # Create data frame file
-    df, filename, name = find_similar_anime(name, int(args.a_query_number))
+    df, filename, name = anime_recommendations(name, int(args.a_query_number))
 
     # Strip all Escape characters and spaces
     df.to_csv(filename, index=False)
@@ -263,11 +352,11 @@ def go(args):
         name=filename,
         type="csv",
         description=description,
-        metadata={"Queried name: ": name})
+        metadata={"Queried anime: ": name})
 
     # Upload artifact to wandb
     artifact.add_file(filename)
-    logger.info("Logging artifact")
+    logger.info("Logging artifact for anime %s", name)
     run.log_artifact(artifact)
     artifact.wait()
 
@@ -348,7 +437,7 @@ if __name__ == "__main__":
         required=True
     )
 
-    parser.add_file(
+    parser.add_argument(
         "--genres",
         type=str,
         help="List of genres to narrow down return values",
@@ -359,7 +448,21 @@ if __name__ == "__main__":
         "--spec_genres",
         type=lambda x: bool(strtobool(x)),
         help="Boolean of whether or not to narrow down by specific genres",
-        requried=True
+        required=True
+    )
+
+    parser.add_argument(
+        "--types",
+        type=str,
+        help="List of types of anime to return ['TV', 'OVA', etc]",
+        required=True
+    )
+
+    parser.add_argument(
+        "--spec_types",
+        type=lambda x: bool(strtobool(x)),
+        help="Boolean of whether or not to specify types of anime to return",
+        required=True
     )
 
     args = parser.parse_args()
