@@ -260,8 +260,9 @@ def anime_recommendations(name, count):
     use_types = get_types(anime_df)
 
     # Strip all Escape characters and spaces & produce filename
-    filename = str(name).translate(
-        {ord(c): None for c in string.whitespace}) + '.csv'
+    translated = str(name).translate(
+        {ord(c): None for c in string.whitespace})
+    filename = re.sub(r'\W+', '', translated) + '.csv'
 
     # Get ID and encoded index of input anime
     index = get_anime_frame(name, anime_df).anime_id.values[0]
