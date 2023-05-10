@@ -80,7 +80,8 @@ def get_anime_df():
                    kind='quicksort',
                    na_position='last')
     keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
-                 "Premiered", "Studios", "japanese_name", "Name", "Type"]
+                 "Premiered", "Studios", "japanese_name", "Name", "Type",
+                 "Source"]
     df = df[keep_cols]
     logger.info("Final anime df shape is %s", df.shape)
     return df
@@ -102,6 +103,9 @@ def get_anime_name(anime_id, df):
 
 
 def get_anime_frame(anime, df):
+    """
+    Get either the anime's name or id as a data frame
+    """
     if isinstance(anime, int):
         return df[df.anime_id == anime]
     if isinstance(anime, str):
@@ -123,6 +127,9 @@ def get_sypnopses_df():
 
 
 def get_sypnopsis(anime, sypnopsis_df):
+    """
+    Get sypnopsis of an anime from the sypnopsis data frame
+    """
     if isinstance(anime, int):
         return sypnopsis_df[sypnopsis_df.MAL_ID == anime].sypnopsis.values[0]
     if isinstance(anime, str):
@@ -130,6 +137,9 @@ def get_sypnopsis(anime, sypnopsis_df):
 
 
 def get_model():
+    """
+    Download model from wandb
+    """
     run = wandb.init(project=args.project_name)
     logger.info("Downloading model")
     artifact = run.use_artifact(args.model, type='h5')
@@ -139,6 +149,9 @@ def get_model():
 
 
 def get_weights():
+    """
+    Load anime and user weights
+    """
     logger.info("Getting weights")
     model = get_model()
     anime_weights = model.get_layer('anime_embedding')
@@ -155,6 +168,9 @@ def get_weights():
 
 
 def get_random_anime():
+    """
+    Get a random anime from anime data frame
+    """
     anime_df = get_anime_df()
     possible_anime = anime_df['eng_version'].unique().tolist()
     random_anime = random.choice(possible_anime)
@@ -251,7 +267,10 @@ pd.set_option("max_colwidth", None)
 
 
 def anime_recommendations(name, count):
-
+    """
+    Get anime recommendations based on similar anime.
+    Count is the number of similar anime to return based on highest score
+    """
     # Get dfs and weights
     rating_df, anime_to_index, index_to_anime = get_main_df()
     weights, _ = get_weights()
@@ -294,6 +313,7 @@ def anime_recommendations(name, count):
         studios = anime_frame['Studios'].values[0]
         score = anime_frame["Score"].values[0]
         Type = anime_frame['Type'].values[0]
+        source = anime_frame['Source'].values[0]
         similarity = dists[close]
 
         # Don't include anime if they aren't of a specified type
@@ -305,7 +325,7 @@ def anime_recommendations(name, count):
                      'Sypnopsis': sypnopsis, "Episodes": episodes,
                      "Japanese name": japanese_name, "Studios": studios,
                      "Premiered": premiered, "Score": score,
-                     "Type": Type})
+                     "Type": Type, "Source": source})
         else:
             arr.append(
                 {"anime_id": decoded_id, "Name": anime_name,
@@ -313,7 +333,7 @@ def anime_recommendations(name, count):
                  'Sypnopsis': sypnopsis, "Episodes": episodes,
                  "Japanese name": japanese_name, "Studios": studios,
                  "Premiered": premiered, "Score": score,
-                 "Type": Type})
+                 "Type": Type, "Source": source})
 
     # Convert array to data frame
     Frame = pd.DataFrame(arr)
