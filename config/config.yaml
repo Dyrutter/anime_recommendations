@@ -8,7 +8,7 @@ main:
     - neural_network
     - similar_anime
     - similar_users
-    #- user_prefs
+    - user_prefs
     #- user_recs
     #- ranking_recs
     #- API
@@ -90,14 +90,23 @@ nn_arts:
   main_model: "wandb_anime_nn.h5:v6"
 
 similarity:
-  anime_query: "Rental Magica"
-  random_anime: True
+  anime_query: "Rental Magica" # Input anime to query. Change random_anime to False in order to use.
+  random_anime: True # Whether to choose a random anime to assess rather than an input anime
   a_query_number: 10 # Number of similar anime to return
-  user_query: 109160
-  id_query_number: 10
+  user_query: 109160 # A User ID to query.
+  id_query_number: 10 # Number of similar IDs to return
   max_ratings: 600 # Limit to this many ratings if random_user is True
-  random_user: True
+  random_user: True # Whether or not to use a random user as the sample
   genres: ["Action", "Comedy", None]
-  spec_genres: True
-  types: ["TV", "Movie", 'OVA'] # Potentially ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
-  spec_types: True
+  spec_genres: False # Whether or not to limit returned recommendations to specific genres
+  types: ["TV", "Movie"] # Potentially ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
+  spec_types: True # Whether or not to specify types
+
+users:
+  favorite_percentile: 0.8 # Percentile of ratings to consider as favorites (i.e. 0.8 means the top 20% ratings are favorites)
+  cloud_width: 600 # Pixel width of word cloud figures to display. Higher widths increase processing time
+  cloud_height: 350 # Pixel height of word cloud figures to display. Higher heights increase processing time
+  show_clouds: False
+  genre_fn: 'favorite_genres.png'
+  source_fn: 'favorite_source_material.png'
+  prefs_csv: 'user_prefs.csv'
