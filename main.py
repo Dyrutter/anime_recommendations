@@ -150,20 +150,24 @@ def go(config: DictConfig):
                 "max_ratings": config["similarity"]["max_ratings"],
                 "random_user": config["similarity"]["random_user"]})
 
-    if "recommend" in steps_to_execute:
+    if "user_prefs" in steps_to_execute:
         _ = mlflow.run(
-            os.path.join(root_path, "recommend"),
+            os.path.join(root_path, "user_prefs"),
             entry_point="main",
             parameters={
-                "weights": config["nn_arts"]["main_weights_art"],
-                "history": config["nn_arts"]["main_history"],
                 "model": config["nn_arts"]["main_model"],
-                "project_name": config["main"]["project_name"],
                 "main_df": config["data"]["preprocessed_artifact_latest"],
-                "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
+                "project_name": config["main"]["project_name"],
                 "anime_df": config["data"]["all_anime_artifact_latest"],
-                "anime_query": config["similarity"]["anime_query"],
-                "a_query_number": config["similarity"]["a_query_number"]})
+                "user_query": config["similarity"]["user_query"],
+                "random_user": config["similarity"]["random_user"],
+                "favorite_percentile": config["users"]["favorite_percentile"],
+                "show_clouds": config["users"]["show_clouds"],
+                "genre_fn": config["users"]["genre_fn"],
+                "source_fn": config["users"]["source_fn"],
+                "cloud_width": config["users"]["cloud_width"],
+                "cloud_height": config["users"]["cloud_height"],
+                "prefs_csv": config["users"]["prefs_csv"]})
 
 
 if __name__ == "__main__":
