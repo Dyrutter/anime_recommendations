@@ -167,7 +167,9 @@ def go(config: DictConfig):
                 "source_fn": config["users"]["source_fn"],
                 "cloud_width": config["users"]["cloud_width"],
                 "cloud_height": config["users"]["cloud_height"],
-                "prefs_csv": config["users"]["prefs_csv"]})
+                "prefs_csv": config["users"]["prefs_csv"],
+                "interval": config["main"]["interval"],
+                "save_faves": config["users"]["save_faves"]})
 
 
 if __name__ == "__main__":
