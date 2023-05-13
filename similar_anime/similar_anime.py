@@ -281,7 +281,8 @@ def anime_recommendations(name, count):
     # Strip all Escape characters and spaces & produce filename
     translated = str(name).translate(
         {ord(c): None for c in string.whitespace})
-    filename = re.sub(r'\W+', '', translated) + '.csv'
+    translated = re.sub(r'\W+', '', translated)
+    filename = translated + '.csv'
 
     # Get ID and encoded index of input anime
     index = get_anime_frame(name, anime_df).anime_id.values[0]
@@ -345,7 +346,7 @@ def anime_recommendations(name, count):
             by="Similarity", ascending=False).drop(['Genres'], axis=1)
     else:
         Frame = Frame.sort_values(by="Similarity", ascending=False)
-    return Frame[:count], filename, name
+    return Frame[:count], filename, translated
 
 
 def go(args):
@@ -355,13 +356,14 @@ def go(args):
         name="similar_anime")
 
     if args.random_anime is True:
-        name = get_random_anime()
-        logger.info("Using %s as random input anime", name)
+        anime_name = get_random_anime()
+        logger.info("Using %s as random input anime", anime_name)
     else:
-        name = name
+        anime_name = args.anime_query
 
     # Create data frame file
-    df, filename, name = anime_recommendations(name, int(args.a_query_number))
+    df, filename, name = anime_recommendations(
+        anime_name, int(args.a_query_number))
 
     # Strip all Escape characters and spaces
     df.to_csv(filename, index=False)
@@ -373,11 +375,11 @@ def go(args):
         name=filename,
         type="csv",
         description=description,
-        metadata={"Queried anime: ": name})
+        metadata={"Queried anime: ": args.anime_query})
 
     # Upload artifact to wandb
     artifact.add_file(filename)
-    logger.info("Logging artifact for anime %s", name)
+    logger.info("Logging artifact for anime %s", args.anime_query)
     run.log_artifact(artifact)
     artifact.wait()
 
