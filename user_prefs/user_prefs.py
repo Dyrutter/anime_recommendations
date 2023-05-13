@@ -1,6 +1,6 @@
 import argparse
 import logging
-# import os
+import os
 import wandb
 # import string
 import pandas as pd
@@ -152,8 +152,10 @@ def genre_cloud(anime_df, ID):
                       contour_width=0.05,
                       colormap='spring')
     genres_cloud = cloud.generate(genres)
-    fn = 'User_ID_' + str(ID) + '_genre_cloud.png'
-    # genres_cloud.to_file(fp)
+    fn = "User_ID_" + str(ID) + '_' + args.genre_fn
+    genres_cloud.to_file(fn)
+    if args.show_clouds is True:
+        show_cloud(genre_cloud)
     return genres_cloud, fn
 
 
@@ -168,15 +170,20 @@ def source_cloud(anime_df, ID):
                       contour_width=0.05,
                       colormap='spring')
     source_cloud = cloud.generate(sources)
-    fn = 'User_ID_' + str(ID) + '_source_cloud.png'
-    # source_cloud.to_file(fp)
+    fn = 'User_ID_' + str(ID) + '_' + args.source_fn
+    source_cloud.to_file(fn)
+    if args.show_clouds is True:
+        show_cloud(source_cloud)
     return source_cloud, fn
 
 
 def show_cloud(cloud):
-    plt.figure(figsize=(8, 6))
+    fig = plt.figure(figsize=(8, 6))
+    timer = fig.canvas.new_timer(interval=int(args.interval))
+    timer.add_callback(plt.close)
     plt.imshow(cloud, interpolation='bilinear')
     plt.axis('off')
+    timer.start()
     plt.show()
 
 
@@ -189,7 +196,7 @@ def fave_genres(user, df, anime_df):
 
     faves = anime_df[anime_df["anime_id"].isin(top)]
     faves = faves[["eng_version", "Genres"]]
-    return pd.DataFrame(faves)  # added DataFrame to this
+    return pd.DataFrame(faves)
 
 
 def fave_sources(user, df, anime_df):
@@ -204,13 +211,15 @@ def fave_sources(user, df, anime_df):
     return pd.DataFrame(faves)
 
 
-def fave_df(genres, sources):
+def get_fave_df(genres, sources, ID):
     """
     Input source and genre dfs and returned merged df
     """
     genres = genres["Genres"]
     sources["Genres"] = genres
-    return sources
+    fn = 'User_ID_' + str(ID) + '_' + args.prefs_csv
+    sources.to_csv(fn)
+    return sources, fn
 
 
 def go(args):
@@ -229,20 +238,49 @@ def go(args):
 
     genre_df = fave_genres(user, df, anime_df)
     source_df = fave_sources(user, df, anime_df)
-    # genre_df = pd.DataFrame(favorite_genres)
-    # source_df = pd.DataFrame(favorite_sources)
 
-    genre_clouds, genre_fn = genre_cloud(genre_df, user)
+    genres_cloud, genre_fn = genre_cloud(genre_df, user)
     sources_cloud, source_fn = source_cloud(source_df, user)
+    fave_df, fave_fn = get_fave_df(genre_df, source_df, user)
 
-    if args.show_clouds is True:  # FIND TIMER FOR PLT.SHOW
-        show_cloud(genre_cloud)
-        show_cloud(source_cloud)
-    else:
-        pass
+    # Log favorite genre cloud
+    logger.info("Genre Cloud artifact")
+    genre_cloud_artifact = wandb.Artifact(
+        name=genre_fn,
+        type="image",
+        description='Cloud image of favorite genres')
+    genre_cloud_artifact.add_file(genre_fn)
+    run.log_artifact(genre_cloud_artifact)
+    logger.info("Genre cloud logged!")
+    genre_cloud_artifact.wait()
 
+    # Log favorite source cloud
+    logger.info("creating history artifact")
+    source_cloud_artifact = wandb.Artifact(
+        name=source_fn,
+        type='cloud',
+        description='Image of source cloud')
+    source_cloud_artifact.add_file(source_fn)
+    run.log_artifact(source_cloud_artifact)
+    logger.info('Source cloud logged!')
+    source_cloud_artifact.wait()
 
-# wordcloud.to_file("img/first_review.png")
+    # Log favorites csv file
+    logger.info("Creating favorites csv")
+    favorites_csv = wandb.Artifact(
+        name=fave_fn,
+        type='data',
+        description='Csv file of a users favorite Genres and sources')
+    favorites_csv.add_file(fave_fn)
+    run.log_artifact(favorites_csv)
+    logger.info("Favorites data frame logged!")
+    favorites_csv.wait()
+
+    if args.save_faves is False:
+        os.remove(genre_fn)
+        os.remove(source_fn)
+        os.remove(fave_fn)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -337,6 +375,20 @@ if __name__ == "__main__":
         "--prefs_csv",
         type=str,
         help="Artifact name of preferences csv file",
+        required=True
+    )
+
+    parser.add_argument(
+        "--interval",
+        type=str,
+        help="Interval in milliseconds to display clouds",
+        required=True
+    )
+
+    parser.add_argument(
+        "--save_faves",
+        type=lambda x: bool(strtobool(x)),
+        help="Whether or not to save clouds and fave csv file locally",
         required=True
     )
 
