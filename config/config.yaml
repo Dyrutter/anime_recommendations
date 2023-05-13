@@ -92,7 +92,7 @@ nn_arts:
 
 similarity:
   anime_query: "Rental Magica" # Input anime to query. Change random_anime to False in order to use.
-  random_anime: True # Whether to choose a random anime to assess rather than an input anime
+  random_anime: False # Whether to choose a random anime to assess rather than an input anime
   a_query_number: 10 # Number of similar anime to return
   user_query: 109160 # A User ID to query.
   id_query_number: 10 # Number of similar IDs to return
@@ -112,3 +112,4 @@ users:
   source_fn: 'favorite_source_material.png'
   prefs_csv: 'user_prefs.csv'
   save_faves: True
+  input_user: 'user_prefs.csv:latest'
