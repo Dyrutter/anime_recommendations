@@ -13,6 +13,7 @@ main:
     #- ranking_recs
     #- API
   random_seed: 42
+  interval: 3000 # Time in milliseconds to display figures
 
 data:
   stats_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet?raw=True"
@@ -110,3 +111,4 @@ users:
   genre_fn: 'favorite_genres.png'
   source_fn: 'favorite_source_material.png'
   prefs_csv: 'user_prefs.csv'
+  save_faves: True
