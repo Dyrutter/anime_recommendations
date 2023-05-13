@@ -43,6 +43,12 @@ entry_points:
       prefs_csv:
         description: Artifact name of preferences csv file to create
         type: str
+      interval:
+        description: Interval in milliseconds to display figures
+        type: str
+      save_faves:
+        description: Whether or not to save clouds and favorites csv file to local machine
+        type: str
 
     command: >-
       python user_prefs.py --model {model} \
@@ -57,4 +63,6 @@ entry_points:
                               --source_fn {source_fn} \
                               --cloud_width {cloud_width} \
                               --cloud_height {cloud_height} \
-                              --prefs_csv {prefs_csv}
+                              --prefs_csv {prefs_csv} \
+                              --interval {interval} \
+                              --save_faves {save_faves}
