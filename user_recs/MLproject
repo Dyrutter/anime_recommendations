@@ -19,7 +19,7 @@ entry_points:
       user_query:
         description: User of which to find similar animes to
         type: str
-      random_user:
+      use_random_user:
         description: Whether to use a random user for the input
         type: str
       user_recs_fn:
@@ -67,7 +67,7 @@ entry_points:
                               --main_df {main_df} \
                               --anime_df {anime_df} \
                               --user_query {user_query} \
-                              --random_user {random_user} \
+                              --use_random_user {use_random_user} \
                               --user_recs_fn {user_recs_fn} \
                               --save_user_recs {save_user_recs} \
                               --sypnopses_df {sypnopses_df} \
