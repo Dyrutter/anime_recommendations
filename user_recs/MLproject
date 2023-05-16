@@ -1,11 +1,11 @@
-name: user_prefs
+name: user_recs
 conda_env: conda.yml
 
 entry_points:
   main:
     parameters:
       model:
-        description: Wandb artifact with .h5 file of neural network
+        description: Neural network model artifact path
         type: str
       project_name:
         description: Name of Wandb project
@@ -22,19 +22,63 @@ entry_points:
       random_user:
         description: Whether to use a random user for the input
         type: str
+      user_recs_fn:
+        description: Artifact name of user-based recommendations csv file to create
+        type: str
+      save_user_recs:
+        description: Whether or not to save user recommendations csv file to local machine
+        type: str
+      sypnopses_df:
+        description: Artifact name of sypnopsis data frame
+        type: str
+      user_num_recs:
+        description: Number of anime recommendations to return
+        type: str
+      favorite_percentile:
+        description: Top percentile of ratings to consider as favorite, e.g. 0.8 would mean top 20 percent
+        type: str
+      show_clouds:
+        description: Boolean of whether or not to show word clouds when script is run
+        type: str
+      genre_fn:
+        description: Path name of genre cloud artifact
+        type: str
+      source_fn:
+        description: Name of source cloud artifact
+        type: str
+      cloud_width:
+        description: Pixel width of word cloud figures to create
+        type: str
+      cloud_height:
+        description: Pixel height of word cloud figures to create
+        type: str
       prefs_csv:
         description: Artifact name of preferences csv file to create
         type: str
+      interval:
+        description: Interval in milliseconds to display figures
+        type: str
       save_faves:
         description: Whether or not to save clouds and favorites csv file to local machine
-        type: str
+        type: str 
 
     command: >-
-      python user_recs.py --model {model} \
-                              --project_name {project_name} \
+      python user_recs.py --project_name {project_name} \
                               --main_df {main_df} \
                               --anime_df {anime_df} \
                               --user_query {user_query} \
                               --random_user {random_user} \
+                              --user_recs_fn {user_recs_fn} \
+                              --save_user_recs {save_user_recs} \
+                              --sypnopses_df {sypnopses_df} \
+                              --user_num_recs {user_num_recs} \
+                              --favorite_percentile {favorite_percentile} \
+                              --show_clouds {show_clouds} \
+                              --genre_fn {genre_fn} \
+                              --source_fn {source_fn} \
+                              --cloud_width {cloud_width} \
+                              --cloud_height {cloud_height} \
                               --prefs_csv {prefs_csv} \
-                              --save_faves {save_faves}
+                              --interval {interval} \
+                              --save_faves {save_faves} \
+                              --model {model}
