@@ -171,6 +171,31 @@ def go(config: DictConfig):
                 "interval": config["main"]["interval"],
                 "save_faves": config["users"]["save_faves"]})
 
+    if "user_recs" in steps_to_execute:
+        _ = mlflow.run(
+            os.path.join(root_path, "user_prefs"),
+            entry_point="main",
+            parameters={
+                "main_df": config["data"]["preprocessed_artifact_latest"],
+                "project_name": config["main"]["project_name"],
+                "anime_df": config["data"]["all_anime_artifact_latest"],
+                "user_query": config["similarity"]["user_query"],
+                "random_user": config["similarity"]["random_user"],
+                "user_recs_fn": config["users"]["user_recs_fn"],
+                "save_user_recs": config["users"]["save_user_recs"],
+                "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
+                "user_num_recs": config["users"]["user_num_recs"],
+                "favorite_percentile": config["users"]["favorite_percentile"],
+                "show_clouds": config["users"]["show_clouds"],
+                "genre_fn": config["users"]["genre_fn"],
+                "source_fn": config["users"]["source_fn"],
+                "cloud_width": config["users"]["cloud_width"],
+                "cloud_height": config["users"]["cloud_height"],
+                "prefs_csv": config["users"]["prefs_csv"],
+                "interval": config["main"]["interval"],
+                "save_faves": config["users"]["save_faves"],
+                "model": config["nn_arts"]["main_model"]})
+
 
 if __name__ == "__main__":
     go()
