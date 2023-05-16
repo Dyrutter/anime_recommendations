@@ -211,15 +211,18 @@ def fave_sources(user, df, anime_df):
     return pd.DataFrame(faves)
 
 
-def get_fave_df(genres, sources, ID):
+def get_fave_df(genres, sources, ID, save=False):
     """
     Input source and genre dfs and returned merged df
     """
     genres = genres["Genres"]
     sources["Genres"] = genres
-    fn = 'User_ID_' + str(ID) + '_' + args.prefs_csv
-    sources.to_csv(fn)
-    return sources, fn
+    if save is True:
+    	fn = 'User_ID_' + str(ID) + '_' + args.prefs_csv
+    	sources.to_csv(fn)
+    	return sources, fn
+    else:
+    	return sources
 
 
 def go(args):
@@ -241,7 +244,8 @@ def go(args):
 
     genres_cloud, genre_fn = genre_cloud(genre_df, user)
     sources_cloud, source_fn = source_cloud(source_df, user)
-    fave_df, fave_fn = get_fave_df(genre_df, source_df, user)
+    fave_df, fave_fn = get_fave_df(
+        genre_df, source_df, user, save=args.save_faves)
 
     # Log favorite genre cloud
     logger.info("Genre Cloud artifact")
@@ -255,7 +259,7 @@ def go(args):
     genre_cloud_artifact.wait()
 
     # Log favorite source cloud
-    logger.info("creating history artifact")
+    logger.info("creating source cloud artifact")
     source_cloud_artifact = wandb.Artifact(
         name=source_fn,
         type='cloud',
