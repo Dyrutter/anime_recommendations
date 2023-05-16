@@ -9,8 +9,8 @@ main:
     - similar_anime
     - similar_users
     - user_prefs
-    #- user_recs
-    #- ranking_recs
+    - user_recs
+    #- model_recs
     #- API
   random_seed: 42
   interval: 3000 # Time in milliseconds to display figures
@@ -113,3 +113,6 @@ users:
   prefs_csv: 'user_prefs.csv'
   save_faves: True
   input_user: 'user_prefs.csv:latest'
+  user_recs_fn: "user_recs.csv"
+  save_user_recs: True
+  user_num_recs: 10
