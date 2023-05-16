@@ -370,16 +370,16 @@ def go(args):
 
     # Create artifact
     logger.info("Creating artifact")
-    description = "Anime most similar to: " + str(args.anime_query)
+    description = "Anime most similar to: " + str(anime_name)
     artifact = wandb.Artifact(
         name=filename,
         type="csv",
         description=description,
-        metadata={"Queried anime: ": args.anime_query})
+        metadata={"Queried anime: ": anime_name})
 
     # Upload artifact to wandb
     artifact.add_file(filename)
-    logger.info("Logging artifact for anime %s", args.anime_query)
+    logger.info("Logging artifact for anime %s", anime_name)
     run.log_artifact(artifact)
     artifact.wait()
 
