@@ -173,14 +173,14 @@ def go(config: DictConfig):
 
     if "user_recs" in steps_to_execute:
         _ = mlflow.run(
-            os.path.join(root_path, "user_prefs"),
+            os.path.join(root_path, "user_recs"),
             entry_point="main",
             parameters={
                 "main_df": config["data"]["preprocessed_artifact_latest"],
                 "project_name": config["main"]["project_name"],
                 "anime_df": config["data"]["all_anime_artifact_latest"],
                 "user_query": config["similarity"]["user_query"],
-                "random_user": config["similarity"]["random_user"],
+                "use_random_user": config["users"]["use_random_user"],
                 "user_recs_fn": config["users"]["user_recs_fn"],
                 "save_user_recs": config["users"]["save_user_recs"],
                 "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
@@ -195,7 +195,71 @@ def go(config: DictConfig):
                 "interval": config["main"]["interval"],
                 "save_faves": config["users"]["save_faves"],
                 "model": config["nn_arts"]["main_model"]})
-
+"""
+    if "model_recs" in steps_to_execute:
+        _ = mlflow.run(
+            os.path.join(root_path, "model_recs"),
+            entry_point="main",
+            parameters={
+                "weights": config["nn_arts"]["main_weights_art"],
+                "history": config["nn_arts"]["main_history"],
+                "model": config["nn_arts"]["main_model"],
+                "project_name": config["main"]["project_name"],
+                "main_df": config["data"]["preprocessed_artifact_latest"],
+                "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
+                "anime_df": config["data"]["all_anime_artifact_latest"],
+                "anime_query": config["similarity"]["anime_query"],
+                "a_query_number": config["similarity"]["a_query_number"],
+                "random_anime": config["similarity"]["random_anime"],
+                "genres": config["similarity"]["genres"],
+                "spec_genres": config["similarity"]["spec_genres"],
+                "types": config["similarity"]["types"],
+                "spec_types": config["similarity"]["spec_types"],
+                "weights": config["nn_arts"]["main_weights_art"],
+                "history": config["nn_arts"]["main_history"],
+                "model": config["nn_arts"]["main_model"],
+                "project_name": config["main"]["project_name"],
+                "main_df": config["data"]["preprocessed_artifact_latest"],
+                "user_query": config["similarity"]["user_query"],
+                "id_query_number": config["similarity"]["id_query_number"],
+                "max_ratings": config["similarity"]["max_ratings"],
+                "random_user": config["similarity"]["random_user"],
+                "model": config["nn_arts"]["main_model"],
+                "main_df": config["data"]["preprocessed_artifact_latest"],
+                "project_name": config["main"]["project_name"],
+                "anime_df": config["data"]["all_anime_artifact_latest"],
+                "user_query": config["similarity"]["user_query"],
+                "random_user": config["similarity"]["random_user"],
+                "favorite_percentile": config["users"]["favorite_percentile"],
+                "show_clouds": config["users"]["show_clouds"],
+                "genre_fn": config["users"]["genre_fn"],
+                "source_fn": config["users"]["source_fn"],
+                "cloud_width": config["users"]["cloud_width"],
+                "cloud_height": config["users"]["cloud_height"],
+                "prefs_csv": config["users"]["prefs_csv"],
+                "interval": config["main"]["interval"],
+                "save_faves": config["users"]["save_faves"],
+                "main_df": config["data"]["preprocessed_artifact_latest"],
+                "project_name": config["main"]["project_name"],
+                "anime_df": config["data"]["all_anime_artifact_latest"],
+                "user_query": config["similarity"]["user_query"],
+                "use_random_user": config["users"]["use_random_user"],
+                "user_recs_fn": config["users"]["user_recs_fn"],
+                "save_user_recs": config["users"]["save_user_recs"],
+                "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
+                "user_num_recs": config["users"]["user_num_recs"],
+                "favorite_percentile": config["users"]["favorite_percentile"],
+                "show_clouds": config["users"]["show_clouds"],
+                "genre_fn": config["users"]["genre_fn"],
+                "source_fn": config["users"]["source_fn"],
+                "cloud_width": config["users"]["cloud_width"],
+                "cloud_height": config["users"]["cloud_height"],
+                "prefs_csv": config["users"]["prefs_csv"],
+                "interval": config["main"]["interval"],
+                "save_faves": config["users"]["save_faves"],
+                "model": config["nn_arts"]["main_model"]
+            })
+"""
 
 if __name__ == "__main__":
     go()
