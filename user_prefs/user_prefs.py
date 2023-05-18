@@ -1,16 +1,18 @@
+from helper_functions.load import main_df_by_id, get_anime_df, get_sources
+from helper_functions.load import get_random_user, get_genres
 import argparse
 import logging
 import os
 import wandb
-# import string
 import pandas as pd
 import numpy as np
-# import tensorflow as tf
 from distutils.util import strtobool
-import random
-import re
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+import sys
+from pathlib import Path
+path_root = Path(__file__).parents[1]
+sys.path.append(str(path_root))
 
 
 logging.basicConfig(
@@ -21,124 +23,6 @@ logging.basicConfig(
     datefmt='%d %b %Y %H:%M:%S %Z',  # Format date
     force=True)
 logger = logging.getLogger()
-
-
-def get_main_df():
-    """
-    Get data frame from wandb
-    Covert to same format we used for neural network
-    """
-    run = wandb.init(project=args.project_name)
-    logger.info("Downloading data artifact")
-    artifact = run.use_artifact(args.main_df, type='preprocessed_data')
-    artifact_path = artifact.file()
-    df = pd.read_parquet(artifact_path)
-
-    # Encoding categorical data
-    user_ids = df["user_id"].unique().tolist()
-    anime_ids = df["anime_id"].unique().tolist()
-
-    # Dicts of format {id: count_number}
-    anime_to_index = {value: count for count, value in enumerate(anime_ids)}
-    user_to_index = {value: count for count, value in enumerate(user_ids)}
-
-    # Dicts of format {count_number: id}
-    index_to_user = {count: value for count, value in enumerate(user_ids)}
-
-    df["user"] = df["user_id"].map(user_to_index)
-    df["anime"] = df["anime_id"].map(anime_to_index)
-    df = df[['user', 'anime', 'rating', 'user_id', 'anime_id']]
-    df = df.sample(frac=1, random_state=42)
-    return df, user_to_index, index_to_user
-
-
-def get_genres(anime_df):
-    """
-    Get a list of all possible anime genres
-    """
-    genres = anime_df['Genres'].unique().tolist()
-    # Get genres individually (instances have lists of genres)
-    possibilities = list(set(str(genres).split()))
-    # Remove non alphanumeric characters
-    possibilities = sorted(
-        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
-    # Convert incomplete categories to their proper names
-    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
-    fixed = possibilities + ['SliceofLife', 'SuperPower', 'MartialArts']
-    genre_list = sorted([i for i in fixed if i not in rem])
-    return genre_list
-
-
-def get_sources(anime_df):
-    """
-    Get a list of all possible anime genres
-    """
-    sources = anime_df['Source'].unique().tolist()
-    # Get genres individually (instances have lists of genres)
-    possibilities = list(set(str(sources).split()))
-    # Remove non alphanumeric characters
-    possibilities = sorted(list(
-        set([re.sub(r'[\W_]', '', e) for e in possibilities])))
-
-    remove = \
-        ['novel', "Light", "Visual", "Picture", "Card", "game", "book", "Web"]
-    fixed = possibilities + \
-        ['LightNovel', 'VisualNovel', 'PictureBook', 'CardGame', "WebNovel"]
-    source_list = sorted([i for i in fixed if i not in remove])
-    return source_list
-
-
-def get_random_user():
-    """
-    Get a random user from main data frame
-    """
-    rating_df, user_to_index, index_to_user = get_main_df()
-    possible_users = list(user_to_index.keys())
-
-    random_user = int(random.choice(possible_users))
-    return random_user
-
-
-def get_anime_name(anime_id, df):
-    try:
-        # Get a single anime from the anime df based on ID
-        name = df[df.anime_id == anime_id].eng_version.values[0]
-    except BaseException:
-        raise ValueError("ID/eng_version pair was not found in data frame!")
-
-    try:
-        if name is np.nan:
-            name = df[df.anime_id == anime_id].Name.values[0]
-    except BaseException:
-        raise ValueError("Name was not found in data frame!")
-    return name
-
-
-def get_anime_df():
-    """
-    Get data frame containing stats on each anime
-    """
-    run = wandb.init(project=args.project_name)
-    logger.info("Downloading anime data artifact")
-    artifact = run.use_artifact(args.anime_df, type='raw_data')
-    artifact_path = artifact.file()
-    df = pd.read_csv(artifact_path)
-    df = df.replace("Unknown", np.nan)
-
-    df['anime_id'] = df['MAL_ID']
-    df['japanese_name'] = df['Japanese name']
-    df["eng_version"] = df['English name']
-    df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
-    df.sort_values(by=['Score'],
-                   inplace=True,
-                   ascending=False,
-                   kind='quicksort',
-                   na_position='last')
-    keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
-                 "Premiered", "Studios", "japanese_name", "Name", "Type",
-                 "Source"]
-    df = df[keep_cols]
-    return df
 
 
 def genre_cloud(anime_df, ID):
@@ -218,11 +102,11 @@ def get_fave_df(genres, sources, ID, save=False):
     genres = genres["Genres"]
     sources["Genres"] = genres
     if save is True:
-    	fn = 'User_ID_' + str(ID) + '_' + args.prefs_csv
-    	sources.to_csv(fn)
-    	return sources, fn
+        fn = 'User_ID_' + str(ID) + '_' + args.prefs_csv
+        sources.to_csv(fn)
+        return sources, fn
     else:
-    	return sources
+        return sources
 
 
 def go(args):
@@ -230,14 +114,21 @@ def go(args):
         project=args.project_name,
         name="user_preferences")
 
+    df, user_to_index, index_to_user = main_df_by_id(
+        project=args.project_name,
+        main_df=args.main_df,
+        artifact_type='preprocessed_data')
+
+    anime_df = get_anime_df(
+        project=args.project_name,
+        anime_df=args.anime_df,
+        artifact_type='raw_data')
+
     if args.random_user is True:
-        user = get_random_user()
+        user = get_random_user(df, user_to_index, index_to_user)
         logger.info("Using %s as random input user", user)
     else:
         user = int(args.user_query)
-
-    df, user_to_index, index_to_user = get_main_df()
-    anime_df = get_anime_df()
 
     genre_df = fave_genres(user, df, anime_df)
     source_df = fave_sources(user, df, anime_df)
