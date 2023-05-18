@@ -1,7 +1,3 @@
-import sys
-from pathlib import Path
-path_root = Path(__file__).parents[1]
-sys.path.append(str(path_root))
 import numpy as np
 import re
 from distutils.util import strtobool
@@ -16,6 +12,10 @@ from helper_functions.User import get_random_user, genre_cloud, source_cloud
 from helper_functions.load import main_df_by_id, get_anime_df, get_model
 from helper_functions.load import get_weights, get_sypnopses_df
 from helper_functions.load import get_anime_frame, get_sypnopsis
+import sys
+from pathlib import Path
+path_root = Path(__file__).parents[1]
+sys.path.append(str(path_root))
 
 
 logging.basicConfig(
