@@ -61,8 +61,7 @@ entry_points:
       save_faves:
         description: Whether or not to save clouds and favorites csv file to local machine
         type: str 
-        
-        
+
     command: >-
       python user_recs.py --project_name {project_name} \
                               --main_df {main_df} \
