@@ -1,15 +1,20 @@
+from helper_functions.load import get_anime_frame, get_sypnopsis, get_genres
+from helper_functions.load import get_weights, get_sypnopses_df
+from helper_functions.load import main_df_by_anime, get_anime_df, get_model
 import argparse
 import logging
-# import os
 import wandb
 import string
 import pandas as pd
 import numpy as np
-import tensorflow as tf
 from distutils.util import strtobool
 import random
 import ast
 import re
+from pathlib import Path
+import sys
+path_root = Path(__file__).parents[1]
+sys.path.append(str(path_root))
 
 
 logging.basicConfig(
@@ -22,178 +27,14 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-def get_main_df():
-    """
-    Get data frame from wandb
-    Covert to same format we used for neural network
-    """
-    run = wandb.init(project=args.project_name)
-    logger.info("Downloading data artifact")
-    artifact = run.use_artifact(args.main_df, type='preprocessed_data')
-    artifact_path = artifact.file()
-    df = pd.read_parquet(artifact_path)
-    logger.info("Main preprocessed df shape is %s", df.shape)
-
-    # Encoding categorical data
-    user_ids = df["user_id"].unique().tolist()
-    anime_ids = df["anime_id"].unique().tolist()
-
-    # Dicts of format {id: count_number}
-    anime_to_index = {value: count for count, value in enumerate(anime_ids)}
-    user_to_index = {value: count for count, value in enumerate(user_ids)}
-
-    # Dicts of format {count_number: id}
-    index_to_anime = {count: value for count, value in enumerate(anime_ids)}
-
-    # Convert values of format id to count_number
-    df["user"] = df["user_id"].map(user_to_index)
-    df["anime"] = df["anime_id"].map(anime_to_index)
-    df = df[['user', 'anime', 'rating']]
-    df = df.sample(frac=1, random_state=42)
-
-    logger.info("Final preprocessed df shape is %s", df.shape)
-    logger.info("Final preprocessed df head is %s", df.head())
-
-    return df, anime_to_index, index_to_anime
-
-
-def get_anime_df():
-    """
-    Get data frame containing stats on each anime
-    """
-    run = wandb.init(project=args.project_name)
-    logger.info("Downloading anime data artifact")
-    artifact = run.use_artifact(args.anime_df, type='raw_data')
-    artifact_path = artifact.file()
-    df = pd.read_csv(artifact_path)
-    logger.info("Orignal anime df shape is %s", df.shape)
-    df = df.replace("Unknown", np.nan)
-
-    df['anime_id'] = df['MAL_ID']
-    df['japanese_name'] = df['Japanese name']
-    df["eng_version"] = df['English name']
-    logger.info("Original English version is %s", df["eng_version"].head())
-    df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
-    df.sort_values(by=['Score'],
-                   inplace=True,
-                   ascending=False,
-                   kind='quicksort',
-                   na_position='last')
-    keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
-                 "Premiered", "Studios", "japanese_name", "Name", "Type",
-                 "Source"]
-    df = df[keep_cols]
-    logger.info("Final anime df shape is %s", df.shape)
-    return df
-
-
-def get_anime_name(anime_id, df):
-    try:
-        # Get a single anime from the anime df based on ID
-        name = df[df.anime_id == anime_id].eng_version.values[0]
-    except BaseException:
-        raise ValueError("ID/eng_version pair was not found in data frame!")
-
-    try:
-        if name is np.nan:
-            name = df[df.anime_id == anime_id].Name.values[0]
-    except BaseException:
-        raise ValueError("Name was not found in data frame!")
-    return name
-
-
-def get_anime_frame(anime, df):
-    """
-    Get either the anime's name or id as a data frame
-    """
-    if isinstance(anime, int):
-        return df[df.anime_id == anime]
-    if isinstance(anime, str):
-        return df[df.eng_version == anime]
-
-
-def get_sypnopses_df():
-    """
-    Download sypnopses df from wandb
-    """
-    run = wandb.init(project=args.project_name)
-    logger.info("Downloading sypnopses df")
-    artifact = run.use_artifact(args.sypnopses_df, type='raw_data')
-    artifact_path = artifact.file()
-    cols = ["MAL_ID", "Name", "Genres", "sypnopsis"]
-    df = pd.read_csv(artifact_path, usecols=cols)
-    logger.info("Anime df shape is %s", df.shape)
-    return df
-
-
-def get_sypnopsis(anime, sypnopsis_df):
-    """
-    Get sypnopsis of an anime from the sypnopsis data frame
-    """
-    if isinstance(anime, int):
-        return sypnopsis_df[sypnopsis_df.MAL_ID == anime].sypnopsis.values[0]
-    if isinstance(anime, str):
-        return sypnopsis_df[sypnopsis_df.Name == anime].sypnopsis.values[0]
-
-
-def get_model():
-    """
-    Download model from wandb
-    """
-    run = wandb.init(project=args.project_name)
-    logger.info("Downloading model")
-    artifact = run.use_artifact(args.model, type='h5')
-    artifact_path = artifact.file()
-    model = tf.keras.models.load_model(artifact_path)
-    return model
-
-
-def get_weights():
-    """
-    Load anime and user weights
-    """
-    logger.info("Getting weights")
-    model = get_model()
-    anime_weights = model.get_layer('anime_embedding')
-    anime_weights = anime_weights.get_weights()[0]
-    anime_weights = anime_weights / np.linalg.norm(
-        anime_weights, axis=1).reshape((-1, 1))
-
-    user_weights = model.get_layer('user_embedding')
-    user_weights = user_weights.get_weights()[0]
-    user_weights = user_weights / np.linalg.norm(
-        user_weights, axis=1).reshape((-1, 1))
-    logger.info("Weights extracted!")
-    return anime_weights, user_weights
-
-
-def get_random_anime():
+def get_random_anime(anime_df):
     """
     Get a random anime from anime data frame
     """
-    anime_df = get_anime_df()
+    # anime_df = get_anime_df()
     possible_anime = anime_df['eng_version'].unique().tolist()
     random_anime = random.choice(possible_anime)
     return random_anime
-
-
-def get_genres():
-    """
-    Get a list of all possible anime genres
-    """
-    anime_df = get_anime_df()
-    genres = anime_df['Genres'].unique().tolist()
-    # Get genres individually (instances have lists of genres)
-    possibilities = list(set(str(genres).split()))
-    # Remove non alphanumeric characters
-    possibilities = sorted(
-        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
-    # Convert incomplete categories to their proper names
-    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
-    fixed = possibilities + \
-        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
-    genre_list = sorted([i for i in fixed if i not in rem])
-    return genre_list
 
 
 def by_genre(anime_df):
@@ -202,7 +43,7 @@ def by_genre(anime_df):
     """
     # Get genres to use and possible genres
     use_genres = ast.literal_eval(args.genres)
-    genres = get_genres()
+    genres = get_genres(anime_df)
     # Ensure the input genres are valid genres
     for genre in use_genres:
         try:
@@ -266,16 +107,12 @@ def get_types(df):
 pd.set_option("max_colwidth", None)
 
 
-def anime_recommendations(name, count):
+def anime_recommendations(name, count, anime_df, sypnopsis_df, model, weights,
+                          rating_df, anime_to_index, index_to_anime):
     """
     Get anime recommendations based on similar anime.
     Count is the number of similar anime to return based on highest score
     """
-    # Get dfs and weights
-    rating_df, anime_to_index, index_to_anime = get_main_df()
-    weights, _ = get_weights()
-    anime_df = get_anime_df()
-    sypnopsis_df = get_sypnopses_df()
     use_types = get_types(anime_df)
 
     # Strip all Escape characters and spaces & produce filename
@@ -315,6 +152,7 @@ def anime_recommendations(name, count):
         score = anime_frame["Score"].values[0]
         Type = anime_frame['Type'].values[0]
         source = anime_frame['Source'].values[0]
+        rating = anime_frame["Rating"].values[0]
         similarity = dists[close]
 
         # Don't include anime if they aren't of a specified type
@@ -326,7 +164,7 @@ def anime_recommendations(name, count):
                      'Sypnopsis': sypnopsis, "Episodes": episodes,
                      "Japanese name": japanese_name, "Studios": studios,
                      "Premiered": premiered, "Score": score,
-                     "Type": Type, "Source": source})
+                     "Type": Type, "Source": source, 'Rating': rating})
         else:
             arr.append(
                 {"anime_id": decoded_id, "Name": anime_name,
@@ -334,7 +172,7 @@ def anime_recommendations(name, count):
                  'Sypnopsis': sypnopsis, "Episodes": episodes,
                  "Japanese name": japanese_name, "Studios": studios,
                  "Premiered": premiered, "Score": score,
-                 "Type": Type, "Source": source})
+                 "Type": Type, "Source": source, 'Rating': rating})
 
     # Convert array to data frame
     Frame = pd.DataFrame(arr)
@@ -354,16 +192,41 @@ def go(args):
     run = wandb.init(
         project=args.project_name,
         name="similar_anime")
+    anime_df = get_anime_df(
+        project=args.project_name,
+        anime_df=args.anime_df,
+        artifact_type='raw_data')
+    sypnopsis_df = get_sypnopses_df(
+        project=args.project_name,
+        sypnopsis_df=args.sypnopses_df,
+        artifact_type='raw_data')
+    model = get_model(
+        project=args.project_name,
+        model=args.model,
+        artifact_type='h5')
+    weights, _ = get_weights(model)
+    rating_df, anime_to_index, index_to_anime = main_df_by_anime(
+        project=args.project_name,
+        main_df=args.main_df,
+        artifact_type='preprocessed_data')
 
     if args.random_anime is True:
-        anime_name = get_random_anime()
+        anime_name = get_random_anime(anime_df)
         logger.info("Using %s as random input anime", anime_name)
     else:
         anime_name = args.anime_query
 
     # Create data frame file
     df, filename, name = anime_recommendations(
-        anime_name, int(args.a_query_number))
+        anime_name,
+        int(args.a_query_number),
+        anime_df,
+        sypnopsis_df,
+        model,
+        weights,
+        rating_df,
+        anime_to_index,
+        index_to_anime)
 
     # Strip all Escape characters and spaces
     df.to_csv(filename, index=False)
