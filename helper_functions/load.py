@@ -21,7 +21,7 @@ def get_model(project='anime_recommendations',
               model='wandb_anime_nn.h5:v6',
               artifact_type='h5'):
     run = wandb.init(project=project)  # project=args.project_name)
-    logger.info("Downloading model")
+    # logger.info("Downloading model")
     # args.model, type='h5')
     artifact = run.use_artifact(model, type=artifact_type)
     artifact_path = artifact.file()
@@ -30,8 +30,7 @@ def get_model(project='anime_recommendations',
 
 
 def get_weights(model):
-    logger.info("Getting weights")
-    # model = get_model() ###### REMEMBER TO UPDATE THIS LINE IN ALL FUNCTIONS
+    # logger.info("Getting weights")
     anime_weights = model.get_layer('anime_embedding')
     anime_weights = anime_weights.get_weights()[0]
     anime_weights = anime_weights / np.linalg.norm(
@@ -41,7 +40,7 @@ def get_weights(model):
     user_weights = user_weights.get_weights()[0]
     user_weights = user_weights / np.linalg.norm(
         user_weights, axis=1).reshape((-1, 1))
-    logger.info("Weights extracted!")
+    # logger.info("Weights extracted!")
     return anime_weights, user_weights
 
 
@@ -53,13 +52,13 @@ def get_sypnopses_df(
     Download sypnopses df from wandb
     """
     run = wandb.init(project=project)  # args.project_name)
-    logger.info("Downloading sypnopses df")
+    # logger.info("Downloading sypnopses df")
     # args.sypnopses_df, type='raw_data')
     artifact = run.use_artifact(sypnopsis_df, type=artifact_type)
     artifact_path = artifact.file()
     cols = ["MAL_ID", "Name", "Genres", "sypnopsis"]
     df = pd.read_csv(artifact_path, usecols=cols)
-    logger.info("Sypnopsis df shape is %s", df.shape)
+    # logger.info("Sypnopsis df shape is %s", df.shape)
     return df
 
 
@@ -71,12 +70,12 @@ def get_anime_df(
     Get data frame containing stats on each anime
     """
     run = wandb.init(project=project)  # args.project_name)
-    logger.info("Downloading anime data artifact")
+    # logger.info("Downloading anime data artifact")
     # args.anime_df, type='raw_data')
     artifact = run.use_artifact(anime_df, type=artifact_type)
     artifact_path = artifact.file()
     df = pd.read_csv(artifact_path)
-    logger.info("Orignal anime df shape is %s", df.shape)
+    # logger.info("Orignal anime df shape is %s", df.shape)
     df = df.replace("Unknown", np.nan)
 
     df['anime_id'] = df['MAL_ID']
@@ -93,7 +92,7 @@ def get_anime_df(
                  "Premiered", "Studios", "japanese_name", "Name", "Type",
                  "Source", 'Rating', 'Members']
     df = df[keep_cols]
-    logger.info("Final anime df shape is %s", df.shape)
+    # logger.info("Final anime df shape is %s", df.shape)
     return df
 
 
@@ -117,12 +116,12 @@ def main_df_by_anime(
     """
 
     run = wandb.init(project=project)  # project=args.project_name)
-    logger.info("Downloading data artifact")
+    # logger.info("Downloading data artifact")
     # args.main_df, type='preprocessed_data')
     artifact = run.use_artifact(main_df, type=artifact_type)
     artifact_path = artifact.file()
     df = pd.read_parquet(artifact_path)
-    logger.info("Main preprocessed df shape is %s", df.shape)
+    # logger.info("Main preprocessed df shape is %s", df.shape)
 
     # Encoding categorical data
     user_ids = df["user_id"].unique().tolist()
@@ -141,8 +140,8 @@ def main_df_by_anime(
     df = df[['user', 'anime', 'rating']]
     df = df.sample(frac=1, random_state=42)
 
-    logger.info("Final preprocessed df shape is %s", df.shape)
-    logger.info("Final preprocessed df head is %s", df.head())
+    # logger.info("Final preprocessed df shape is %s", df.shape)
+    # logger.info("Final preprocessed df head is %s", df.head())
 
     return df, anime_to_index, index_to_anime
 
@@ -156,7 +155,7 @@ def main_df_by_id(
     Covert to same format we used for neural network
     """
     run = wandb.init(project=project)  # project=args.project_name)
-    logger.info("Downloading data artifact")
+    # logger.info("Downloading data artifact")
     # args.main_df, type='preprocessed_data')
     artifact = run.use_artifact(main_df, type=artifact_type)
     artifact_path = artifact.file()
