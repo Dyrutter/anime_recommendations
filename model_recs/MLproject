@@ -1,0 +1,64 @@
+name: model_recs
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      main_df:
+        description: Main preprocessed data frame artifact
+        type: str
+      main_df_type:
+        description: Type of preprocessed main data frame
+        type: str
+      project_name:
+        description: Name of wandb project
+        type: str
+      anime_df:
+        description: Name of anime data frame artifact
+        type: str
+      anime_df_type:
+        description: Artifact type of anime df
+        type: str
+      sypnopsis_df:
+        description: Artifact name of sypnopsis data frame
+        type: str
+      sypnopsis_type:
+        description: Type of sypnopsis data frame artifact
+        type: str
+      model:
+        description: Neural network model artifact name
+        type: str
+      model_type:
+        description: Neural network model's wandb artifact type
+        type: str
+      user_query:
+        description: User of which to find similar animes to
+        type: str
+      random_user:
+        description: Whether to use a random user for the input
+        type: str
+      model_recs_fn:
+        description: Artifact name of model-based recommendations csv file to create
+        type: str
+      save_model_recs:
+        description: Whether or not to save model recommendations csv file to local machine
+        type: str
+      model_num_recs:
+        description: Number of anime recommendations to return
+        type: str
+
+    command: >-
+      python model_recs.py --main_df {main_df} \
+                              --main_df_type {main_df_type} \
+                              --project_name {project_name} \
+                              --anime_df {anime_df} \
+                              --anime_df_type {anime_df_type} \
+                              --sypnopsis_df {sypnopsis_df} \
+                              --sypnopsis_type {sypnopsis_type} \
+                              --model {model} \
+                              --model_type {model_type} \
+                              --user_query {user_query} \
+                              --random_user {random_user} \
+                              --model_recs_fn {model_recs_fn} \
+                              --save_model_recs {save_model_recs} \
+                              --model_num_recs {model_num_recs}
