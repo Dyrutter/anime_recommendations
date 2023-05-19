@@ -114,8 +114,7 @@ def main_df_by_anime(
     Get data frame from wandb
     Covert to same format we used for neural network
     """
-
-    run = wandb.init(project=project)  # project=args.project_name)
+    run = wandb.init(project=project)
     # logger.info("Downloading data artifact")
     # args.main_df, type='preprocessed_data')
     artifact = run.use_artifact(main_df, type=artifact_type)
