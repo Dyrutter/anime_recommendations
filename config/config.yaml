@@ -3,6 +3,7 @@ main:
   project_name: anime_recommendations
   experiment_name: development
   execute_steps:
+    #- scrape
     - download
     - preprocess
     - neural_network
@@ -10,7 +11,7 @@ main:
     - similar_users
     - user_prefs
     - user_recs
-    #- model_recs
+    - model_recs
     #- API
   random_seed: 42
   interval: 3000 # Time in milliseconds to display figures
@@ -89,6 +90,7 @@ nn_arts:
   main_weights_art: "wandb_anime_weights.h5:v8"
   main_history: "wandb_anime_nn_history.csv:v8"
   main_model: "wandb_anime_nn.h5:v6"
+  model_type: "h5"
 
 similarity:
   anime_query: "Rental Magica" # Input anime to query. Change random_anime to False in order to use.
@@ -104,7 +106,7 @@ similarity:
   spec_types: True # Whether or not to specify types
 
 users:
-  favorite_percentile: 0.8 # Percentile of ratings to consider as favorites (i.e. 0.8 means the top 20% ratings are favorites)
+  favorite_percentile: 80 # Percentile of ratings to consider as favorites (i.e. 80 means the top 20% ratings are favorites)
   cloud_width: 600 # Pixel width of word cloud figures to display. Higher widths increase processing time
   cloud_height: 350 # Pixel height of word cloud figures to display. Higher heights increase processing time
   show_clouds: False
@@ -117,3 +119,6 @@ users:
   save_user_recs: True
   user_num_recs: 10
   use_random_user: False
+  model_recs_fn: 'model_recs.csv'
+  save_model_recs: True
+  model_num_recs: 10
