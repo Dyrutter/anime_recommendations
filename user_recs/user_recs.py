@@ -1,17 +1,17 @@
-import numpy as np
-import re
-from distutils.util import strtobool
-import pandas as pd
-import wandb
-import os
-import logging
-import argparse
-import string
-from helper_functions.User import fave_genres, fave_sources
-from helper_functions.User import get_random_user, genre_cloud, source_cloud
-from helper_functions.load import main_df_by_id, get_anime_df, get_model
-from helper_functions.load import get_weights, get_sypnopses_df
 from helper_functions.load import get_anime_frame, get_sypnopsis
+from helper_functions.load import get_weights, get_sypnopses_df
+from helper_functions.load import main_df_by_id, get_anime_df, get_model
+from helper_functions.User import get_random_user, genre_cloud, source_cloud
+from helper_functions.User import fave_genres, fave_sources
+import string
+import argparse
+import logging
+import os
+import wandb
+import pandas as pd
+from distutils.util import strtobool
+import re
+import numpy as np
 import sys
 from pathlib import Path
 path_root = Path(__file__).parents[1]
@@ -205,7 +205,7 @@ def go(args):
     similar_users_df.to_csv(filename, index=False)
 
     genres_cloud, genre_fn = genre_cloud(
-        genre_df, user, width=int(args.cloud_width), genre_fn=args.genre_fn,
+        genre_df, user, width=int(args.cloud_width),
         genre_fn=args.genre_fn, show_clouds=args.show_clouds,
         height=int(args.cloud_height), interval=int(args.interval))
     sources_cloud, source_fn = source_cloud(
