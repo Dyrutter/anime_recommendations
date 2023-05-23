@@ -119,6 +119,12 @@ users:
   save_user_recs: True
   user_num_recs: 10
   use_random_user: False
+
+model_recs: # For recommendations based on the ranking model
   model_recs_fn: 'model_recs.csv'
   save_model_recs: True
   model_num_recs: 10
+  specify_types: True
+  anime_types: ["TV", "Movie"]
+  model_genres: ['Action', 'Comedy', None]
+  specify_genres: False 
