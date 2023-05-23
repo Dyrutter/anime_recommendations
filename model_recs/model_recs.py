@@ -231,26 +231,11 @@ def get_genres(anime_df):
     return genre_list
 
 
-def get_types(df):
-    """
-    Modify data frame to include only anime of specified genre
-    """
-    possibilities = ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
-    use_types = ast.literal_eval(args.anime_types)
-    for anime_type in use_types:
-        try:
-            assert anime_type in possibilities
-        except AssertionError:
-            return logger.info(
-                "An invalid type was input. Select from %s", possibilities)
-    return use_types
-
-
 def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
     anime_ids = df["anime_id"].unique().tolist()
     index_to_anime = {index: anime for index, anime in enumerate(anime_ids)}
     ratings = model.predict(id_anime).flatten()
-    top_inds = (-ratings).argsort()[:n_recs]
+    top_inds = (-ratings).argsort()[:]
     rec_ids = [index_to_anime.get(unwatched[x][0]) for x in top_inds]
     anime_recs, top_ids = [], []
 
@@ -275,17 +260,26 @@ def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
                 sypnopsis = get_sypnopsis(int(anime_id), syp_df)
             except BaseException:
                 continue
-            anime_recs.append(
-                {"Name": name, "Prediciton_rating": rating,
-                 "Source": source, "Genres": genre, "anime_id": anime_id,
-                 'Sypnopsis': sypnopsis, "Episodes": episodes,
-                 "Japanese name": japanese_name, "Studios": studios,
-                 "Premiered": premiered, "Score": score, "Type": Type})
+            if args.specify_types is True:
+                if Type in ast.literal_eval(args.anime_types):
+                    anime_recs.append(
+                        {"Name": name, "Prediction": rating, "Genres": genre,
+                         "Source": source, "anime_id": anime_id,
+                         'Sypnopsis': sypnopsis, "Episodes": episodes,
+                         "Japanese name": japanese_name, "Studios": studios,
+                         "Premiered": premiered, "Score": score, "Type": Type})
+            else:
+                anime_recs.append(
+                    {"Name": name, "Prediciton_rating": rating,
+                     "Source": source, "Genres": genre, "anime_id": anime_id,
+                     'Sypnopsis': sypnopsis, "Episodes": episodes,
+                     "Japanese name": japanese_name, "Studios": studios,
+                     "Premiered": premiered, "Score": score, "Type": Type})
     Frame = pd.DataFrame(anime_recs)
     if args.specify_genres is True:
         Frame = by_genre(Frame)
-    Frame = Frame.sort_values(by="Prediciton_rating", ascending=False)
-    return Frame
+    Frame = Frame.sort_values(by="Prediction", ascending=False)
+    return Frame[:n_recs]
 
 
 def clean(item):
@@ -318,7 +312,7 @@ def go(args):
     anime_df = get_anime_df(
         project=args.project_name,
         anime_df=args.anime_df,
-        artifact_type=args.all_artifact_type)
+        artifact_type=args.anime_df_type)
     sypnopsis_df = get_sypnopses_df(
         project=args.project_name,
         sypnopsis_df=args.sypnopsis_df,
@@ -344,7 +338,7 @@ def go(args):
         model,
         arr,
         unwatched,
-        args.model_num_recs)
+        int(args.model_num_recs))
     filename = 'User_ID_' + str(user) + '_' + args.model_recs_fn
     recs.to_csv(filename, index=False)
 
