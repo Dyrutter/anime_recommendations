@@ -9,6 +9,7 @@ import re
 import random
 import numpy as np
 import tensorflow as tf
+import ast
 
 logging.basicConfig(
     filename='./model_recs.log',
@@ -92,11 +93,13 @@ def get_anime_name(anime_id, df):
 
 def get_unwatched(df, anime_df, user):
     watched = df[df.user_id == user]
-    unwatched = anime_df[~anime_df['anime_id'].isin(watched.anime_ids.values)]
+    unwatched = anime_df[~anime_df['anime_id'].isin(watched.anime_id.values)]
     anime_ids = df["anime_id"].unique().tolist()
     anime_to_index = {value: count for count, value in enumerate(anime_ids)}
-    unwatched_ids = list(set(unwatched['anime_id']))
-    return unwatched_ids.intersection(set(anime_to_index.keys()))
+    unwatched = list(set(unwatched['anime_id']).intersection(
+        set(anime_to_index.keys())))
+    unwatched = [[anime_to_index.get(x)] for x in unwatched]
+    return unwatched
 
 
 def get_user_anime_arr(df, anime_df, user, unwatched):
@@ -156,6 +159,93 @@ def get_sypnopsis(anime, sypnopsis_df):
         return sypnopsis_df[sypnopsis_df.Name == anime].sypnopsis.values[0]
 
 
+def by_genre(anime_df):
+    """
+    Restrict the potential anime recommendations according to genre
+    """
+    # Get genres to use and possible genres
+    use_genres = ast.literal_eval(args.model_genres)
+    genres = get_genres(anime_df)
+    # Ensure the input genres are valid genres
+    for genre in use_genres:
+        try:
+            assert genre in genres
+        except AssertionError:
+            return logger.info(
+                "An invalid genre was input. Select genres from %s", genres)
+
+    g1, g2, g3 = use_genres
+    arr1, arr2, arr3, empty = [], [], [], []
+
+    # Iterate through anime df
+    for index, row in anime_df.iterrows():
+        i = 0
+        # Append an anime to its specific array if it is of the desired genre
+        if g1 in str(row['Genres']) and g1 not in arr1[:i] and g1 != "None":
+            arr1.append(row)
+        if g2 in str(row['Genres']) and g2 not in arr2[:i] and g2 != "None":
+            arr2.append(row)
+        if g3 in str(row['Genres']) and g3 not in arr3[:i] and g3 != "None":
+            arr3.append(row)
+        i += 1
+    # Initialize empty df
+    df = None
+    # If array 1 was created, convert to data frame
+    if arr1 != empty:
+        df = pd.DataFrame(arr1)
+    # If array 2 was created, convert to data frame
+    if arr2 != empty:
+        df2 = pd.DataFrame(arr2)
+        # If the first data frame exists, concatenate with it
+        if arr1 != empty:
+            df = pd.concat([df, df2]).drop_duplicates()
+        else:
+            df = df2
+    # Create third array and concatenate in same manner
+    if arr3 != empty:
+        df3 = pd.DataFrame(arr3)
+        if df is not None:
+            df = pd.concat([df, df3]).drop_duplicates()
+        else:
+            df = df3
+    return df
+
+
+def get_genres(anime_df):
+    """
+    Get a list of all possible anime genres
+    Input is data frame containing all anime
+    """
+    # anime_df = get_anime_df()
+    genres = anime_df['Genres'].unique().tolist()
+    # Get genres individually (instances have lists of genres)
+    possibilities = list(set(str(genres).split()))
+    # Remove non alphanumeric characters
+    possibilities = sorted(
+        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
+    # Convert incomplete categories to their proper names
+    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
+    fixed = possibilities + \
+        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
+    genre_list = sorted([i for i in fixed if i not in rem])
+    return genre_list
+
+
+def get_types(df):
+    """
+    Modify data frame to include only anime of specified genre
+    """
+    possibilities = ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
+    use_types = ast.literal_eval(args.anime_types)
+    for anime_type in use_types:
+        try:
+            assert anime_type in possibilities
+        except AssertionError:
+            return logger.info(
+                "An invalid type was input. Select from %s", possibilities)
+    return use_types
+
+
 def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
     anime_ids = df["anime_id"].unique().tolist()
     index_to_anime = {index: anime for index, anime in enumerate(anime_ids)}
@@ -169,7 +259,7 @@ def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
         ID = index_to_anime.get(anime_id[0])
 
         if ID in rec_ids:
-            top_ids.append()
+            top_ids.append(ID)
             try:
                 condition = (anime_df.anime_id == ID)
                 name = anime_df[condition]['eng_version'].values[0]
@@ -191,8 +281,11 @@ def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
                  'Sypnopsis': sypnopsis, "Episodes": episodes,
                  "Japanese name": japanese_name, "Studios": studios,
                  "Premiered": premiered, "Score": score, "Type": Type})
-    return pd.DataFrame(anime_recs).sort_values(
-        by='Prediciton_rating', ascending=False)
+    Frame = pd.DataFrame(anime_recs)
+    if args.specify_genres is True:
+        Frame = by_genre(Frame)
+    Frame = Frame.sort_values(by="Prediciton_rating", ascending=False)
+    return Frame
 
 
 def clean(item):
@@ -251,7 +344,7 @@ def go(args):
         model,
         arr,
         unwatched,
-        args.n_recs)
+        args.model_num_recs)
     filename = 'User_ID_' + str(user) + '_' + args.model_recs_fn
     recs.to_csv(filename, index=False)
 
@@ -375,6 +468,34 @@ if __name__ == "__main__":
         "--model_num_recs",
         type=str,
         help="Number of anime recommendations to return",
+        required=True
+    )
+
+    parser.add_argument(
+        "--anime_types",
+        type=str,
+        help="List of anime types to use in recommendations ['TV', 'OVA'...]",
+        required=True
+    )
+
+    parser.add_argument(
+        "--specify_types",
+        type=lambda x: bool(strtobool(x)),
+        help="Boolean of whether or not to specify types of anime to return",
+        required=True
+    )
+
+    parser.add_argument(
+        "--model_genres",
+        type=str,
+        help="List of genres to include in return list",
+        required=True
+    )
+
+    parser.add_argument(
+        "--specify_genres",
+        type=lambda x: bool(strtobool(x)),
+        help="Boolean of whether or not to specify types of anime to return",
         required=True
     )
 
