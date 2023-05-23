@@ -1,16 +1,16 @@
-from helper_functions.load import get_anime_frame, get_sypnopsis, get_genres
-from helper_functions.load import get_weights, get_sypnopses_df
-from helper_functions.load import main_df_by_anime, get_anime_df, get_model
-import argparse
-import logging
-import wandb
-import string
-import pandas as pd
-import numpy as np
-from distutils.util import strtobool
-import random
-import ast
 import re
+import ast
+import random
+from distutils.util import strtobool
+import numpy as np
+import pandas as pd
+import string
+import wandb
+import logging
+import argparse
+from helper_functions.load import main_df_by_anime, get_anime_df, get_model
+from helper_functions.load import get_weights, get_sypnopses_df
+from helper_functions.load import get_anime_frame, get_sypnopsis, get_genres
 from pathlib import Path
 import sys
 path_root = Path(__file__).parents[1]
