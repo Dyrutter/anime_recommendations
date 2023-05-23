@@ -1,4 +1,3 @@
-import logging
 import wandb
 import pandas as pd
 import numpy as np
@@ -7,22 +6,10 @@ import random
 import re
 
 
-logging.basicConfig(
-    filename='./load.log',  # Path to log file
-    level=logging.INFO,  # Log info, warnings, errors, and critical errors
-    filemode='a',  # Create log file if one doesn't already exist and add
-    format='%(asctime)s-%(name)s - %(levelname)s - %(message)s',
-    datefmt='%d %b %Y %H:%M:%S %Z',  # Format date
-    force=True)
-logger = logging.getLogger()
-
-
 def get_model(project='anime_recommendations',
               model='wandb_anime_nn.h5:v6',
               artifact_type='h5'):
-    run = wandb.init(project=project)  # project=args.project_name)
-    # logger.info("Downloading model")
-    # args.model, type='h5')
+    run = wandb.init(project=project)
     artifact = run.use_artifact(model, type=artifact_type)
     artifact_path = artifact.file()
     model = tf.keras.models.load_model(artifact_path)
@@ -30,7 +17,6 @@ def get_model(project='anime_recommendations',
 
 
 def get_weights(model):
-    # logger.info("Getting weights")
     anime_weights = model.get_layer('anime_embedding')
     anime_weights = anime_weights.get_weights()[0]
     anime_weights = anime_weights / np.linalg.norm(
@@ -40,7 +26,6 @@ def get_weights(model):
     user_weights = user_weights.get_weights()[0]
     user_weights = user_weights / np.linalg.norm(
         user_weights, axis=1).reshape((-1, 1))
-    # logger.info("Weights extracted!")
     return anime_weights, user_weights
 
 
@@ -51,14 +36,11 @@ def get_sypnopses_df(
     """
     Download sypnopses df from wandb
     """
-    run = wandb.init(project=project)  # args.project_name)
-    # logger.info("Downloading sypnopses df")
-    # args.sypnopses_df, type='raw_data')
+    run = wandb.init(project=project)
     artifact = run.use_artifact(sypnopsis_df, type=artifact_type)
     artifact_path = artifact.file()
     cols = ["MAL_ID", "Name", "Genres", "sypnopsis"]
     df = pd.read_csv(artifact_path, usecols=cols)
-    # logger.info("Sypnopsis df shape is %s", df.shape)
     return df
 
 
@@ -70,18 +52,14 @@ def get_anime_df(
     Get data frame containing stats on each anime
     """
     run = wandb.init(project=project)  # args.project_name)
-    # logger.info("Downloading anime data artifact")
-    # args.anime_df, type='raw_data')
     artifact = run.use_artifact(anime_df, type=artifact_type)
     artifact_path = artifact.file()
     df = pd.read_csv(artifact_path)
-    # logger.info("Orignal anime df shape is %s", df.shape)
     df = df.replace("Unknown", np.nan)
 
     df['anime_id'] = df['MAL_ID']
     df['japanese_name'] = df['Japanese name']
     df["eng_version"] = df['English name']
-    # logger.info("Original English version is %s", df["eng_version"].head())
     df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
     df.sort_values(by=['Score'],
                    inplace=True,
@@ -92,7 +70,6 @@ def get_anime_df(
                  "Premiered", "Studios", "japanese_name", "Name", "Type",
                  "Source", 'Rating', 'Members']
     df = df[keep_cols]
-    # logger.info("Final anime df shape is %s", df.shape)
     return df
 
 
@@ -115,12 +92,9 @@ def main_df_by_anime(
     Covert to same format we used for neural network
     """
     run = wandb.init(project=project)
-    # logger.info("Downloading data artifact")
-    # args.main_df, type='preprocessed_data')
     artifact = run.use_artifact(main_df, type=artifact_type)
     artifact_path = artifact.file()
     df = pd.read_parquet(artifact_path)
-    # logger.info("Main preprocessed df shape is %s", df.shape)
 
     # Encoding categorical data
     user_ids = df["user_id"].unique().tolist()
@@ -139,9 +113,6 @@ def main_df_by_anime(
     df = df[['user', 'anime', 'rating']]
     df = df.sample(frac=1, random_state=42)
 
-    # logger.info("Final preprocessed df shape is %s", df.shape)
-    # logger.info("Final preprocessed df head is %s", df.head())
-
     return df, anime_to_index, index_to_anime
 
 
@@ -153,9 +124,7 @@ def main_df_by_id(
     Get data frame from wandb
     Covert to same format we used for neural network
     """
-    run = wandb.init(project=project)  # project=args.project_name)
-    # logger.info("Downloading data artifact")
-    # args.main_df, type='preprocessed_data')
+    run = wandb.init(project=project)
     artifact = run.use_artifact(main_df, type=artifact_type)
     artifact_path = artifact.file()
     df = pd.read_parquet(artifact_path)
@@ -165,7 +134,6 @@ def main_df_by_id(
 
     # Encoding categorical data
     user_ids = df["user_id"].unique().tolist()
-    # print (f'user ids lenght is {len(user_ids)}')
     anime_ids = df["anime_id"].unique().tolist()
 
     # Dicts of format {id: count_number}
