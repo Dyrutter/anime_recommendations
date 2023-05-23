@@ -3,10 +3,6 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
-# import sys
-# from pathlib import Path
-# path_root = Path(__file__.parent[1])
-# sys.path.append(str(path_root))
 from helper_functions.load import get_genres, get_sources
 
 
