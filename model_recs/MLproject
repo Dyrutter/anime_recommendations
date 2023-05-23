@@ -46,6 +46,18 @@ entry_points:
       model_num_recs:
         description: Number of anime recommendations to return
         type: str
+      anime_types:
+        description: List of anime types to use in recommendations ['TV', 'OVA', 'Movie', 'ONA', 'Special', 'Music']
+        type: str
+      specify_types:
+        description: Boolean of whether to specify types of anime to return
+        type: str
+      model_genres:
+        description: List of up to three genres to use in anime recommendations, e.g. ['Action', 'Fantasy', 'Comedy']
+        type: str
+      specify_genres:
+        description: Boolean of whether or not to specify genres of anime to return
+        type: str
 
     command: >-
       python model_recs.py --main_df {main_df} \
@@ -61,4 +73,8 @@ entry_points:
                               --random_user {random_user} \
                               --model_recs_fn {model_recs_fn} \
                               --save_model_recs {save_model_recs} \
-                              --model_num_recs {model_num_recs}
+                              --model_genres {model_genres} \
+                              --specify_genres {specify_genres}
+                              --model_num_recs {model_num_recs} \
+                              --anime_types {anime_types} \
+                              --specify_types {specify_types}
