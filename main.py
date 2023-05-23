@@ -212,9 +212,13 @@ def go(config: DictConfig):
                 "model_type": config["nn_arts"]["model_type"],
                 "user_query": config["similarity"]["user_query"],
                 "random_user": config["similarity"]["random_user"],
-                "model_recs_fn": config["users"]["model_recs_fn"],
-                "save_model_recs": config["users"]["save_model_recs"],
-                "model_num_recs": config["users"]["model_num_recs"]})
+                "model_recs_fn": config["model_recs"]["model_recs_fn"],
+                "save_model_recs": config["model_recs"]["save_model_recs"],
+                "model_num_recs": config["model_recs"]["model_num_recs"],
+                "anime_types": config["model_recs"]["anime_types"],
+                "specify_types": config["model_recs"]['specify_types'],
+                "model_genres": config["model_recs"]["model_genres"],
+                "specify_genres": config["model_recs"]["specify_genres"]})
 
 
 if __name__ == "__main__":
