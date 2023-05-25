@@ -31,6 +31,10 @@ entry_points:
       random_user:
         description: Whether to use a random user for the input
         type: str
+      num_faves:
+        description: Number of a similar user's favorite anime to return
+        type: str
+      TV_only: Only return TV shows as a similar user's favorite type of media
 
     command: >-
       python similar_users.py --weights {weights} \
@@ -41,4 +45,6 @@ entry_points:
                               --user_query {user_query} \
                               --id_query_number {id_query_number} \
                               --max_ratings {max_ratings} \
-                              --random_user {random_user}
+                              --random_user {random_user} \
+                              --num_faves {num_faves} \
+                              --TV_only {TV_only}
