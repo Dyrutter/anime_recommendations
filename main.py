@@ -150,7 +150,7 @@ def go(config: DictConfig):
                 "max_ratings": config["similarity"]["max_ratings"],
                 "random_user": config["similarity"]["random_user"],
                 "num_faves": config["users"]["num_faves"],
-                "TV_only": conifg["users"]["TV_only"]})
+                "TV_only": config["users"]["TV_only"]})
 
     if "user_prefs" in steps_to_execute:
         _ = mlflow.run(
