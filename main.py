@@ -148,7 +148,9 @@ def go(config: DictConfig):
                 "user_query": config["similarity"]["user_query"],
                 "id_query_number": config["similarity"]["id_query_number"],
                 "max_ratings": config["similarity"]["max_ratings"],
-                "random_user": config["similarity"]["random_user"]})
+                "random_user": config["similarity"]["random_user"],
+                "num_faves": config["users"]["num_faves"],
+                "TV_only": conifg["users"]["TV_only"]})
 
     if "user_prefs" in steps_to_execute:
         _ = mlflow.run(
