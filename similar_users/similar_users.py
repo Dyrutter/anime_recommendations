@@ -41,7 +41,6 @@ def get_main_df():
 
     # Dicts of format {count_number: id}
     index_to_user = {count: value for count, value in enumerate(user_ids)}
-    # index_to_anime = {count: value for count, value in enumerate(anime_ids)}
 
     # Convert values of format id to count_number
     df["user"] = df["user_id"].map(user_to_index)
@@ -84,12 +83,134 @@ def get_random_user():
     return random_user
 
 
+def get_anime_name(anime_id, df):
+    try:
+        # Get a single anime from the anime df based on ID
+        name = df[df.anime_id == anime_id].eng_version.values[0]
+    except BaseException:
+        raise ValueError("ID/eng_version pair was not found in data frame!")
+
+    try:
+        if name is np.nan:
+            name = df[df.anime_id == anime_id].Name.values[0]
+    except BaseException:
+        raise ValueError("Name was not found in data frame!")
+    return name
+
+
+def get_anime_df(
+        project='anime_recommendations',
+        anime_df='all_anime.csv:latest',
+        artifact_type='raw_data'):
+    """
+    Get data frame containing stats on each anime
+    """
+    run = wandb.init(project=project)  # args.project_name)
+    artifact = run.use_artifact(anime_df, type=artifact_type)
+    artifact_path = artifact.file()
+    df = pd.read_csv(artifact_path)
+    df = df.replace("Unknown", np.nan)
+
+    df['anime_id'] = df['MAL_ID']
+    df['japanese_name'] = df['Japanese name']
+    df["eng_version"] = df['English name']
+    df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
+    df.sort_values(by=['Score'],
+                   inplace=True,
+                   ascending=False,
+                   kind='quicksort',
+                   na_position='last')
+    keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
+                 "Premiered", "Studios", "japanese_name", "Name", "Type",
+                 "Source", 'Rating', 'Members']
+    df = df[keep_cols]
+    return df
+
+
+def getAnimeName(anime_id, df):
+    try:
+        # Get a single anime from the anime df based on ID
+        name = df[df.anime_id == anime_id].eng_version.values[0]
+    except BaseException:
+        raise ValueError("ID/eng_version pair was not found in data frame!")
+
+    try:
+        if name is np.nan:
+            name = df[df.anime_id == anime_id].Name.values[0]
+    except BaseException:
+        raise ValueError("Name was not found in data frame!")
+    return name
+
+
 pd.set_option("max_colwidth", None)
 
 
-def find_similar_users(user_id, n_users):
-    rating_df, user_to_index, index_to_user = get_main_df()
+def get_fave_anime(df, anime_df, user, num_faves, TV_only):
+    """
+    Get list of a user's favorite anime. If more than one anime has the
+    maxium rating, select the anime with the most episodes watched.
+    Inputs:
+        df: main data frame
+        anime_df: data frame with anime statistics
+        user: the ID of the user in question
+        num_faves: the number of favorite animes to return
+
+    """
+    # Get the IDs of all anime a user has watched and sort by rating
+    fave_df = df[df.user_id == user]
+    fave_df = fave_df[fave_df.rating == max(fave_df.rating)]
+    faves = fave_df['anime_id'].tolist()
+
+    # Get names of each corresponding anime ID in the sorted list
+    names = [anime_df[
+        anime_df.anime_id == anime_id].Name.values[0] for anime_id in faves]
+
+    # Get number of episodes of each corresponding anime ID
+    eps = [anime_df[anime_df.anime_id == anime_id].Episodes.values[0]
+           for anime_id in faves]
+
+    # Get Types of each corresponding anime ID [movie, ova, etc.]
+    Types = [anime_df[
+        anime_df.anime_id == anime_id].Type.values[0] for anime_id in faves]
+    fave_df['name'], fave_df['episodes'], fave_df['type'] = names, eps, Types
+
+    # In case df doesn't contain ['watched_episodes'] or 'watching status'
+    try:
+        # Get the percent of episodes the user has watched (episodes were
+        # strings)
+        x = []
+        for index, row in fave_df.iterrows():
+            x.append(
+                row['watched_episodes'] / np.array(row['episodes']).astype(
+                    np.float32))
+        # Create new column sorted by highest percent
+        fave_df["percent"] = x
+        fave_df = fave_df.drop(
+            ['user_id', 'anime_id', 'watching_status'], axis=1)
+        fave_df = fave_df[fave_df.percent == max(fave_df.percent)]
+    except KeyError:
+        logger.info("The data frame did not contain # of watched episodes")
+
+    # Sort remaining data frame according to number of episodes if only TV
+    if TV_only is True:
+        fave_df.sort_values(by='episodes', ascending=False, inplace=True)
+    all_faves = fave_df['name'].tolist()
+
+    try:
+        # Narrow to all with highest episodes if enough exist to meet return
+        fave_df = fave_df[fave_df.episodes == max(fave_df.episodes)]
+        all_faves = fave_df['name'].tolist()
+        return random.choices(all_faves, k=num_faves)
+    except IndexError:
+        # If there aren't enough qualifying anime, return all faves
+        return fave_df['name'].tolist()
+
+
+# ADD TYPE TO ML PROJECT
+def find_similar_users(user_id, n_users, num_faves, TV_only):
+    df, user_to_index, index_to_user = get_main_df()
     anime_weights, user_weights = get_weights()
+    anime_df = get_anime_df()
     weights = user_weights
 
     # Specify filename here in case the a random ID is used
@@ -111,9 +232,12 @@ def find_similar_users(user_id, n_users):
             similarity = dists[close]
             decoded_id = index_to_user.get(close)
             if decoded_id != user_id:
+                faves = get_fave_anime(
+                    df, anime_df, user_id, num_faves, TV_only)
                 SimilarityArr.append(
                     {"similar_users": decoded_id,
-                     "similarity": similarity})
+                     "similarity": similarity,
+                     "favorite_animes": faves})
 
         Frame = pd.DataFrame(SimilarityArr).sort_values(by="similarity",
                                                         ascending=False)
@@ -137,8 +261,8 @@ def go(args):
         user_id = int(args.user_query)
 
     # Create data frame file
-    df, filename, user_id = find_similar_users(
-        int(user_id), int(args.id_query_number))
+    df, filename, user_id = find_similar_users(int(user_id), int(
+        args.id_query_number, int(args.num_faves), args.TV_only))
     df.to_csv(filename, index=False)
 
     # Create artifact
@@ -223,6 +347,20 @@ if __name__ == "__main__":
         "--random_user",
         type=lambda x: bool(strtobool(x)),
         help="Decide whether or not to use a random user id",
+        required=True
+    )
+
+    parser.add_argument(
+        "--num_faves",
+        type=str,
+        help="Number of a similar user's favorite anime to return",
+        required=True
+    )
+
+    parser.add_argument(
+        "--TV_only",
+        type=lambda x: bool(strtobool(x)),
+        help="Boolean of whether to return a similar user's TV for type",
         required=True
     )
 
