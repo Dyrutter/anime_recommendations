@@ -119,6 +119,8 @@ users:
   save_user_recs: True
   user_num_recs: 10
   use_random_user: False
+  num_faves: 2 # Number of a similar user's favorite anime to return
+  TV_only: True
 
 model_recs: # For recommendations based on the ranking model
   model_recs_fn: 'model_recs.csv'
@@ -127,4 +129,6 @@ model_recs: # For recommendations based on the ranking model
   specify_types: True
   anime_types: ["TV", "Movie"]
   model_genres: ['Action', 'Comedy', None]
-  specify_genres: False 
+  specify_genres: False
+  min_score: 0.00
+  max_score: 10.00
