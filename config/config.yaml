@@ -115,12 +115,19 @@ users:
   prefs_csv: 'user_prefs.csv'
   save_faves: True
   input_user: 'user_prefs.csv:latest'
+  sim_user_type: 'csv' # Type of wandb artifact the list of similar users csv file was saved as
   user_recs_fn: "user_recs.csv"
   save_user_recs: True
   user_num_recs: 10
   use_random_user: False
   num_faves: 2 # Number of a similar user's favorite anime to return
   TV_only: True
+  sim_users_fn: 'similar_users.csv' # Filename of similar users artifact
+  sim_users_type: 'csv' # Artifact type of similar users df
+  sim_users_latest: 'similar_users.csv:latest' # Latest artifact for similar users
+  ID_fn: "ID_used.csv"
+  ID_used_latest: "ID_used.csv:latest"
+  ID_type: "csv"
 
 model_recs: # For recommendations based on the ranking model
   model_recs_fn: 'model_recs.csv'
