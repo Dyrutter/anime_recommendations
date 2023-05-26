@@ -27,7 +27,7 @@ def get_main_df():
     """
     run = wandb.init(project=args.project_name)
     logger.info("Downloading data artifact")
-    artifact = run.use_artifact(args.main_df, type='preprocessed_data')
+    artifact = run.use_artifact(args.main_df, type=args.main_df_type)
     artifact_path = artifact.file()
     df = pd.read_parquet(artifact_path)
 
@@ -45,7 +45,7 @@ def get_main_df():
     # Convert values of format id to count_number
     df["user"] = df["user_id"].map(user_to_index)
     df["anime"] = df["anime_id"].map(anime_to_index)
-    df = df[['user', 'anime', 'rating']]
+    df = df[['user', 'anime', 'rating', 'user_id', 'anime_id']]
     df = df.sample(frac=1, random_state=42)
 
     return df, user_to_index, index_to_user
@@ -54,7 +54,7 @@ def get_main_df():
 def get_model():
     run = wandb.init(project=args.project_name)
     logger.info("Downloading model")
-    artifact = run.use_artifact(args.model, type='h5')
+    artifact = run.use_artifact(args.model, type=args.model_type)
     artifact_path = artifact.file()
     model = tf.keras.models.load_model(artifact_path)
     return model
@@ -98,15 +98,12 @@ def get_anime_name(anime_id, df):
     return name
 
 
-def get_anime_df(
-        project='anime_recommendations',
-        anime_df='all_anime.csv:latest',
-        artifact_type='raw_data'):
+def get_anime_df():
     """
     Get data frame containing stats on each anime
     """
-    run = wandb.init(project=project)  # args.project_name)
-    artifact = run.use_artifact(anime_df, type=artifact_type)
+    run = wandb.init(project=args.project_name)
+    artifact = run.use_artifact(args.anime_df, type=args.anime_df_type)
     artifact_path = artifact.file()
     df = pd.read_csv(artifact_path)
     df = df.replace("Unknown", np.nan)
@@ -127,36 +124,20 @@ def get_anime_df(
     return df
 
 
-def getAnimeName(anime_id, df):
-    try:
-        # Get a single anime from the anime df based on ID
-        name = df[df.anime_id == anime_id].eng_version.values[0]
-    except BaseException:
-        raise ValueError("ID/eng_version pair was not found in data frame!")
-
-    try:
-        if name is np.nan:
-            name = df[df.anime_id == anime_id].Name.values[0]
-    except BaseException:
-        raise ValueError("Name was not found in data frame!")
-    return name
-
-
-pd.set_option("max_colwidth", None)
-
-
 def get_fave_anime(df, anime_df, user, num_faves, TV_only):
     """
-    Get list of a user's favorite anime. If more than one anime has the
+    Get a user's favorite anime. If more than one anime has the
     maxium rating, select the anime with the most episodes watched.
     Inputs:
-        df: main data frame
-        anime_df: data frame with anime statistics
-        user: the ID of the user in question
-        num_faves: the number of favorite animes to return
-
+        df: main pandas data frame
+        anime_df: pandas data frame with anime statistics
+        user: interger ID of the user in question
+        num_faves: interger of favorite animes to return
+        TV_only: Boolean of whether to only include TV shows as favorite anime
+    Outputs:
+        String of num_faves favorite anime
     """
-    # Get the IDs of all anime a user has watched and sort by rating
+    # Get the IDs of all anime a user has watched and narrow to max rated
     fave_df = df[df.user_id == user]
     fave_df = fave_df[fave_df.rating == max(fave_df.rating)]
     faves = fave_df['anime_id'].tolist()
@@ -169,44 +150,38 @@ def get_fave_anime(df, anime_df, user, num_faves, TV_only):
     eps = [anime_df[anime_df.anime_id == anime_id].Episodes.values[0]
            for anime_id in faves]
 
-    # Get Types of each corresponding anime ID [movie, ova, etc.]
-    Types = [anime_df[
-        anime_df.anime_id == anime_id].Type.values[0] for anime_id in faves]
-    fave_df['name'], fave_df['episodes'], fave_df['type'] = names, eps, Types
+    fave_df['name'], fave_df['episode'] = names, eps
+    # Convert episodes from type str to float
+    fave_df['episodes'] = np.array(fave_df['episode']).astype(np.float32)
 
-    # In case df doesn't contain ['watched_episodes'] or 'watching status'
     try:
-        # Get the percent of episodes the user has watched (episodes were
-        # strings)
+        # Get % of episodes the user has watched
         x = []
         for index, row in fave_df.iterrows():
-            x.append(
-                row['watched_episodes'] / np.array(row['episodes']).astype(
-                    np.float32))
-        # Create new column sorted by highest percent
-        fave_df["percent"] = x
-        fave_df = fave_df.drop(
-            ['user_id', 'anime_id', 'watching_status'], axis=1)
-        fave_df = fave_df[fave_df.percent == max(fave_df.percent)]
-    except KeyError:
-        logger.info("The data frame did not contain # of watched episodes")
+            x.append(row['watched_episodes'] / row['episodes'])
 
-    # Sort remaining data frame according to number of episodes if only TV
+        # Create new data frame of only rows with highest % watched
+        fave_df["percent"] = x
+        fave_df = fave_df[fave_df.percent == max(fave_df.percent)]
+
+    except KeyError:
+        logger.info("The data frame did not contain 'watched_episodes'")
+
+    # Sort remaining data frame according to # of episodes if TV_only
     if TV_only is True:
         fave_df.sort_values(by='episodes', ascending=False, inplace=True)
     all_faves = fave_df['name'].tolist()
-
     try:
-        # Narrow to all with highest episodes if enough exist to meet return
-        fave_df = fave_df[fave_df.episodes == max(fave_df.episodes)]
-        all_faves = fave_df['name'].tolist()
-        return random.choices(all_faves, k=num_faves)
+        # Return faves if enough exist, convert list to a string w/o brackets
+        return str(all_faves[:num_faves])[1:-1]
     except IndexError:
         # If there aren't enough qualifying anime, return all faves
-        return fave_df['name'].tolist()
+        return str(all_faves)[1:-1]
 
 
-# ADD TYPE TO ML PROJECT
+pd.set_option("max_colwidth", None)
+
+
 def find_similar_users(user_id, n_users, num_faves, TV_only):
     df, user_to_index, index_to_user = get_main_df()
     anime_weights, user_weights = get_weights()
@@ -217,35 +192,31 @@ def find_similar_users(user_id, n_users, num_faves, TV_only):
     filename = 'User_' + str(user_id).translate(
         {ord(c): None for c in string.whitespace}) + '.csv'
 
-    try:
-        index = user_id
-        encoded_index = user_to_index.get(index)
+    index = user_id
+    encoded_index = user_to_index.get(index)
 
-        dists = np.dot(weights, weights[encoded_index])
-        sorted_dists = np.argsort(dists)
-        n_users = n_users + 1
-        closest = sorted_dists[-n_users:]
+    dists = np.dot(weights, weights[encoded_index])
+    sorted_dists = np.argsort(dists)
+    n_users = n_users + 1
+    closest = sorted_dists[-n_users:]
 
-        SimilarityArr = []
+    SimilarityArr = []
 
-        for close in closest:
-            similarity = dists[close]
-            decoded_id = index_to_user.get(close)
-            if decoded_id != user_id:
-                faves = get_fave_anime(
-                    df, anime_df, user_id, num_faves, TV_only)
-                SimilarityArr.append(
-                    {"similar_users": decoded_id,
-                     "similarity": similarity,
-                     "favorite_animes": faves})
+    for close in closest:
+        similarity = dists[close]
+        decoded_id = index_to_user.get(close)
+        if decoded_id != user_id:
+            faves = get_fave_anime(
+                df, anime_df, decoded_id, num_faves, TV_only)
+            SimilarityArr.append(
+                {"similar_users": decoded_id,
+                 "similarity": similarity,
+                 "favorite_animes": faves})
 
-        Frame = pd.DataFrame(SimilarityArr).sort_values(by="similarity",
-                                                        ascending=False)
+    Frame = pd.DataFrame(SimilarityArr).sort_values(by="similarity",
+                                                    ascending=False)
 
-        return Frame, filename, user_id
-
-    except BaseException:
-        logger.info('%s Not Found in User list', user_id)
+    return Frame, filename, user_id
 
 
 def go(args):
@@ -256,27 +227,42 @@ def go(args):
 
     if args.random_user is True:
         user_id = get_random_user()
-        logger.info("Using user ID %s", user_id)
+        logger.info("Using random user ID %s", user_id)
     else:
         user_id = int(args.user_query)
 
     # Create data frame file
     df, filename, user_id = find_similar_users(int(user_id), int(
-        args.id_query_number, int(args.num_faves), args.TV_only))
+        args.id_query_number), int(args.num_faves), args.TV_only)
     df.to_csv(filename, index=False)
 
-    # Create artifact
-    logger.info("Creating artifact")
+    # Create similar users artifact
+    logger.info("Creating similar users artifact")
     description = "Users most similar to: " + str(args.user_query)
     artifact = wandb.Artifact(
-        name=filename,
-        type="csv",
+        name=args.sim_users_fn,
+        type=args.sim_users_type,
         description=description,
         metadata={"Queried user: ": user_id, "Filename: ": filename})
-
-    # Upload artifact to wandb
+    # Upload to wandb
     artifact.add_file(filename)
-    logger.info("Logging artifact")
+    logger.info("Logging similar users artifact")
+    run.log_artifact(artifact)
+    artifact.wait()
+
+    # Save the user ID as an artifact
+    ID_df = pd.DataFrame([user_id], columns=['User_ID'])
+    logger.info("Creating user_id artifact")
+    description = "User ID queried, will be-re-used in further steps"
+    fn = str(user_id) + '.csv'
+    ID_df.to_csv(fn, index=False)
+    artifact = wandb.Artifact(
+        name=args.ID_fn,
+        type=args.ID_type,
+        description=description,
+        metadata={"Queried user ": user_id, "Filename ": fn})
+    artifact.add_file(fn)
+    logger.info("Logger user id")
     run.log_artifact(artifact)
     artifact.wait()
 
@@ -288,23 +274,30 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--weights",
+        "--anime_df",
         type=str,
-        help="Wandb artifact with .h5 file of all neural network weights",
+        help="Artifact name of anime data df",
         required=True
     )
 
     parser.add_argument(
-        "--history",
+        "--anime_df_type",
         type=str,
-        help="Wandb artifact with .csv file of neural network run history",
+        help="Artifact type of anime df",
         required=True
     )
 
     parser.add_argument(
         "--model",
         type=str,
-        help="Wandb artifact with .h5 file of neural network",
+        help="Wandb artifact of neural network",
+        required=True
+    )
+
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        help="Artifact type of model",
         required=True
     )
 
@@ -319,6 +312,13 @@ if __name__ == "__main__":
         "--main_df",
         type=str,
         help="Main prerpocessed data frame",
+        required=True
+    )
+
+    parser.add_argument(
+        "--main_df_type",
+        type=str,
+        help="Type of main data frame",
         required=True
     )
 
@@ -361,6 +361,34 @@ if __name__ == "__main__":
         "--TV_only",
         type=lambda x: bool(strtobool(x)),
         help="Boolean of whether to return a similar user's TV for type",
+        required=True
+    )
+
+    parser.add_argument(
+        "--sim_users_fn",
+        type=str,
+        help="Filename of similar users artifact",
+        required=True
+    )
+
+    parser.add_argument(
+        "--sim_users_type",
+        type=str,
+        help="Type of similar users artifact",
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_fn",
+        type=str,
+        help="filename of artifact containing the user ID that was queried",
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_type",
+        type=str,
+        help='artifact type user ID was saved as',
         required=True
     )
 
