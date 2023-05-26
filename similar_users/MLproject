@@ -4,20 +4,26 @@ conda_env: conda.yml
 entry_points:
   main:
     parameters:
-      weights:
-        description: Wandb artifact with .h5 file of all neural network weights
+      anime_df:
+        description: Artifact name of data frame containing anime data
         type: str
-      history:
-        description: Wandb artifact with .csv file of neural network run history
+      anime_df_type:
+        description: type of artifact anime data frame is saved as
         type: str
       model:
-        description: Wandb artifact with .h5 file of neural network
+        description: Wandb artifact of neural network
+        type: str
+      model_type:
+        description: artifact type of wandb model
         type: str
       project_name:
         description: Name of Wandb project
         type: str
       main_df:
         description: Main preprocessed data frame artifact
+        type: str
+      main_df_type:
+        description: Type of main data frame artifact
         type: str
       user_query:
         description: User of which to find similar animes to
@@ -34,17 +40,37 @@ entry_points:
       num_faves:
         description: Number of a similar user's favorite anime to return
         type: str
-      TV_only: Only return TV shows as a similar user's favorite type of media
+      TV_only:
+        description: Only return TV shows as a similar user's favorite type of media
+        type: str
+      sim_users_fn:
+        description: CSV filename for similar users artifact
+        type: str
+      sim_users_type:
+        description: Type of similar users artifact
+        type: str
+      ID_fn:
+        description: filename of artifact containing the user ID that was queried
+        type: str
+      ID_type:
+        description: artifact type user ID was saved as
+        type: str
 
     command: >-
-      python similar_users.py --weights {weights} \
-                              --history {history} \
+      python similar_users.py --anime_df {anime_df} \
+                              --anime_df_type {anime_df_type} \
                               --model {model} \
+                              --model_type {model_type} \
                               --project_name {project_name} \
                               --main_df {main_df} \
+                              --main_df_type {main_df_type} \
                               --user_query {user_query} \
                               --id_query_number {id_query_number} \
                               --max_ratings {max_ratings} \
                               --random_user {random_user} \
                               --num_faves {num_faves} \
-                              --TV_only {TV_only}
+                              --TV_only {TV_only} \
+                              --sim_users_fn {sim_users_fn} \
+                              --sim_users_type {sim_users_type} \
+                              --ID_fn {ID_fn} \
+                              --ID_type {ID_type}
