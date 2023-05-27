@@ -49,6 +49,30 @@ entry_points:
       save_faves:
         description: Whether or not to save clouds and favorites csv file to local machine
         type: str
+      flow_user:
+        description: Latest user ID artifact for use in MLflow runs
+        type: str
+      from_flow:
+        description: Boolean of whether to use the user ID Artifact created using MLflow
+        type: str
+      use_local_user:
+        description: Boolean of whether to use the user_query found in config file rather than the artifact
+        type: str
+      main_df_type:
+        description: Type of main preprocessed data frame
+        type: str
+      anime_df_type:
+        description: Type of anime data frame
+        type: str
+      ID_type:
+        description: Type of User ID artifact
+        type: str
+      cloud_type:
+        description: Artifact type of favorites clouds
+        type: str
+      fave_art_type:
+        description: Artifact type of favorites csv
+        type: str 
 
     command: >-
       python user_prefs.py --model {model} \
@@ -65,4 +89,12 @@ entry_points:
                               --cloud_height {cloud_height} \
                               --prefs_csv {prefs_csv} \
                               --interval {interval} \
-                              --save_faves {save_faves}
+                              --save_faves {save_faves} \
+                              --flow_user {flow_user} \
+                              --from_flow {from_flow} \
+                              --use_local_user {use_local_user} \
+                              --main_df_type {main_df_type} \
+                              --anime_df_type {anime_df_type} \
+                              --ID_type {ID_type} \
+                              --cloud_type {cloud_type} \
+                              --fave_art_type {fave_art_type}
