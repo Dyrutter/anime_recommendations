@@ -96,7 +96,6 @@ similarity:
   anime_query: "Rental Magica" # Input anime to query. Change random_anime to False in order to use.
   random_anime: True # Whether to choose a random anime to assess rather than an input anime
   a_query_number: 10 # Number of similar anime to return
-  user_query: 109160 # A User ID to query.
   id_query_number: 10 # Number of similar IDs to return
   max_ratings: 600 # Limit to this many ratings if random_user is True
   random_user: True # Whether or not to use a random user as the sample
@@ -109,25 +108,30 @@ users:
   favorite_percentile: 80 # Percentile of ratings to consider as favorites (i.e. 80 means the top 20% ratings are favorites)
   cloud_width: 600 # Pixel width of word cloud figures to display. Higher widths increase processing time
   cloud_height: 350 # Pixel height of word cloud figures to display. Higher heights increase processing time
-  show_clouds: False
-  genre_fn: 'favorite_genres.png'
-  source_fn: 'favorite_source_material.png'
-  prefs_csv: 'user_prefs.csv'
-  save_faves: True
-  input_user: 'user_prefs.csv:latest'
+  show_clouds: False # Whether to show clouds when running MLflow
+  genre_fn: 'favorite_genres.png' # Artifact filename of genre cloud
+  source_fn: 'favorite_source_material.png' # Artifact filename of sources cloud
+  prefs_csv: 'user_prefs.csv' # Artifact filename of user_preferences
+  save_faves: True # Whether to save clouds and CSV file to local machine
+  latest_user_prefs: 'user_prefs.csv:latest' # Csv file of latest user preferences
   sim_user_type: 'csv' # Type of wandb artifact the list of similar users csv file was saved as
+  user_query: 109160 # A User ID to query.
+  use_local_user: False #Boolean of whether to use the user_query found in config file rather than the artifact
   user_recs_fn: "user_recs.csv"
   save_user_recs: True
   user_num_recs: 10
-  use_random_user: False
-  num_faves: 2 # Number of a similar user's favorite anime to return
+  use_random_user: False # Whether to use a random user in similar_users.py
+  num_faves: 2 # Number of a similar user's favorite anime to return in similar_users.py
   TV_only: True
   sim_users_fn: 'similar_users.csv' # Filename of similar users artifact
   sim_users_type: 'csv' # Artifact type of similar users df
   sim_users_latest: 'similar_users.csv:latest' # Latest artifact for similar users
-  ID_fn: "ID_used.csv"
-  ID_used_latest: "ID_used.csv:latest"
-  ID_type: "csv"
+  ID_fn: "ID_used.csv" # from similar_users.py, the ID used for MLflow
+  flow_user: "ID_used.csv:latest" # latest artifact taken from similar_users.py
+  ID_type: "csv" # Type of artifact the user ID was saved as
+  from_flow: True # Whether to take the user ID created in mlflow
+  cloud_type: "png" # Type of genre and source cloud artifacts
+  fave_art_type: "csv" # Type of data frame containing favorite genres and sources
 
 model_recs: # For recommendations based on the ranking model
   model_recs_fn: 'model_recs.csv'
