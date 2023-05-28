@@ -29,13 +29,15 @@ def main_df_by_id():
         user_to_index: enumerated IDs of format {ID: enumerated_index}
         index_to_user: enumerated IDs of format {enumerated_index: ID}
     """
+    # Load data frame artifact
     run = wandb.init(project=args.project_name)
     artifact = run.use_artifact(args.main_df, type=args.main_df_type)
     artifact_path = artifact.file()
     df = pd.read_parquet(artifact_path)
+
+    # Narrow df to users with > 400 ratings
     n_ratings = df['user_id'].value_counts(dropna=True)
-    df = df[df['user_id'].isin(
-        n_ratings[n_ratings >= int(400)].index)].copy()
+    df = df[df['user_id'].isin(n_ratings[n_ratings >= int(400)].index)].copy()
 
     # Encoding categorical data
     user_ids = df["user_id"].unique().tolist()
@@ -86,6 +88,11 @@ def get_anime_df():
 def get_anime_name(anime_id, df):
     """
     Helper function for loading anime data frame
+    Inputs:
+        anime_id: The ID of an anime
+        df: anime stats data frame
+    Outputs:
+        name: The english name of anime_id
     """
     try:
         # Get a single anime from the anime df based on ID
@@ -124,8 +131,6 @@ def genre_cloud(anime_df, ID):
     genres_cloud = cloud.generate(genres)
     fn = "User_ID_" + str(ID) + '_' + args.genre_fn
     genres_cloud.to_file(fn)
-    if args.show_clouds is True:
-        show_cloud(genres_cloud)
     return genres_cloud, fn
 
 
@@ -152,8 +157,6 @@ def source_cloud(anime_df, ID):
     source_cloud = cloud.generate(sources)
     fn = 'User_ID_' + str(ID) + '_' + args.source_fn
     source_cloud.to_file(fn)
-    if args.show_clouds is True:
-        show_cloud(source_cloud)
     return source_cloud, fn
 
 
@@ -310,14 +313,14 @@ def go(args):
     anime_df = get_anime_df()
 
     # Establish which user to find preferences of
-    if args.random_user is True:
+    if args.pref_random_user is True:
         user = get_random_user(df, user_to_index, index_to_user)
         logger.info("Using %s as random input user", user)
-    elif args.use_local_user is True:
+    elif args.prefs_local_user is True:
         user = int(args.user_query)
         logger.info("Using locally specified user %s as user", user)
-    elif args.flow_user is True:
-        user = get_ID_artifact
+    elif args.prefs_from_flow is True:
+        user = get_ID_artifact()
         logger.info("Using ID artifact %s as local user", user)
     else:
         logger.info("NO ID WAS INPUT")
@@ -352,7 +355,7 @@ def go(args):
         type=args.cloud_type,
         description='Image of source cloud',
         metadata={"ID": user, "Filename": source_fn})
-    source_cloud_artifact.add_file(source_cloud_artifact)
+    source_cloud_artifact.add_file(source_fn)
     run.log_artifact(source_cloud_artifact)
     logger.info('Source cloud logged!')
     source_cloud_artifact.wait()
@@ -368,6 +371,10 @@ def go(args):
     run.log_artifact(favorites_artifact)
     logger.info("Favorites data frame logged!")
     favorites_artifact.wait()
+
+    if args.show_clouds is True:
+        show_cloud(genres_cloud)
+        show_cloud(sources_cloud)
 
     if args.save_faves is False:
         os.remove(genre_fn)
@@ -416,7 +423,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--random_user",
+        "--pref_random_user",
         type=lambda x: bool(strtobool(x)),
         help="Decide whether or not to use a random user id",
         required=True
@@ -493,14 +500,14 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--from_flow",
+        "--prefs_from_flow",
         type=lambda x: bool(
             strtobool(x)),
         help="Bool of whether to use the ID Artifact created using MLflow",
         required=True)
 
     parser.add_argument(
-        "--use_local_user",
+        "--prefs_local_user",
         type=lambda x: bool(
             strtobool(x)),
         help="Whether to use user_query in config file instead of artifact",
