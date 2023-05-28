@@ -4,12 +4,15 @@ conda_env: conda.yml
 entry_points:
   main:
     parameters:
-      weights:
-        description: Wandb artifact with .h5 file of all neural network weights
+      main_df_type:
+        description: Artifact type of main preprocessed data frame
         type: str
-      history:
-        description: Wandb artifact with .csv file of neural network run history
+      anime_df_type:
+        description: Artifact type of anime data frame
         type: str
+      sypnopsis_df_type:
+        description: Artifact type of sypnopsis data frame
+        type: str 
       model:
         description: Wandb artifact with .h5 file of neural network
         type: str
@@ -46,10 +49,17 @@ entry_points:
       spec_types:
         description: Boolean of whether or not to specify types of anime to return
         type: str
+      a_rec_type:
+        description: Type of artifact anime recommendations are saved as
+        type: str
+      save_sim_anime:
+        description: Boolean of whether to save anime recommendation artifacts
+        type: str
 
     command: >-
-      python similar_anime.py --weights {weights} \
-                              --history {history} \
+      python similar_anime.py --main_df_type {main_df_type} \
+                              --anime_df_type {anime_df_type} \
+                              --sypnopsis_df_type {sypnopsis_df_type} \
                               --model {model} \
                               --project_name {project_name} \
                               --main_df {main_df} \
@@ -61,4 +71,6 @@ entry_points:
                               --genres {genres} \
                               --spec_genres {spec_genres} \
                               --types {types} \
-                              --spec_types {spec_types}
+                              --spec_types {spec_types} \
+                              --a_rec_type {a_rec_type} \
+                              --save_sim_anime {save_sim_anime}
