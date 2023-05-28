@@ -19,7 +19,7 @@ entry_points:
       user_query:
         description: User of which to find similar animes to
         type: str
-      random_user:
+      pref_random_user:
         description: Whether to use a random user for the input
         type: str
       favorite_percentile:
@@ -52,10 +52,10 @@ entry_points:
       flow_user:
         description: Latest user ID artifact for use in MLflow runs
         type: str
-      from_flow:
+      prefs_from_flow:
         description: Boolean of whether to use the user ID Artifact created using MLflow
         type: str
-      use_local_user:
+      prefs_local_user:
         description: Boolean of whether to use the user_query found in config file rather than the artifact
         type: str
       main_df_type:
@@ -80,7 +80,7 @@ entry_points:
                               --main_df {main_df} \
                               --anime_df {anime_df} \
                               --user_query {user_query} \
-                              --random_user {random_user} \
+                              --pref_random_user {pref_random_user} \
                               --favorite_percentile {favorite_percentile} \
                               --show_clouds {show_clouds} \
                               --genre_fn {genre_fn} \
@@ -91,8 +91,8 @@ entry_points:
                               --interval {interval} \
                               --save_faves {save_faves} \
                               --flow_user {flow_user} \
-                              --from_flow {from_flow} \
-                              --use_local_user {use_local_user} \
+                              --prefs_from_flow {prefs_from_flow} \
+                              --prefs_local_user {prefs_local_user} \
                               --main_df_type {main_df_type} \
                               --anime_df_type {anime_df_type} \
                               --ID_type {ID_type} \
