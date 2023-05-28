@@ -108,15 +108,16 @@ users:
   favorite_percentile: 80 # Percentile of ratings to consider as favorites (i.e. 80 means the top 20% ratings are favorites)
   cloud_width: 600 # Pixel width of word cloud figures to display. Higher widths increase processing time
   cloud_height: 350 # Pixel height of word cloud figures to display. Higher heights increase processing time
-  show_clouds: False # Whether to show clouds when running MLflow
+  show_clouds: True # Whether to show clouds when running MLflow
   genre_fn: 'favorite_genres.png' # Artifact filename of genre cloud
   source_fn: 'favorite_source_material.png' # Artifact filename of sources cloud
   prefs_csv: 'user_prefs.csv' # Artifact filename of user_preferences
-  save_faves: True # Whether to save clouds and CSV file to local machine
+  save_faves: True # Whether to save clouds and CSV file from user_prefs.py to local machine
   latest_user_prefs: 'user_prefs.csv:latest' # Csv file of latest user preferences
   sim_user_type: 'csv' # Type of wandb artifact the list of similar users csv file was saved as
   user_query: 109160 # A User ID to query.
   use_local_user: False #Boolean of whether to use the user_query found in config file rather than the artifact
+  prefs_local_user: False # boolean of whether to use the user_query found in config file for user_prefs.py
   user_recs_fn: "user_recs.csv"
   save_user_recs: True
   user_num_recs: 10
@@ -129,9 +130,10 @@ users:
   ID_fn: "ID_used.csv" # from similar_users.py, the ID used for MLflow
   flow_user: "ID_used.csv:latest" # latest artifact taken from similar_users.py
   ID_type: "csv" # Type of artifact the user ID was saved as
-  from_flow: True # Whether to take the user ID created in mlflow
-  cloud_type: "png" # Type of genre and source cloud artifacts
-  fave_art_type: "csv" # Type of data frame containing favorite genres and sources
+  prefs_from_flow: True # Whether to take the user ID created in mlflow for user_prefs.py
+  cloud_type: "png" # Type of genre and source cloud artifacts for user_prefs.py
+  fave_art_type: "csv" # Type of data frame containing favorite genres and sources for user_prefs.py
+  pref_random_user: False # Whether to use a random user for user_prefs.py
 
 model_recs: # For recommendations based on the ranking model
   model_recs_fn: 'model_recs.csv'
