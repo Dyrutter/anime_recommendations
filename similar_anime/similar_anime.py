@@ -1,20 +1,16 @@
-import re
-import ast
-import random
-from distutils.util import strtobool
-import numpy as np
-import pandas as pd
-import string
-import wandb
-import logging
 import argparse
-from helper_functions.load import main_df_by_anime, get_anime_df, get_model
-from helper_functions.load import get_weights, get_sypnopses_df
-from helper_functions.load import get_anime_frame, get_sypnopsis, get_genres
-from pathlib import Path
-import sys
-path_root = Path(__file__).parents[1]
-sys.path.append(str(path_root))
+import logging
+import wandb
+import string
+import os
+import pandas as pd
+import numpy as np
+from distutils.util import strtobool
+import unicodedata
+import random
+import ast
+import re
+import tensorflow as tf
 
 
 logging.basicConfig(
@@ -27,14 +23,202 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
+def main_df_by_anime():
+    """
+    Get main df from wandb and covert to same format used for neural network
+    Outputs:
+        df: Main data frame with added columns containing additional indices
+        anime_to_index: enumerated anime IDs of format {ID: enumerated_index}
+        index_to_anime: enumerated anime IDs of format {enumerated_index: ID}
+    """
+    # Load data frame artifact
+    run = wandb.init(project=args.project_name)
+    artifact = run.use_artifact(args.main_df, type=args.main_df_type)
+    artifact_path = artifact.file()
+    df = pd.read_parquet(artifact_path)
+
+    # Narrow df to users with > 400 ratings
+    n_ratings = df['user_id'].value_counts(dropna=True)
+    df = df[df['user_id'].isin(n_ratings[n_ratings >= int(400)].index)].copy()
+
+    # Encoding categorical data
+    user_ids = df["user_id"].unique().tolist()
+    anime_ids = df["anime_id"].unique().tolist()
+
+    # Dicts of format {id: count_number}
+    anime_to_index = {value: count for count, value in enumerate(anime_ids)}
+    user_to_index = {value: count for count, value in enumerate(user_ids)}
+
+    # Dicts of format {count_number: id}
+    index_to_anime = {count: value for count, value in enumerate(anime_ids)}
+
+    # Convert values of format id to count_number
+    df["user"] = df["user_id"].map(user_to_index)
+    df["anime"] = df["anime_id"].map(anime_to_index)
+    df = df[['user', 'anime', 'rating', 'user_id', 'anime_id']]
+    df = df.sample(frac=1, random_state=42)
+
+    return df, anime_to_index, index_to_anime
+
+
+def get_anime_df():
+    """
+    Get data frame containing stats on each anime
+    """
+    run = wandb.init(project=args.project_name)
+    artifact = run.use_artifact(args.anime_df, type=args.anime_df_type)
+    artifact_path = artifact.file()
+    df = pd.read_csv(artifact_path)
+    df = df.replace("Unknown", np.nan)
+
+    df['anime_id'] = df['MAL_ID']
+    df['japanese_name'] = df['Japanese name']
+    df["eng_version"] = df['English name']
+    df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
+    df['full_eng_version'] = df['eng_version']
+
+    # Get column of cleaned anime names
+    df['eng_version'] = df.anime_id.apply(
+        lambda x: clean(get_anime_name(x, df)).lower())
+    df.sort_values(by=['Score'],
+                   inplace=True,
+                   ascending=False,
+                   kind='quicksort',
+                   na_position='last')
+    keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
+                 "Premiered", "Studios", "japanese_name", "Name", "Type",
+                 "Source", 'Rating', 'Members', 'full_eng_version']
+    df = df[keep_cols]
+    return df
+
+
+def get_anime_name(anime_id, df):
+    """
+    Helper function for loading anime data frame
+    Inputs:
+        anime_id: The ID of an anime
+        df: anime stats data frame
+    Outputs:
+        name: The english name of anime_id
+    """
+    try:
+        # Get a single anime from the anime df based on ID
+        name = df[df.anime_id == anime_id].eng_version.values[0]
+    except BaseException:
+        raise ValueError("ID/eng_version pair was not found in data frame!")
+
+    try:
+        if name is np.nan:
+            name = df[df.anime_id == anime_id].Name.values[0]
+    except BaseException:
+        raise ValueError("Name was not found in data frame!")
+    return name
+
+
+def get_sypnopses_df():
+    """
+    Download sypnopses df from wandb
+    """
+    run = wandb.init(project=args.project_name)
+    art = run.use_artifact(args.sypnopses_df, type=args.sypnopsis_df_type)
+    artifact_path = art.file()
+    cols = ["MAL_ID", "Name", "Genres", "sypnopsis"]
+    df = pd.read_csv(artifact_path, usecols=cols)
+    return df
+
+
+def get_model():
+    run = wandb.init(project=args.project_name)
+    artifact = run.use_artifact(args.model, type=args.model_type)
+    artifact_path = artifact.file()
+    model = tf.keras.models.load_model(artifact_path)
+    return model
+
+
+def get_weights(model):
+    anime_weights = model.get_layer('anime_embedding')
+    anime_weights = anime_weights.get_weights()[0]
+    anime_weights = anime_weights / np.linalg.norm(
+        anime_weights, axis=1).reshape((-1, 1))
+
+    user_weights = model.get_layer('user_embedding')
+    user_weights = user_weights.get_weights()[0]
+    user_weights = user_weights / np.linalg.norm(
+        user_weights, axis=1).reshape((-1, 1))
+    return anime_weights, user_weights
+
+
+def get_genres(anime_df):
+    """
+    Get all possible anime genres
+    Input: data frame containing anime statistics
+    Output: All possible anime genres in list format
+    """
+    genres = anime_df['Genres'].unique().tolist()
+    # Get genres individually (instances have lists of genres)
+    possibilities = list(set(str(genres).split()))
+    # Remove non alphanumeric characters
+    possibilities = sorted(
+        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
+    # Convert incomplete categories to their proper names
+    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
+    fixed = possibilities + \
+        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
+    genre_list = sorted([i for i in fixed if i not in rem])
+    return genre_list
+
+
+def get_sypnopsis(anime, sypnopsis_df):
+    """
+    Get sypnopsis of an anime from the sypnopsis data frame using decoded ID
+    """
+    if isinstance(anime, int):
+        return sypnopsis_df[sypnopsis_df.MAL_ID == anime].sypnopsis.values[0]
+    if isinstance(anime, str):
+        return sypnopsis_df[sypnopsis_df.Name == anime].sypnopsis.values[0]
+
+
+def get_anime_frame(anime, df):
+    """
+    Get either the anime df containing only specified anime
+    """
+    if isinstance(anime, int):
+        return df[df.anime_id == anime]
+    if isinstance(anime, str):
+        return df[df.eng_version == anime]
+
+
 def get_random_anime(anime_df):
     """
     Get a random anime from anime data frame
     """
-    # anime_df = get_anime_df()
     possible_anime = anime_df['eng_version'].unique().tolist()
     random_anime = random.choice(possible_anime)
     return random_anime
+
+
+def clean(item):
+    """
+    Remove or convert all non-alphabetical characters from a string
+    Strip all Escape characters, accents, and spaces
+    """
+    translations = []
+    if isinstance(item, list):
+        for name in item:
+            x = str(name).translate({ord(c): None for c in string.whitespace})
+            x = re.sub(r'\W+', '', x)
+            x = u"".join([c for c in unicodedata.normalize('NFKD', x)
+                          if not unicodedata.combining(c)])
+
+            translations.append(x.lower())
+    else:
+        x = str(item).translate({ord(c): None for c in string.whitespace})
+        x = re.sub(r'\W+', '', x)
+        x = u"".join([c for c in unicodedata.normalize('NFKD', x)
+                      if not unicodedata.combining(c)])
+        return x.lower()
+
+    return translations
 
 
 def by_genre(anime_df):
@@ -107,22 +291,23 @@ def get_types(df):
 pd.set_option("max_colwidth", None)
 
 
-def anime_recommendations(name, count, anime_df, sypnopsis_df, model, weights,
-                          rating_df, anime_to_index, index_to_anime):
+def anime_recs(name, count, anime_df):
     """
     Get anime recommendations based on similar anime.
     Count is the number of similar anime to return based on highest score
     """
+    sypnopsis_df = get_sypnopses_df()
+    model = get_model()
+    weights, _ = get_weights(model)
+    rating_df, anime_to_index, index_to_anime = main_df_by_anime()
     use_types = get_types(anime_df)
 
-    # Strip all Escape characters and spaces & produce filename
-    translated = str(name).translate(
-        {ord(c): None for c in string.whitespace})
-    translated = re.sub(r'\W+', '', translated)
+    translated = clean(name)
     filename = translated + '.csv'
+    logger.info('filename is %s', filename)
 
     # Get ID and encoded index of input anime
-    index = get_anime_frame(name, anime_df).anime_id.values[0]
+    index = get_anime_frame(translated, anime_df).anime_id.values[0]
     encoded_index = anime_to_index.get(index)
 
     # Get and sort dists
@@ -143,7 +328,8 @@ def anime_recommendations(name, count, anime_df, sypnopsis_df, model, weights,
             sypnopsis = "None"
 
         # Get desired column values for anime
-        anime_name = anime_frame['eng_version'].values[0]
+        anime_name = anime_frame['eng_version'].values[0]  # Cleaned name
+        full = anime_frame['full_eng_version'].values[0]  # Full name
         genre = anime_frame['Genres'].values[0]
         japanese_name = anime_frame['japanese_name'].values[0]
         episodes = anime_frame['Episodes'].values[0]
@@ -159,7 +345,7 @@ def anime_recommendations(name, count, anime_df, sypnopsis_df, model, weights,
         if args.spec_types is True:
             if Type in use_types:
                 arr.append(
-                    {"anime_id": decoded_id, "Name": anime_name,
+                    {"anime_id": decoded_id, "Name": full,
                      "Similarity": similarity, "Genres": genre,
                      'Sypnopsis': sypnopsis, "Episodes": episodes,
                      "Japanese name": japanese_name, "Studios": studios,
@@ -174,7 +360,7 @@ def anime_recommendations(name, count, anime_df, sypnopsis_df, model, weights,
                  "Premiered": premiered, "Score": score,
                  "Type": Type, "Source": source, 'Rating': rating})
 
-    # Convert array to data frame
+    # Convert array to data frame, ensuring the input anime is not included
     Frame = pd.DataFrame(arr)
     Frame = Frame[Frame.anime_id != index].drop(['anime_id'], axis=1)
 
@@ -189,26 +375,11 @@ def anime_recommendations(name, count, anime_df, sypnopsis_df, model, weights,
 
 def go(args):
     # Initialize run
-    run = wandb.init(
-        project=args.project_name,
-        name="similar_anime")
-    anime_df = get_anime_df(
-        project=args.project_name,
-        anime_df=args.anime_df,
-        artifact_type='raw_data')
-    sypnopsis_df = get_sypnopses_df(
-        project=args.project_name,
-        sypnopsis_df=args.sypnopses_df,
-        artifact_type='raw_data')
-    model = get_model(
-        project=args.project_name,
-        model=args.model,
-        artifact_type='h5')
-    weights, _ = get_weights(model)
-    rating_df, anime_to_index, index_to_anime = main_df_by_anime(
-        project=args.project_name,
-        main_df=args.main_df,
-        artifact_type='preprocessed_data')
+    run = wandb.init(project=args.project_name)
+    anime_df = get_anime_df()
+    # logger.info('df head is %s', anime_df['clean_version'].head())
+    # cleaned = list(anime_df['clean_version'])
+    # logger.info('silent is in df is %s', 'silentmobius' in cleaned)
 
     if args.random_anime is True:
         anime_name = get_random_anime(anime_df)
@@ -217,34 +388,29 @@ def go(args):
         anime_name = args.anime_query
 
     # Create data frame file
-    df, filename, name = anime_recommendations(
-        anime_name,
-        int(args.a_query_number),
-        anime_df,
-        sypnopsis_df,
-        model,
-        weights,
-        rating_df,
-        anime_to_index,
-        index_to_anime)
-
-    # Strip all Escape characters and spaces
-    df.to_csv(filename, index=False)
+    df, fn, name = anime_recs(anime_name, int(args.a_query_number), anime_df)
+    df.to_csv(fn, index=False)
 
     # Create artifact
-    logger.info("Creating artifact")
+    logger.info("Creating recommendations artifact")
     description = "Anime most similar to: " + str(anime_name)
-    artifact = wandb.Artifact(
-        name=filename,
-        type="csv",
+    recs_artifact = wandb.Artifact(
+        name=fn,
+        type=args.a_rec_type,
         description=description,
-        metadata={"Queried anime: ": anime_name})
+        metadata={"Queried anime: ": anime_name,
+                  "Model used: ": args.model,
+                  "Main data frame used: ": args.main_df,
+                  "Filename: ": fn})
 
     # Upload artifact to wandb
-    artifact.add_file(filename)
+    recs_artifact.add_file(fn)
     logger.info("Logging artifact for anime %s", anime_name)
-    run.log_artifact(artifact)
-    artifact.wait()
+    run.log_artifact(recs_artifact)
+    recs_artifact.wait()
+
+    if args.save_sim_anime is False:
+        os.remove(fn)
 
 
 if __name__ == "__main__":
@@ -254,16 +420,30 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--weights",
+        "--main_df_type",
         type=str,
-        help="Wandb artifact with .h5 file of all neural network weights",
+        help="Artifact type of main data frame",
         required=True
     )
 
     parser.add_argument(
-        "--history",
+        "--anime_df_type",
         type=str,
-        help="Wandb artifact with .csv file of neural network run history",
+        help="Artifact type of anime df",
+        required=True
+    )
+
+    parser.add_argument(
+        "--sypnopsis_df_type",
+        type=str,
+        help='Artifact type of sypnopses df',
+        required=True
+    )
+
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        help='Artifact type of neural network',
         required=True
     )
 
@@ -348,6 +528,20 @@ if __name__ == "__main__":
         "--spec_types",
         type=lambda x: bool(strtobool(x)),
         help="Boolean of whether or not to specify types of anime to return",
+        required=True
+    )
+
+    parser.add_argument(
+        "--a_rec_type",
+        type=str,
+        help="Type of artifact anime recommendations are saved as",
+        required=True
+    )
+
+    parser.add_argument(
+        "--save_sim_anime",
+        type=lambda x: bool(strtobool(x)),
+        help="Boolean of whether to save anime recs to local machine",
         required=True
     )
 
