@@ -3,7 +3,6 @@ main:
   project_name: anime_recommendations
   experiment_name: development
   execute_steps:
-    #- scrape
     - download
     - preprocess
     - neural_network
@@ -12,19 +11,19 @@ main:
     - user_prefs
     - user_recs
     - model_recs
-    #- API
+    # - API
   random_seed: 42
   interval: 3000 # Time in milliseconds to display figures
 
-data:
+data: # Data artifacts
   stats_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet?raw=True"
   synopses_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/synopses.csv?raw=True"
   all_anime_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/all_anime.csv?raw=True"
 
-  stats_artifact: "full_data_set.parquet"
-  stats_artifact_type: "raw_data"
-  stats_artifact_description: "Main statistics file."
-  stats_artifact_latest: "full_data_set.parquet:v0"
+  stats_artifact: "full_data_set.parquet" # Raw version of main data frame
+  stats_artifact_type: "raw_data" # Type of raw version of main data frame
+  stats_artifact_description: "Main raw statistics file." # Description of raw version of main data frame
+  stats_artifact_latest: "full_data_set.parquet:v0" # Used artifact version of main data frame
 
   synopses_artifact: "synopses.csv"
   synopses_artifact_type: "raw_data"
@@ -41,17 +40,17 @@ data:
   preprocessed_artifact_description: "Preprocessed stats file to be used for model training"
   preprocessed_artifact_latest: "preprocessed_stats.parquet:v2" # Currently with <400 reviews removed
 
-  num_reviews: 400
-  drop_half_watched: False
-  drop_unwatched: False
-  drop_plan: False
+  num_reviews: 400 # Minimum number of reviews a user must have made in order to be considered
+  drop_half_watched: False # Drop instances where a user has watched less than half the episodes
+  drop_unwatched: False # Drop instnaces where a user hasn't watched any episodes
+  drop_plan: False # Drop instances where a user only plans to watch the anime
 
-  save_raw_locally: False
-  save_clean_locally: False
+  save_raw_locally: False # Whether to save raw data locally
+  save_clean_locally: False # Whether to save clean data locally
   from_local: True # Use local raw data for download step
   local_fname: '/Applications/python_files/anime_recommendations/data/animelist.csv' # Filename of local raw data
 
-model:
+model: # Settings for neural network
   test_size: 10000
   kernel_initializer: 'he_normal'
   TPU_INIT: False
@@ -84,27 +83,29 @@ model:
   an_weights_fn: './wandb_anime_weights.csv'
   id_weights_fn: './wandb_user_weights.csv'
 
-nn_arts:
-  main_anime_weights: "wandb_anime_weights.csv:v2"
-  main_user_weights: "wandb_user_weights.csv:v2"
-  main_weights_art: "wandb_anime_weights.h5:v8"
-  main_history: "wandb_anime_nn_history.csv:v8"
-  main_model: "wandb_anime_nn.h5:v6"
-  model_type: "h5"
+nn_arts: # Names of main/best neural network artifacts
+  main_anime_weights: "wandb_anime_weights.csv:v2" # Anime weights from main neural network model
+  main_user_weights: "wandb_user_weights.csv:v2" # User weights from main neural network model
+  main_weights_art: "wandb_anime_weights.h5:v8" # All weights from main neural network model
+  main_history: "wandb_anime_nn_history.csv:v8" # Hisotry file for main neural network
+  main_model: "wandb_anime_nn.h5:v6" # Main neural network artifact name
+  model_type: "h5" # Neural network artifact type
 
-similarity:
-  anime_query: "Rental Magica" # Input anime to query. Change random_anime to False in order to use.
-  random_anime: True # Whether to choose a random anime to assess rather than an input anime
+similarity: # Arguments for anime-based recommendations in similar_anime.py
+  anime_query: "Yuu☆Yuu☆Hakusho" #"SilentMöbius" # Input anime to query. Change random_anime to False in order to use.
+  random_anime: False # Whether to choose a random anime to assess rather than an input anime
   a_query_number: 10 # Number of similar anime to return
   id_query_number: 10 # Number of similar IDs to return
   max_ratings: 600 # Limit to this many ratings if random_user is True
   random_user: True # Whether or not to use a random user as the sample
-  genres: ["Action", "Comedy", None]
+  genres: ["Action", "Comedy", None] # Genres to include in recommendations
   spec_genres: False # Whether or not to limit returned recommendations to specific genres
   types: ["TV", "Movie"] # Potentially ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
   spec_types: True # Whether or not to specify types
+  a_rec_type: 'csv' #Type of anime recommendations artifacts to local machine
+  save_sim_anime: True # Whether to save anime recommendation artifacts to local machine
 
-users:
+users: # Arguments for user-based recommendations in user_prefs.py, similar_users.py, and user_recs.py
   favorite_percentile: 80 # Percentile of ratings to consider as favorites (i.e. 80 means the top 20% ratings are favorites)
   cloud_width: 600 # Pixel width of word cloud figures to display. Higher widths increase processing time
   cloud_height: 350 # Pixel height of word cloud figures to display. Higher heights increase processing time
@@ -115,33 +116,40 @@ users:
   save_faves: True # Whether to save clouds and CSV file from user_prefs.py to local machine
   latest_user_prefs: 'user_prefs.csv:latest' # Csv file of latest user preferences
   sim_user_type: 'csv' # Type of wandb artifact the list of similar users csv file was saved as
-  user_query: 109160 # A User ID to query.
+  user_query: 109160 # A User ID to query if use_local_user is True
   use_local_user: False #Boolean of whether to use the user_query found in config file rather than the artifact
   prefs_local_user: False # boolean of whether to use the user_query found in config file for user_prefs.py
-  user_recs_fn: "user_recs.csv"
-  save_user_recs: True
-  user_num_recs: 10
+  user_recs_fn: "user_recs.csv" # Artifact name of user recommendations in user_recs.py
+  save_user_recs: True # Boolean of whether to save users recommendations in user_recs.py
+  user_num_recs: 10 # Number of anime recommendations to return in user_recs.py
   use_random_user: False # Whether to use a random user in similar_users.py
   num_faves: 2 # Number of a similar user's favorite anime to return in similar_users.py
-  TV_only: True
-  sim_users_fn: 'similar_users.csv' # Filename of similar users artifact
+  TV_only: True # Whether to include only TV shows in user_recs.py
+  sim_users_fn: 'similar_users.csv' # Filename of similar users artifact in similar_users.py
   sim_users_type: 'csv' # Artifact type of similar users df
   sim_users_latest: 'similar_users.csv:latest' # Latest artifact for similar users
   ID_fn: "ID_used.csv" # from similar_users.py, the ID used for MLflow
-  flow_user: "ID_used.csv:latest" # latest artifact taken from similar_users.py
-  ID_type: "csv" # Type of artifact the user ID was saved as
-  prefs_from_flow: True # Whether to take the user ID created in mlflow for user_prefs.py
+  flow_user: "ID_used.csv:latest" # latest artifact taken from similar_users.py, ID used for MLflow in user_prefs.py, user_recs.py, and model_recs.py
+  ID_type: "csv" # Type of artifact the user ID was saved as in similar_users.py
+  prefs_from_flow: True # Whether to take the user ID created in mlflow as opposed to a random user or a user specified in config for user_prefs.py
   cloud_type: "png" # Type of genre and source cloud artifacts for user_prefs.py
   fave_art_type: "csv" # Type of data frame containing favorite genres and sources for user_prefs.py
   pref_random_user: False # Whether to use a random user for user_prefs.py
+  recs_random_user: False # Whether to use a random user for user_prefs.py ################
+  user_recs_query: 109160 # User to query in user_recs.py
+  recs_from_flow: True # Whether to get user recommendations from the latest similar users artifact in user_recs.py ############
+  user_recs_fn: 'user_based_recommendations.csv' # Artifact name for user-based recommendations in user_recs.py #################
+  user_recs_type: 'csv' # Artifact type of user-based recommendations csv file in user_recs.py ################
 
 model_recs: # For recommendations based on the ranking model
-  model_recs_fn: 'model_recs.csv'
-  save_model_recs: True
-  model_num_recs: 10
-  specify_types: True
-  anime_types: ["TV", "Movie"]
-  model_genres: ['Action', 'Comedy', None]
-  specify_genres: False
-  min_score: 0.00
-  max_score: 10.00
+  model_recs_fn: 'model_recs.csv' # Artifact filename for ranking-based anime recommendations
+  save_model_recs: True # Whether to save ranking-based anime recs to local machine
+  model_num_recs: 10 # Number of ranking-based anime recs to return
+  specify_types: True # Whether to specify the types of anime to return in ranking-based recs
+  anime_types: ["TV", "Movie"] # Types of anime to return in ranking-based recs
+  model_genres: ['Action', 'Comedy', None] # Genres to include in ranking-based recs
+  specify_genres: False # Whether to specify genres in ranking-based recs
+  min_score: 0.00 # Minimum rating of anime recs to return
+  max_score: 10.00 # Maximum rating of anime recs to return
+  model_recs_query: 109160
+  model_recs_type: 'csv' ####################
