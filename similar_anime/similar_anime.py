@@ -11,7 +11,7 @@ import random
 import ast
 import re
 import tensorflow as tf
-
+# [★, ♥, ☆, ♡, ½, ß, ²]
 
 logging.basicConfig(
     filename='./similar_anime.log',  # Path to log file
@@ -185,7 +185,7 @@ def get_anime_frame(anime, df):
     if isinstance(anime, int):
         return df[df.anime_id == anime]
     if isinstance(anime, str):
-        return df[df.eng_version == anime]
+        return df[df.Name == anime]
 
 
 def get_random_anime(anime_df):
@@ -203,8 +203,12 @@ def clean(item):
     Strip all Escape characters, accents, and spaces
     """
     translations = []
+    irregular = ['★', '♥', '☆', '♡', '½', 'ß', '²']
     if isinstance(item, list):
         for name in item:
+            for irr in irregular:
+                if irr in name:
+                    name = name.replace(irr, ' ')
             x = str(name).translate({ord(c): None for c in string.whitespace})
             x = re.sub(r'\W+', '', x)
             x = u"".join([c for c in unicodedata.normalize('NFKD', x)
@@ -212,6 +216,9 @@ def clean(item):
 
             translations.append(x.lower())
     else:
+        for irr in irregular:
+            if irr in item:
+                item = item.replace(irr, ' ')
         x = str(item).translate({ord(c): None for c in string.whitespace})
         x = re.sub(r'\W+', '', x)
         x = u"".join([c for c in unicodedata.normalize('NFKD', x)
@@ -307,7 +314,12 @@ def anime_recs(name, count, anime_df):
     logger.info('filename is %s', filename)
 
     # Get ID and encoded index of input anime
-    index = get_anime_frame(translated, anime_df).anime_id.values[0]
+    try:
+        index = get_anime_frame(translated, anime_df).anime_id.values[0]
+    except IndexError:
+        index = get_anime_frame(name, anime_df).anime_id.values[0]  # Added
+
+    logger.info('index is %s', index)
     encoded_index = anime_to_index.get(index)
 
     # Get and sort dists
@@ -328,8 +340,7 @@ def anime_recs(name, count, anime_df):
             sypnopsis = "None"
 
         # Get desired column values for anime
-        anime_name = anime_frame['eng_version'].values[0]  # Cleaned name
-        full = anime_frame['full_eng_version'].values[0]  # Full name
+        full = anime_frame['full_eng_version'].values[0]
         genre = anime_frame['Genres'].values[0]
         japanese_name = anime_frame['japanese_name'].values[0]
         episodes = anime_frame['Episodes'].values[0]
@@ -353,7 +364,7 @@ def anime_recs(name, count, anime_df):
                      "Type": Type, "Source": source, 'Rating': rating})
         else:
             arr.append(
-                {"anime_id": decoded_id, "Name": anime_name,
+                {"anime_id": decoded_id, "Name": full,
                  "Similarity": similarity, "Genres": genre,
                  'Sypnopsis': sypnopsis, "Episodes": episodes,
                  "Japanese name": japanese_name, "Studios": studios,
@@ -378,8 +389,10 @@ def go(args):
     run = wandb.init(project=args.project_name)
     anime_df = get_anime_df()
     # logger.info('df head is %s', anime_df['clean_version'].head())
-    # cleaned = list(anime_df['clean_version'])
-    # logger.info('silent is in df is %s', 'silentmobius' in cleaned)
+    # cleaned = list(anime_df['eng_version'])
+    x = list(anime_df['Name'])
+    # logger.info('yu is in df is %s', "Yuu☆Yuu☆Hakusho" in x)
+    # logger.info('silent is in df is %s', 'yuuyuuhakusho' in cleaned)
 
     if args.random_anime is True:
         anime_name = get_random_anime(anime_df)
@@ -387,6 +400,7 @@ def go(args):
     else:
         anime_name = args.anime_query
 
+    logger.info('yu is in df is %s', anime_name in x)
     # Create data frame file
     df, fn, name = anime_recs(anime_name, int(args.a_query_number), anime_df)
     df.to_csv(fn, index=False)
