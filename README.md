@@ -12,7 +12,7 @@ The workflow is:
 7) Create an API for live recommendations
 
 
-Due to the large amount of data, the model was trained using [Tensor Processing Units/TPUs](https://www.tensorflow.org/guide/tpu), Google's application-specific integrated circuits (ASICs) which drastically accelerate machine learning workloads. If you intend to run the project using a Colab notebook, make sure that your hardware accelerator is set to TPU by checking your notebook settings: 
+Due to the amount of data, the model was trained using [Tensor Processing Units/TPUs](https://www.tensorflow.org/guide/tpu), Google's application-specific integrated circuits (ASICs) which drastically accelerate machine learning workloads. If you intend to run the project using a Colab notebook, make sure that your hardware accelerator is set to TPU by checking your notebook settings: 
 
 `Runtime > Change runtime type > Hardware accelerator > TPU`
 
