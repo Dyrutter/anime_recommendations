@@ -55,6 +55,12 @@ entry_points:
       save_sim_anime:
         description: Boolean of whether to save anime recommendation artifacts
         type: str
+      ID_emb_name:
+        description: Name of User ID embedding layer in neural network model
+        type: str
+      anime_emb_name:
+        description: Name of anime ID embedding layer in neural network model
+        type: str
 
     command: >-
       python similar_anime.py --main_df_type {main_df_type} \
@@ -73,4 +79,6 @@ entry_points:
                               --types {types} \
                               --spec_types {spec_types} \
                               --a_rec_type {a_rec_type} \
-                              --save_sim_anime {save_sim_anime}
+                              --save_sim_anime {save_sim_anime} \
+                              --ID_emb_name {ID_emb_name} \
+                              --anime_emb_name {anime_emb_name}
