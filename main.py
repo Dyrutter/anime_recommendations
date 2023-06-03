@@ -113,15 +113,20 @@ def go(config: DictConfig):
                 "input_data": config["data"]["preprocessed_artifact_latest"],
                 "project_name": config["main"]["project_name"],
                 "model_artifact": config["model"]["model_artifact"],
-                "history_csv": config["model"]["history_csv"]})
+                "history_csv": config["model"]["history_csv"],
+                "ID_emb_name": config["model"]["ID_emb_name"],
+                "anime_emb_name": config["model"]["anime_emb_name"],
+                "merged_name": config["model"]["merged_name"]})
 
     if "similar_anime" in steps_to_execute:
         _ = mlflow.run(
             os.path.join(root_path, "similar_anime"),
             entry_point="main",
             parameters={
-                "weights": config["nn_arts"]["main_weights_art"],
-                "history": config["nn_arts"]["main_history"],
+                "anime_df_type": config["data"]["all_anime_type"],
+                "main_df_type": config["data"]["preprocessed_artifact_type"],
+                "sypnopsis_df_type": config["data"]["synopses_artifact_type"],
+                "model_type": config["nn_arts"]["model_type"],
                 "model": config["nn_arts"]["main_model"],
                 "project_name": config["main"]["project_name"],
                 "main_df": config["data"]["preprocessed_artifact_latest"],
@@ -133,7 +138,9 @@ def go(config: DictConfig):
                 "genres": config["similarity"]["genres"],
                 "spec_genres": config["similarity"]["spec_genres"],
                 "types": config["similarity"]["types"],
-                "spec_types": config["similarity"]["spec_types"]})
+                "spec_types": config["similarity"]["spec_types"],
+                "a_rec_type": config["similarity"]["a_rec_type"],
+                "save_sim_anime": config["similarity"]["save_sim_anime"]})
 
     if "similar_users" in steps_to_execute:
         _ = mlflow.run(
@@ -187,7 +194,7 @@ def go(config: DictConfig):
                 "cloud_type": config["users"]["cloud_type"],
                 "fave_art_type": config["users"]["fave_art_type"]})
 
-    if "user_recs" in steps_to_execute:
+    if "user_recs" in steps_to_execute:  # Add flow user, types, bool clouds
         _ = mlflow.run(
             os.path.join(root_path, "user_recs"),
             entry_point="main",
@@ -195,8 +202,8 @@ def go(config: DictConfig):
                 "main_df": config["data"]["preprocessed_artifact_latest"],
                 "project_name": config["main"]["project_name"],
                 "anime_df": config["data"]["all_anime_artifact_latest"],
-                "user_query": config["users"]["user_query"],
-                "use_random_user": config["users"]["use_random_user"],
+                "user_recs_query": config["users"]["user_recs_query"],
+                "use_random_user": config["users"]["recs_random_user"],
                 "user_recs_fn": config["users"]["user_recs_fn"],
                 "save_user_recs": config["users"]["save_user_recs"],
                 "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
@@ -227,7 +234,7 @@ def go(config: DictConfig):
                 "model": config["nn_arts"]["main_model"],
                 "model_type": config["nn_arts"]["model_type"],
                 "user_query": config["users"]["user_query"],
-                "random_user": config["similarity"]["random_user"],
+                "random_user": config["users"]["model_recs_query"],
                 "model_recs_fn": config["model_recs"]["model_recs_fn"],
                 "save_model_recs": config["model_recs"]["save_model_recs"],
                 "model_num_recs": config["model_recs"]["model_num_recs"],
