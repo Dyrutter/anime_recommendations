@@ -82,6 +82,9 @@ model: # Settings for neural network
   user_weights: 'wandb_user_weights.csv' # Numpy array of user weights
   an_weights_fn: './wandb_anime_weights.csv'
   id_weights_fn: './wandb_user_weights.csv'
+  ID_emb_name: 'user_embedding' # Name of user weights layer
+  anime_emb_name: 'anime_embedding' # Name of anime weights layer
+  merged_name: 'dot_product' # Name of merged layer
 
 nn_arts: # Names of main/best neural network artifacts
   main_anime_weights: "wandb_anime_weights.csv:v2" # Anime weights from main neural network model
@@ -138,7 +141,6 @@ users: # Arguments for user-based recommendations in user_prefs.py, similar_user
   recs_random_user: False # Whether to use a random user for user_prefs.py ################
   user_recs_query: 109160 # User to query in user_recs.py
   recs_from_flow: True # Whether to get user recommendations from the latest similar users artifact in user_recs.py ############
-  user_recs_fn: 'user_based_recommendations.csv' # Artifact name for user-based recommendations in user_recs.py #################
   user_recs_type: 'csv' # Artifact type of user-based recommendations csv file in user_recs.py ################
 
 model_recs: # For recommendations based on the ranking model
