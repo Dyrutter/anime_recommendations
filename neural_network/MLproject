@@ -88,6 +88,15 @@ entry_points:
       history_csv:
         description: filename of model's history csv
         type: str
+      ID_emb_name:
+        description: Name of User ID embedding layer in neural network model
+        type: str
+      anime_emb_name:
+        description: Name of anime ID embedding layer in neural network model
+        type: str
+      merged_name:
+        description: Name of merged layer in neural network model
+        type: str
 
     command: >-
       python neural_network.py --test_size {test_size} \
@@ -117,4 +126,7 @@ entry_points:
                               --input_data {input_data} \
                               --project_name {project_name} \
                               --model_artifact {model_artifact} \
-                              --history_csv {history_csv}
+                              --history_csv {history_csv} \
+                              --ID_emb_name {ID_emb_name} \
+                              --anime_emb_name {anime_emb_name} \
+                              --merged_name {merged_name}
