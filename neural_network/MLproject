@@ -97,6 +97,21 @@ entry_points:
       merged_name:
         description: Name of merged layer in neural network model
         type: str
+      main_df_type:
+        description: Artifact type of main data frame
+        type: str
+      model_type:
+        description: Artifact type of neural network model
+        type: str
+      history_type:
+        description: Artifact type of history csv file
+        type: str
+      weights_type:
+        description: Artifact type of weights file
+        type: str
+      model_metrics:
+        description: List of model metrics of format ['metric_1', 'metric_2'...]
+        type: str
 
     command: >-
       python neural_network.py --test_size {test_size} \
@@ -129,4 +144,9 @@ entry_points:
                               --history_csv {history_csv} \
                               --ID_emb_name {ID_emb_name} \
                               --anime_emb_name {anime_emb_name} \
-                              --merged_name {merged_name}
+                              --merged_name {merged_name} \
+                              --main_df_type {main_df_type} \
+                              --model_type {model_type} \
+                              --history_type {history_type} \
+                              --weights_type {weights_type} \
+                              --model_metrics {model_metrics}
