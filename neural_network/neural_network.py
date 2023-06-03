@@ -1,3 +1,4 @@
+# Still need df type, model type, history type
 import argparse
 import logging
 import wandb
@@ -65,27 +66,25 @@ def neural_network():
     df, n_users, n_animes = get_df()
     # Both inputs are 1-dimensional
     user = tfkl.Input(name='user', shape=[1])
-    user_embedding = tfkl.Embedding(name='user_embedding',
+    user_embedding = tfkl.Embedding(name=args.ID_emb_name,
                                     input_dim=n_users,
                                     output_dim=int(args.embedding_size))(user)
 
     anime = tfkl.Input(name='anime', shape=[1])
     anime_embedding = tfkl.Embedding(
-        name='anime_embedding',
+        name=args.anime_emb_name,
         input_dim=n_animes,
         output_dim=int(args.embedding_size))(anime)
 
     # Merge layer with a dot product along second axis
     merged = tfkl.Dot(
-        name='dot_product',
+        name=args.merged_name,
         normalize=True,
         axes=2)([user_embedding, anime_embedding])
 
-    # Reshape to be a single number (shape will be (None, 1))
+    # Reshape (shape will be (None, 1))
     merged = tfkl.Flatten()(merged)
-    out = tfkl.Dense(
-        1,
-        kernel_initializer=args.kernel_initializer)(merged)
+    out = tfkl.Dense(1, kernel_initializer=args.kernel_initializer)(merged)
 
     norm = tfkl.BatchNormalization()(out)
     model = tfkl.Activation(args.activation_function)(norm)
@@ -495,6 +494,27 @@ if __name__ == "__main__":
         "--history_csv",
         type=str,
         help="Name of model history csv file to save",
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_emb_name",
+        type=str,
+        help="Name of user weight layer in neural network model",
+        required=True
+    )
+
+    parser.add_argument(
+        "--anime_emb_name",
+        type=str,
+        help="Name of anime weight layer in neural network model",
+        required=True
+    )
+
+    parser.add_argument(
+        "--merged_name",
+        type=str,
+        help="Name of merged weight layer in neural network model",
         required=True
     )
 
