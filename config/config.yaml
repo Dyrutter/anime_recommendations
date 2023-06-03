@@ -85,6 +85,7 @@ model: # Settings for neural network
   ID_emb_name: 'user_embedding' # Name of user weights layer
   anime_emb_name: 'anime_embedding' # Name of anime weights layer
   merged_name: 'dot_product' # Name of merged layer
+  model_metrics: ["mae", "mse"] # Metrics to use for model construction
 
 nn_arts: # Names of main/best neural network artifacts
   main_anime_weights: "wandb_anime_weights.csv:v2" # Anime weights from main neural network model
@@ -92,7 +93,9 @@ nn_arts: # Names of main/best neural network artifacts
   main_weights_art: "wandb_anime_weights.h5:v8" # All weights from main neural network model
   main_history: "wandb_anime_nn_history.csv:v8" # Hisotry file for main neural network
   main_model: "wandb_anime_nn.h5:v6" # Main neural network artifact name
-  model_type: "h5" # Neural network artifact type
+  model_type: "h5" # Neural network model artifact type
+  history_type: "history_csv" # Neural network history artifact type
+  weights_type: "h5" # Neural network weights artifact type
 
 similarity: # Arguments for anime-based recommendations in similar_anime.py
   anime_query: "Yuu☆Yuu☆Hakusho" #"SilentMöbius" # Input anime to query. Change random_anime to False in order to use.
@@ -153,5 +156,6 @@ model_recs: # For recommendations based on the ranking model
   specify_genres: False # Whether to specify genres in ranking-based recs
   min_score: 0.00 # Minimum rating of anime recs to return
   max_score: 10.00 # Maximum rating of anime recs to return
-  model_recs_query: 109160
-  model_recs_type: 'csv' ####################
+  model_recs_query: 109160 # User query for model recs if a local user is queried
+  model_recs_type: 'csv' # Artifact type of model recs ######
+  mod_recs_from_flow: True ######
