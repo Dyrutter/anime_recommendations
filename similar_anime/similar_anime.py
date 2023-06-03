@@ -11,7 +11,6 @@ import random
 import ast
 import re
 import tensorflow as tf
-# [★, ♥, ☆, ♡, ½, ß, ²]
 
 logging.basicConfig(
     filename='./similar_anime.log',  # Path to log file
@@ -63,7 +62,8 @@ def main_df_by_anime():
 
 def get_anime_df():
     """
-    Get data frame containing stats on each anime
+    Get data frame containing stats on each anime from wandb.
+    Create column of cleaned anime names for filename usage.
     """
     run = wandb.init(project=args.project_name)
     artifact = run.use_artifact(args.anime_df, type=args.anime_df_type)
@@ -128,6 +128,9 @@ def get_sypnopses_df():
 
 
 def get_model():
+    """
+    Download neural network model from wandb
+    """
     run = wandb.init(project=args.project_name)
     artifact = run.use_artifact(args.model, type=args.model_type)
     artifact_path = artifact.file()
@@ -136,12 +139,20 @@ def get_model():
 
 
 def get_weights(model):
-    anime_weights = model.get_layer('anime_embedding')
+    """
+    Extract weights from model and apply Frobenius normalization.
+    Inputs:
+        model: neural network model
+    Outputs:
+        anime_weights: norm weights associated with anime embedding layer
+        user_weights: norm weights associated with user embedding layer
+    """
+    anime_weights = model.get_layer(args.anime_emb_name)
     anime_weights = anime_weights.get_weights()[0]
     anime_weights = anime_weights / np.linalg.norm(
         anime_weights, axis=1).reshape((-1, 1))
 
-    user_weights = model.get_layer('user_embedding')
+    user_weights = model.get_layer(args.ID_emb_name)
     user_weights = user_weights.get_weights()[0]
     user_weights = user_weights / np.linalg.norm(
         user_weights, axis=1).reshape((-1, 1))
@@ -199,8 +210,9 @@ def get_random_anime(anime_df):
 
 def clean(item):
     """
-    Remove or convert all non-alphabetical characters from a string
-    Strip all Escape characters, accents, and spaces
+    Remove or convert all non-alphabetical characters from a string or list
+    of strings.
+    Strip all Escape characters, accents, spaces, and irregular characters
     """
     translations = []
     irregular = ['★', '♥', '☆', '♡', '½', 'ß', '²']
@@ -388,11 +400,6 @@ def go(args):
     # Initialize run
     run = wandb.init(project=args.project_name)
     anime_df = get_anime_df()
-    # logger.info('df head is %s', anime_df['clean_version'].head())
-    # cleaned = list(anime_df['eng_version'])
-    x = list(anime_df['Name'])
-    # logger.info('yu is in df is %s', "Yuu☆Yuu☆Hakusho" in x)
-    # logger.info('silent is in df is %s', 'yuuyuuhakusho' in cleaned)
 
     if args.random_anime is True:
         anime_name = get_random_anime(anime_df)
@@ -400,7 +407,6 @@ def go(args):
     else:
         anime_name = args.anime_query
 
-    logger.info('yu is in df is %s', anime_name in x)
     # Create data frame file
     df, fn, name = anime_recs(anime_name, int(args.a_query_number), anime_df)
     df.to_csv(fn, index=False)
@@ -556,6 +562,20 @@ if __name__ == "__main__":
         "--save_sim_anime",
         type=lambda x: bool(strtobool(x)),
         help="Boolean of whether to save anime recs to local machine",
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_emb_name",
+        type=str,
+        help="Name of user weight layer in neural network model",
+        required=True
+    )
+
+    parser.add_argument(
+        "--anime_emb_name",
+        type=str,
+        help="Name of anime weight layer in neural network model",
         required=True
     )
 
