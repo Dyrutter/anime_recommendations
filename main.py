@@ -116,7 +116,12 @@ def go(config: DictConfig):
                 "history_csv": config["model"]["history_csv"],
                 "ID_emb_name": config["model"]["ID_emb_name"],
                 "anime_emb_name": config["model"]["anime_emb_name"],
-                "merged_name": config["model"]["merged_name"]})
+                "merged_name": config["model"]["merged_name"],
+                "main_df_type": config["data"]["preprocessed_artifact_type"],
+                "model_type": config["nn_arts"]["model_type"],
+                "history_type": config["nn_arts"]["history_type"],
+                "weights_type": config["nn_arts"]["weights_type"],
+                "model_metrics": config["model"]["model_metrics"]})
 
     if "similar_anime" in steps_to_execute:
         _ = mlflow.run(
@@ -140,7 +145,9 @@ def go(config: DictConfig):
                 "types": config["similarity"]["types"],
                 "spec_types": config["similarity"]["spec_types"],
                 "a_rec_type": config["similarity"]["a_rec_type"],
-                "save_sim_anime": config["similarity"]["save_sim_anime"]})
+                "save_sim_anime": config["similarity"]["save_sim_anime"],
+                "ID_emb_name": config["model"]["ID_emb_name"],
+                "anime_emb_name": config["model"]["anime_emb_name"]})
 
     if "similar_users" in steps_to_execute:
         _ = mlflow.run(
