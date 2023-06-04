@@ -1,21 +1,24 @@
-from helper_functions.load import get_anime_frame, get_sypnopsis
-from helper_functions.load import get_weights, get_sypnopses_df
-from helper_functions.load import main_df_by_id, get_anime_df, get_model
-from helper_functions.User import get_random_user, genre_cloud, source_cloud
-from helper_functions.User import fave_genres, fave_sources
-import string
-import argparse
-import logging
-import os
-import wandb
-import pandas as pd
-from distutils.util import strtobool
-import re
-import numpy as np
+# Add functions, Create function for determining ID and similar user artifacts
 import sys
 from pathlib import Path
 path_root = Path(__file__).parents[1]
 sys.path.append(str(path_root))
+import numpy as np
+import re
+from distutils.util import strtobool
+import pandas as pd
+import wandb
+import os
+import logging
+import argparse
+import string
+import regex
+import unicodedata
+from helper_functions.User import fave_genres, fave_sources
+from helper_functions.User import get_random_user, genre_cloud, source_cloud
+from helper_functions.load import main_df_by_id, get_anime_df, get_model
+from helper_functions.load import get_weights, get_sypnopses_df
+from helper_functions.load import get_anime_frame, get_sypnopsis
 
 
 logging.basicConfig(
@@ -30,20 +33,27 @@ logger = logging.getLogger()
 
 def clean(item):
     """
-    Pepare either a string or list of strings to csv format
+    Remove or convert all non-alphabetical characters from a string or list
+    of strings.
+    Strip all Escape characters, accents, spaces, and irregular characters
     """
     translations = []
+    irregular = ['★', '♥', '☆', '♡', '½', 'ß', '²']
     if isinstance(item, list):
         for name in item:
-            translated = str(name).translate(
-                {ord(c): None for c in string.whitespace})
-            translated = re.sub(r'\W+', '', translated)
-            translations.append(translated.lower())
+            for irr in irregular:
+                if irr in name:
+                    name = name.replace(irr, ' ')
+            x = str(name).translate({ord(c): None for c in string.whitespace})
+            x = re.sub(r'\W+', '', x)
+            translations.append(x.lower())
     else:
-        translated = str(item).translate(
-            {ord(c): None for c in string.whitespace})
-        translations = re.sub(r'\W+', '', translated)
-        translations = translations.lower()
+        for irr in irregular:
+            if irr in item:
+                item = item.replace(irr, ' ')
+        x = str(item).translate({ord(c): None for c in string.whitespace})
+        x = re.sub(r'\W+', '', x)
+        return x.lower()
 
     return translations
 
@@ -92,6 +102,14 @@ def get_fave_df(genres, sources, ID, save=False):
     else:
         return sources
 
+def get_anime_frame(anime, df):
+    """
+    Get either the anime df containing only specified anime
+    """
+    if isinstance(anime, int):
+        return df[df.anime_id == anime]
+    if isinstance(anime, str):
+        return df[df.Name == anime]
 
 def similar_user_recs(
         user,
@@ -109,17 +127,14 @@ def similar_user_recs(
     # Prioritized
     user_pref = get_fave_df(genre_df, source_df, user)
 
-    # user_pref['eng'] = clean(user_pref.eng_version.values.tolist())
     recommended_animes, anime_list = [], []
     eng_versions = user_pref.eng_version.values.tolist()
-    # clean_eng = clean(eng_versions)
+
     # Get list of similar user IDs
     for user_id in similar_users.similar_users.values:
         genre_df = fave_genres(user_id, rating_df, anime_df)
         source_df = fave_sources(user_id, rating_df, anime_df)
-        # pref_list = get_fave_df(genre_df, source_df, user_id)
         pref_list = get_fave_df(genre_df, source_df, user)
-        # pref_list['eng'] = clean(pref_list.eng_version.values.tolist())
         # Favorites of similar users that input user has not watched
         pref_list = pref_list[~pref_list.eng_version.isin(eng_versions)]
         anime_list.append(pref_list.eng_version.values)
@@ -156,27 +171,26 @@ def similar_user_recs(
 
 def go(args):
     # Initialize run
-    run = wandb.init(
-        project=args.project_name,
+    run = wandb.init(project=args.project_name,
         name="user_genre_based_preferences_recommendations")
 
     df, user_to_index, index_to_user = main_df_by_id(
         project=args.project_name,
         main_df=args.main_df,
-        artifact_type='preprocessed_data')
+        artifact_type=args.main_df_type)
 
     anime_df = get_anime_df(
         project=args.project_name,
         anime_df=args.anime_df,
-        artifact_type='raw_data')
+        artifact_type=args.anime_df_type)
     sypnopsis_df = get_sypnopses_df(
         project=args.project_name,
         sypnopsis_df=args.sypnopses_df,
-        artifact_type='raw_data')
+        artifact_type=args.sypnopsis_df_type)
     model = get_model(
         project=args.project_name,
         model=args.model,
-        artifact_type='h5')
+        artifact_type=args.model_type)
     anime_weights, user_weights = get_weights(model)
 
     if args.use_random_user is True:
@@ -302,13 +316,6 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--use_random_user",
-        type=lambda x: bool(strtobool(x)),
-        help="Decide whether or not to use a random user id",
-        required=True
-    )
-
-    parser.add_argument(
         "--user_recs_fn",
         type=str,
         help="Artifact name of user recommendations csv file",
@@ -401,6 +408,104 @@ if __name__ == "__main__":
         "--model",
         type=str,
         help="Wandb artifact with .h5 file of neural network",
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_emb_name",
+        type=str,
+        help="Name of user weight layer in neural network model",
+        required=True
+    )
+
+    parser.add_argument(
+        "--anime_emb_name",
+        type=str,
+        help="Name of anime weight layer in neural network model",
+        required=True
+    )
+
+    parser.add_argument(
+        "--main_df_type",
+        type=str,
+        help="Artifact type of main data frame",
+        required=True
+    )
+
+    parser.add_argument(
+        "--anime_df_type",
+        type=str,
+        help="Artifact type of anime df",
+        required=True
+    )
+
+    parser.add_argument(
+        "--sypnopsis_df_type",
+        type=str,
+        help='Artifact type of sypnopses df',
+        required=True
+    )
+
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        help='Artifact type of neural network',
+        required=True
+    )
+
+    parser.add_argument(
+        "--user_recs_random",
+        type=lambda x: bool(strtobool(x)),
+        help="Boolean, whether to user a random user",
+        required=True
+    )
+
+    parser.add_argument(
+        "--recs_sim_from_flow",
+        type=lambda x: bool(strtobool(x)),
+        help="Boolean, whether to use similar users artifact",
+        required=True
+    )
+
+    parser.add_argument(
+        "--user_recs_type",
+        type=str,
+        help="Type of user recs artifact to create",
+        required=True
+    )
+
+    parser.add_argument(
+        "--recs_ID_from_flow",
+        type=lambda x: bool(strtobool(x)),
+        help="Whether to use the User ID artifact created in MLflow",
+        required=True
+    )
+
+    parser.add_argument(
+        "--flow_ID",
+        type=str,
+        help='ID of MLflow artifact name to use if recs_ID_from_flow is True',
+        required=True
+    )
+
+    parser.add_argument(
+        "--flow_ID_type",
+        type=str,
+        help="Type of mlflow artifact user ID was saved as",
+        required=True
+    )
+
+    parser.add_argument(
+        "--sim_users_art",
+        type=str,
+        help="Name of similar users artifact if recs_sim_from_flow is True",
+        required=True
+    )
+
+    parser.add_argument(
+        "--sim_users_art_type",
+        type=str,
+        help="Type of similar users artifact to load",
         required=True
     )
     args = parser.parse_args()
