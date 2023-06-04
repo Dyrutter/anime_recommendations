@@ -201,7 +201,7 @@ def go(config: DictConfig):
                 "cloud_type": config["users"]["cloud_type"],
                 "fave_art_type": config["users"]["fave_art_type"]})
 
-    if "user_recs" in steps_to_execute:  # Add flow user, types, bool clouds
+    if "user_recs" in steps_to_execute:
         _ = mlflow.run(
             os.path.join(root_path, "user_recs"),
             entry_point="main",
@@ -210,7 +210,6 @@ def go(config: DictConfig):
                 "project_name": config["main"]["project_name"],
                 "anime_df": config["data"]["all_anime_artifact_latest"],
                 "user_recs_query": config["users"]["user_recs_query"],
-                "use_random_user": config["users"]["recs_random_user"],
                 "user_recs_fn": config["users"]["user_recs_fn"],
                 "save_user_recs": config["users"]["save_user_recs"],
                 "sypnopses_df": config["data"]["sypnopses_artifact_latest"],
@@ -224,7 +223,21 @@ def go(config: DictConfig):
                 "prefs_csv": config["users"]["prefs_csv"],
                 "interval": config["main"]["interval"],
                 "save_faves": config["users"]["save_faves"],
-                "model": config["nn_arts"]["main_model"]})
+                "model": config["nn_arts"]["main_model"],
+                "ID_emb_name": config["model"]["ID_emb_name"],
+                "anime_emb_name": config["model"]["anime_emb_name"],
+                "anime_df_type": config["data"]["all_anime_type"],
+                "main_df_type": config["data"]["preprocessed_artifact_type"],
+                "sypnopsis_df_type": config["data"]["synopses_artifact_type"],
+                "model_type": config["nn_arts"]["model_type"],
+                "user_recs_random": config["users"]["user_recs_random"],
+                "recs_sim_from_flow": config["users"]["recs_sim_from_flow"],
+                "user_recs_type": config["users"]["user_recs_type"],
+                "recs_ID_from_flow": config["users"]["recs_ID_from_flow"],
+                "flow_ID": config["users"]["flow_user"],
+                "flow_ID_type": config["users"]["ID_type"],
+                "sim_users_art": config["users"]["sim_users_latest"],
+                "sim_users_art_type": config["users"]["sim_users_type"]})
 
     if "model_recs" in steps_to_execute:
         _ = mlflow.run(
