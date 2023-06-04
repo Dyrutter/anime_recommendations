@@ -98,7 +98,7 @@ nn_arts: # Names of main/best neural network artifacts
   weights_type: "h5" # Neural network weights artifact type
 
 similarity: # Arguments for anime-based recommendations in similar_anime.py
-  anime_query: "Yuu☆Yuu☆Hakusho" #"SilentMöbius" # Input anime to query. Change random_anime to False in order to use.
+  anime_query: "SilentMöbius" #"Yuu☆Yuu☆Hakusho" # Input anime to query. Change random_anime to False in order to use.
   random_anime: False # Whether to choose a random anime to assess rather than an input anime
   a_query_number: 10 # Number of similar anime to return
   id_query_number: 10 # Number of similar IDs to return
@@ -141,10 +141,11 @@ users: # Arguments for user-based recommendations in user_prefs.py, similar_user
   cloud_type: "png" # Type of genre and source cloud artifacts for user_prefs.py
   fave_art_type: "csv" # Type of data frame containing favorite genres and sources for user_prefs.py
   pref_random_user: False # Whether to use a random user for user_prefs.py
-  recs_random_user: False # Whether to use a random user for user_prefs.py ################
+  user_recs_random: False # Whether to use a random user for user_prefs.py ################
   user_recs_query: 109160 # User to query in user_recs.py
-  recs_from_flow: True # Whether to get user recommendations from the latest similar users artifact in user_recs.py ############
+  recs_sim_from_flow: True # Whether to get user recommendations from the latest similar users artifact in user_recs.py ############
   user_recs_type: 'csv' # Artifact type of user-based recommendations csv file in user_recs.py ################
+  recs_ID_from_flow: True # Whether to use the user ID artifact created in MLflow
 
 model_recs: # For recommendations based on the ranking model
   model_recs_fn: 'model_recs.csv' # Artifact filename for ranking-based anime recommendations
