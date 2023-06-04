@@ -74,8 +74,8 @@ def get_anime_df():
     df['anime_id'] = df['MAL_ID']
     df['japanese_name'] = df['Japanese name']
     df["eng_version"] = df['English name']
-    df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
-    df['full_eng_version'] = df['eng_version']
+    # df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
+    df['full_eng_version'] = df["Name"]
 
     # Get column of cleaned anime names
     df['eng_version'] = df.anime_id.apply(
@@ -189,21 +189,24 @@ def get_sypnopsis(anime, sypnopsis_df):
         return sypnopsis_df[sypnopsis_df.Name == anime].sypnopsis.values[0]
 
 
-def get_anime_frame(anime, df):
+def get_anime_frame(anime, df, clean=False):
     """
     Get either the anime df containing only specified anime
     """
     if isinstance(anime, int):
         return df[df.anime_id == anime]
     if isinstance(anime, str):
-        return df[df.Name == anime]
+        if clean is False:
+            return df[df.Name == anime]
+        else:
+            return df[df.eng_version == anime]
 
 
 def get_random_anime(anime_df):
     """
     Get a random anime from anime data frame
     """
-    possible_anime = anime_df['eng_version'].unique().tolist()
+    possible_anime = anime_df['Name'].unique().tolist()  # was eng_version
     random_anime = random.choice(possible_anime)
     return random_anime
 
@@ -329,7 +332,13 @@ def anime_recs(name, count, anime_df):
     try:
         index = get_anime_frame(translated, anime_df).anime_id.values[0]
     except IndexError:
-        index = get_anime_frame(name, anime_df).anime_id.values[0]  # Added
+        try:
+            # In case the name has special characters
+            index = get_anime_frame(name, anime_df).anime_id.values[0]
+        except IndexError:
+            # In case there is a typo in the config file
+            index = get_anime_frame(
+                translated, anime_df, clean=True).anime_id.values[0]
 
     logger.info('index is %s', index)
     encoded_index = anime_to_index.get(index)
@@ -352,7 +361,7 @@ def anime_recs(name, count, anime_df):
             sypnopsis = "None"
 
         # Get desired column values for anime
-        full = anime_frame['full_eng_version'].values[0]
+        full = anime_frame["Name"].values[0]
         genre = anime_frame['Genres'].values[0]
         japanese_name = anime_frame['japanese_name'].values[0]
         episodes = anime_frame['Episodes'].values[0]
