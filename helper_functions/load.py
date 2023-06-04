@@ -4,6 +4,8 @@ import numpy as np
 import tensorflow as tf
 import random
 import re
+import string
+import unicodedata
 
 
 def get_model(project='anime_recommendations',
@@ -179,7 +181,7 @@ def get_anime_frame(anime, df):
 
 def get_sypnopsis(anime, sypnopsis_df):
     """
-    Get sypnopsis of an anime from the sypnopsis data frame
+    Get sypnopsis of an anime from the sypnopsis data frame using decoded ID
     """
     if isinstance(anime, int):
         return sypnopsis_df[sypnopsis_df.MAL_ID == anime].sypnopsis.values[0]
@@ -224,3 +226,35 @@ def get_sources(anime_df):
         ['LightNovel', 'VisualNovel', 'PictureBook', 'CardGame', "WebNovel"]
     source_list = sorted([i for i in fixed if i not in remove])
     return source_list
+
+
+def clean(item):
+    """
+    Remove or convert all non-alphabetical characters from a string or list
+    of strings.
+    Strip all Escape characters, accents, spaces, and irregular characters
+    """
+    translations = []
+    irregular = ['★', '♥', '☆', '♡', '½', 'ß', '²']
+    if isinstance(item, list):
+        for name in item:
+            for irr in irregular:
+                if irr in name:
+                    name = name.replace(irr, ' ')
+            x = str(name).translate({ord(c): None for c in string.whitespace})
+            x = re.sub(r'\W+', '', x)
+            x = u"".join([c for c in unicodedata.normalize('NFKD', x)
+                          if not unicodedata.combining(c)])
+
+            translations.append(x.lower())
+    else:
+        for irr in irregular:
+            if irr in item:
+                item = item.replace(irr, ' ')
+        x = str(item).translate({ord(c): None for c in string.whitespace})
+        x = re.sub(r'\W+', '', x)
+        x = u"".join([c for c in unicodedata.normalize('NFKD', x)
+                      if not unicodedata.combining(c)])
+        return x.lower()
+
+    return translations
