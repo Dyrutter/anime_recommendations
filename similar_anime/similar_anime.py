@@ -75,7 +75,6 @@ def get_anime_df():
     df['japanese_name'] = df['Japanese name']
     df["eng_version"] = df['English name']
     # df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
-    df['full_eng_version'] = df["Name"]
 
     # Get column of cleaned anime names
     df['eng_version'] = df.anime_id.apply(
@@ -87,7 +86,7 @@ def get_anime_df():
                    na_position='last')
     keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
                  "Premiered", "Studios", "japanese_name", "Name", "Type",
-                 "Source", 'Rating', 'Members', 'full_eng_version']
+                 "Source", 'Rating', 'Members']
     df = df[keep_cols]
     return df
 
@@ -103,7 +102,7 @@ def get_anime_name(anime_id, df):
     """
     try:
         # Get a single anime from the anime df based on ID
-        name = df[df.anime_id == anime_id].eng_version.values[0]
+        name = df[df.anime_id == anime_id].Name.values[0]  # Was eng_version
     except BaseException:
         raise ValueError("ID/eng_version pair was not found in data frame!")
 
@@ -336,7 +335,7 @@ def anime_recs(name, count, anime_df):
             # In case the name has special characters
             index = get_anime_frame(name, anime_df).anime_id.values[0]
         except IndexError:
-            # In case there is a typo in the config file
+            # In case there is a punctuation typo in the config file
             index = get_anime_frame(
                 translated, anime_df, clean=True).anime_id.values[0]
 
