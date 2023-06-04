@@ -1,24 +1,23 @@
 # Add functions, Create function for determining ID and similar user artifacts
+from helper_functions.load import get_sypnopsis
+from helper_functions.load import get_weights, get_sypnopses_df
+from helper_functions.load import main_df_by_id, get_anime_df, get_model
+from helper_functions.User import get_random_user, genre_cloud, source_cloud
+from helper_functions.User import fave_genres, fave_sources
+import unicodedata
+import string
+import argparse
+import logging
+import os
+import wandb
+import pandas as pd
+from distutils.util import strtobool
+import re
+import numpy as np
 import sys
 from pathlib import Path
 path_root = Path(__file__).parents[1]
 sys.path.append(str(path_root))
-import numpy as np
-import re
-from distutils.util import strtobool
-import pandas as pd
-import wandb
-import os
-import logging
-import argparse
-import string
-import regex
-import unicodedata
-from helper_functions.User import fave_genres, fave_sources
-from helper_functions.User import get_random_user, genre_cloud, source_cloud
-from helper_functions.load import main_df_by_id, get_anime_df, get_model
-from helper_functions.load import get_weights, get_sypnopses_df
-from helper_functions.load import get_anime_frame, get_sypnopsis
 
 
 logging.basicConfig(
@@ -46,6 +45,9 @@ def clean(item):
                     name = name.replace(irr, ' ')
             x = str(name).translate({ord(c): None for c in string.whitespace})
             x = re.sub(r'\W+', '', x)
+            x = u"".join([c for c in unicodedata.normalize('NFKD', x)
+                          if not unicodedata.combining(c)])
+
             translations.append(x.lower())
     else:
         for irr in irregular:
@@ -53,6 +55,8 @@ def clean(item):
                 item = item.replace(irr, ' ')
         x = str(item).translate({ord(c): None for c in string.whitespace})
         x = re.sub(r'\W+', '', x)
+        x = u"".join([c for c in unicodedata.normalize('NFKD', x)
+                      if not unicodedata.combining(c)])
         return x.lower()
 
     return translations
@@ -102,14 +106,19 @@ def get_fave_df(genres, sources, ID, save=False):
     else:
         return sources
 
-def get_anime_frame(anime, df):
+
+def get_anime_frame(anime, df, clean=False):
     """
     Get either the anime df containing only specified anime
     """
     if isinstance(anime, int):
         return df[df.anime_id == anime]
     if isinstance(anime, str):
-        return df[df.Name == anime]
+        if clean is False:
+            return df[df.Name == anime]
+        else:
+            return df[df.eng_version == anime]
+
 
 def similar_user_recs(
         user,
@@ -172,7 +181,7 @@ def similar_user_recs(
 def go(args):
     # Initialize run
     run = wandb.init(project=args.project_name,
-        name="user_genre_based_preferences_recommendations")
+                     name="user_genre_based_preferences_recommendations")
 
     df, user_to_index, index_to_user = main_df_by_id(
         project=args.project_name,
