@@ -74,7 +74,6 @@ def get_anime_df():
     df['anime_id'] = df['MAL_ID']
     df['japanese_name'] = df['Japanese name']
     df["eng_version"] = df['English name']
-    # df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
 
     # Get column of cleaned anime names
     df['eng_version'] = df.anime_id.apply(
