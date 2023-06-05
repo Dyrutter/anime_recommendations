@@ -1,3 +1,4 @@
+# Save fave genres and sources df as artifact
 import argparse
 import logging
 import os
@@ -317,7 +318,7 @@ def go(args):
         user = get_random_user(df, user_to_index, index_to_user)
         logger.info("Using %s as random input user", user)
     elif args.prefs_local_user is True:
-        user = int(args.user_query)
+        user = int(args.prefs_user_query)
         logger.info("Using locally specified user %s as user", user)
     elif args.prefs_from_flow is True:
         user = get_ID_artifact()
@@ -416,7 +417,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--user_query",
+        "--prefs_user_query",
         type=str,
         help="input user id to query",
         required=True
