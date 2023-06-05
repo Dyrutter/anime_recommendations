@@ -25,7 +25,7 @@ entry_points:
       main_df_type:
         description: Type of main data frame artifact
         type: str
-      user_query:
+      sim_user_query:
         description: User of which to find similar animes to
         type: str
       id_query_number:
@@ -64,7 +64,7 @@ entry_points:
                               --project_name {project_name} \
                               --main_df {main_df} \
                               --main_df_type {main_df_type} \
-                              --user_query {user_query} \
+                              --sim_user_query {sim_user_query} \
                               --id_query_number {id_query_number} \
                               --max_ratings {max_ratings} \
                               --random_user {random_user} \
