@@ -16,7 +16,7 @@ entry_points:
       anime_df:
         description: Name of anime data frame artifact
         type: str
-      user_query:
+      user_recs_query:
         description: User of which to find similar animes to
         type: str
       user_recs_fn:
@@ -29,34 +29,7 @@ entry_points:
         description: Artifact name of sypnopsis data frame
         type: str
       user_num_recs:
-        description: Number of anime recommendations to return
-        type: str
-      favorite_percentile:
-        description: Top percentile of ratings to consider as favorite, e.g. 0.8 would mean top 20 percent
-        type: str
-      show_clouds:
-        description: Boolean of whether or not to show word clouds when script is run
-        type: str
-      genre_fn:
-        description: Path name of genre cloud artifact
-        type: str
-      source_fn:
-        description: Name of source cloud artifact
-        type: str
-      cloud_width:
-        description: Pixel width of word cloud figures to create
-        type: str
-      cloud_height:
-        description: Pixel height of word cloud figures to create
-        type: str
-      prefs_csv:
-        description: Artifact name of preferences csv file to create
-        type: str
-      interval:
-        description: Interval in milliseconds to display figures
-        type: str
-      save_faves:
-        description: Whether or not to save clouds and favorites csv file to local machine
+        description: Number of anime recommendations to return in user_recs.py
         type: str 
       ID_emb_name:
         description: Name of User ID embedding layer in neural network model
@@ -104,20 +77,11 @@ entry_points:
       python user_recs.py --project_name {project_name} \
                               --main_df {main_df} \
                               --anime_df {anime_df} \
-                              --user_query {user_query} \
+                              --user_recs_query {user_recs_query} \
                               --user_recs_fn {user_recs_fn} \
                               --save_user_recs {save_user_recs} \
                               --sypnopses_df {sypnopses_df} \
                               --user_num_recs {user_num_recs} \
-                              --favorite_percentile {favorite_percentile} \
-                              --show_clouds {show_clouds} \
-                              --genre_fn {genre_fn} \
-                              --source_fn {source_fn} \
-                              --cloud_width {cloud_width} \
-                              --cloud_height {cloud_height} \
-                              --prefs_csv {prefs_csv} \
-                              --interval {interval} \
-                              --save_faves {save_faves} \
                               --model {model} \
                               --ID_emb_name {ID_emb_name} \
                               --anime_emb_name {anime_emb_name} \
