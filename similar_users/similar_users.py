@@ -229,7 +229,7 @@ def go(args):
         user_id = get_random_user()
         logger.info("Using random user ID %s", user_id)
     else:
-        user_id = int(args.user_query)
+        user_id = int(args.sim_user_query)
 
     # Create data frame file
     df, filename, user_id = find_similar_users(int(user_id), int(
@@ -238,7 +238,7 @@ def go(args):
 
     # Create similar users artifact
     logger.info("Creating similar users artifact")
-    description = "Users most similar to: " + str(args.user_query)
+    description = "Users most similar to: " + str(args.sim_user_query)
     artifact = wandb.Artifact(
         name=args.sim_users_fn,
         type=args.sim_users_type,
@@ -323,7 +323,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--user_query",
+        "--sim_user_query",
         type=str,
         help="input user id to query",
         required=True
