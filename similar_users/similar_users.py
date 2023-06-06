@@ -63,12 +63,12 @@ def get_model():
 def get_weights():
     logger.info("Getting weights")
     model = get_model()
-    anime_weights = model.get_layer('anime_embedding')
+    anime_weights = model.get_layer(args.anime_emb_name)
     anime_weights = anime_weights.get_weights()[0]
     anime_weights = anime_weights / np.linalg.norm(
         anime_weights, axis=1).reshape((-1, 1))
 
-    user_weights = model.get_layer('user_embedding')
+    user_weights = model.get_layer(args.ID_emb_name)
     user_weights = user_weights.get_weights()[0]
     user_weights = user_weights / np.linalg.norm(
         user_weights, axis=1).reshape((-1, 1))
@@ -389,6 +389,20 @@ if __name__ == "__main__":
         "--ID_type",
         type=str,
         help='artifact type user ID was saved as',
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_emb_name",
+        type=str,
+        help="Name of user weight layer in neural network model",
+        required=True
+    )
+
+    parser.add_argument(
+        "--anime_emb_name",
+        type=str,
+        help="Name of anime weight layer in neural network model",
         required=True
     )
 
