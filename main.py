@@ -170,7 +170,9 @@ def go(config: DictConfig):
                 "sim_users_fn": config["users"]["sim_users_fn"],
                 "sim_users_type": config["users"]["sim_users_type"],
                 "ID_fn": config["users"]["ID_fn"],
-                "ID_type": config["users"]["ID_type"]})
+                "ID_type": config["users"]["ID_type"],
+                "ID_emb_name": config["model"]["ID_emb_name"],
+                "anime_emb_name": config["model"]["anime_emb_name"]})
 
     if "user_prefs" in steps_to_execute:
         _ = mlflow.run(
