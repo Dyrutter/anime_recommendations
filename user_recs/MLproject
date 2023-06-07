@@ -72,6 +72,12 @@ entry_points:
         type: str
       sim_users_art_type:
         description: type of similar users artifact to be used if recs_sim_from_flow is True
+        type: str
+      recs_n_sim_ID:
+        description: Number of similar users to include if not using the MLflow artifact
+        type: str
+      recs_ID_from_conf:
+        description: Whether to use the user ID specified in config file under user_recs_query
         type: str 
     command: >-
       python user_recs.py --project_name {project_name} \
@@ -96,4 +102,6 @@ entry_points:
                               --flow_ID {flow_ID} \
                               --flow_ID_type {flow_ID_type} \
                               --sim_users_art {sim_users_art} \
-                              --sim_users_art_type {sim_users_art_type}
+                              --sim_users_art_type {sim_users_art_type} \
+                              --recs_n_sim_ID {recs_n_sim_ID} \
+                              --recs_ID_from_conf {recs_ID_from_conf}
