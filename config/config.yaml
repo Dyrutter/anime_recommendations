@@ -147,6 +147,8 @@ users: # Arguments for user-based recommendations in user_prefs.py, similar_user
   recs_sim_from_flow: True # Whether to get user recommendations from the latest similar users artifact in user_recs.py
   user_recs_type: 'csv' # Artifact type of user-based recommendations csv file in user_recs.py
   recs_ID_from_flow: True # Whether to use the user ID artifact created in MLflow
+  recs_n_sim_ID: 20 # Number of similar users to include in user_recs.py
+  recs_ID_from_conf: False # Whether to use the user ID specified in config file under user_recs_query 
 
 model_recs: # For recommendations based on the ranking model
   model_recs_fn: 'model_recs.csv' # Artifact filename for ranking-based anime recommendations
