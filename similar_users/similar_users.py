@@ -1,6 +1,5 @@
 import argparse
 import logging
-# import os
 import wandb
 import string
 import pandas as pd
@@ -8,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 from distutils.util import strtobool
 import random
+import os
 
 
 logging.basicConfig(
@@ -266,6 +266,13 @@ def go(args):
     run.log_artifact(artifact)
     artifact.wait()
 
+    if args.save_sim_locally is False:
+        try:
+            os.remove(filename)
+            os.remove(fn)
+        except FileNotFoundError:
+            pass
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -403,6 +410,13 @@ if __name__ == "__main__":
         "--anime_emb_name",
         type=str,
         help="Name of anime weight layer in neural network model",
+        required=True
+    )
+
+    parser.add_argument(
+        "--save_sim_locally",
+        type=lambda x: bool(strtobool(x)),
+        help="Whether to save data frame of similar users to local machine",
         required=True
     )
 
