@@ -172,7 +172,8 @@ def go(config: DictConfig):
                 "ID_fn": config["users"]["ID_fn"],
                 "ID_type": config["users"]["ID_type"],
                 "ID_emb_name": config["model"]["ID_emb_name"],
-                "anime_emb_name": config["model"]["anime_emb_name"]})
+                "anime_emb_name": config["model"]["anime_emb_name"],
+                "save_sim_locally": config["users"]["save_sim_locally"]})
 
     if "user_prefs" in steps_to_execute:
         _ = mlflow.run(
@@ -230,7 +231,9 @@ def go(config: DictConfig):
                 "flow_ID": config["users"]["flow_user"],
                 "flow_ID_type": config["users"]["ID_type"],
                 "sim_users_art": config["users"]["sim_users_latest"],
-                "sim_users_art_type": config["users"]["sim_users_type"]})
+                "sim_users_art_type": config["users"]["sim_users_type"],
+                "recs_n_sim_ID": config["users"]["recs_n_sim_ID"],
+                "recs_ID_from_conf": config["users"]["recs_ID_from_conf"]})
 
     if "model_recs" in steps_to_execute:
         _ = mlflow.run(
