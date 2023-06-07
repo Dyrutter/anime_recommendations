@@ -61,6 +61,9 @@ entry_points:
       anime_emb_name:
         description: Name of anime ID embedding layer in neural network model
         type: str
+      save_sim_locally:
+        description: Boolean of whether to save data frame of similar users to local machine
+        type: str
     command: >-
       python similar_users.py --anime_df {anime_df} \
                               --anime_df_type {anime_df_type} \
@@ -80,4 +83,5 @@ entry_points:
                               --ID_fn {ID_fn} \
                               --ID_type {ID_type} \
                               --ID_emb_name {ID_emb_name} \
-                              --anime_emb_name {anime_emb_name}
+                              --anime_emb_name {anime_emb_name} \
+                              --save_sim_locally {save_sim_locally}
