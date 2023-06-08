@@ -61,10 +61,10 @@ def clean(item):
 
 def main_df_by_id():
     """
-    Load data frame artifact from wandb
+    Load main data frame artifact from wandb
     Outputs:
         df: Main Pandas Data Frame of user stats, keeping the columns
-            "user", "anime", and "rating", as well as adding mapped
+            "user_id", "anime_id", and "rating", as well as adding mapped
             columns "user" and "anime"
         user_to_index: enumerated IDs of format {ID: enumerated_index}
         index_to_user: enumerated IDs of format {enumerated_index: ID}
@@ -159,7 +159,9 @@ def get_sypnopses_df():
 
 def get_model():
     """
-    Download neural network model from wandb
+    Download neural network model artifact from wandb
+    Output:
+        model: TensorFlow neural network model
     """
     run = wandb.init(project=args.project_name)
     artifact = run.use_artifact(args.model, type=args.model_type)
@@ -191,7 +193,16 @@ def get_weights(model):
 
 def get_fave_df(genres, sources, ID):
     """
-    Input source and genre dfs and returned merged df
+    Merge favorite sources and favorite genres data frames
+    Inputs:
+        genres: Pandas data frame of a user's favorite anime and their 
+            respective genres with columns ["eng_version", "Genres"]
+        sources: Pandas data frame of a user's favorite anime and their
+            respective source material with columns ["eng_version", "sources"]
+    Outputs:
+        sources: Merged data frame with columns
+            ["eng_version", "Genres", "Sources"]
+        fn: Filename to save Data Frame under
     """
     genres = genres["Genres"]
     sources["Genres"] = genres
@@ -245,7 +256,9 @@ def get_random_user(df, user_to_index, index_to_user):
     Outputs:
         random_user: Interger value of a random user in df
     """
+    # Get list of possible user IDs
     possible_users = list(user_to_index.keys())
+    # Select random user from list of IDs 
     random_user = random.choice(possible_users)
     return random_user
 
@@ -299,7 +312,8 @@ def fave_genres(user, df, anime_df):
         df: main df of cols ['user', 'anime', 'rating', 'user_id', 'anime_id']
         anime_df: df containing anime statisitics
     Outputs:
-        faves: Pandas data frame containing a user's favorite genres
+        faves: Pandas data frame containing a user's favorite anime and their
+           respective genres
     """
     watched = df[df.user_id == user]
     user_rating_percentile = np.percentile(watched.rating, 80)
@@ -319,7 +333,8 @@ def fave_sources(user, df, anime_df):
         df: main df of cols ['user', 'anime', 'rating', 'user_id', 'anime_id']
         anime_df: df containing anime statisitics
     Outputs:
-        faves: Pandas data frame containing a user's favorite sources
+        faves: Pandas data frame containing a user's favorite anime and their
+           respective sources
     """
     watched = df[df.user_id == user]
     user_rating_percentile = np.percentile(watched.rating, 80)
