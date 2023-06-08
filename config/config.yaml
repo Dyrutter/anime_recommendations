@@ -148,7 +148,8 @@ users: # Arguments for user-based recommendations in user_prefs.py, similar_user
   user_recs_type: 'csv' # Artifact type of user-based recommendations csv file in user_recs.py
   recs_ID_from_flow: True # Whether to use the user ID artifact created in MLflow
   recs_n_sim_ID: 20 # Number of similar users to include in user_recs.py
-  recs_ID_from_conf: False # Whether to use the user ID specified in config file under user_recs_query 
+  recs_ID_from_conf: False # Whether to use the user ID specified in config file under user_recs_query
+  save_sim_locally: True # Whether to save data frame of similar users to local machine in similar_users.py 
 
 model_recs: # For recommendations based on the ranking model
   model_recs_fn: 'model_recs.csv' # Artifact filename for ranking-based anime recommendations
@@ -161,6 +162,7 @@ model_recs: # For recommendations based on the ranking model
   min_score: 0.00 # Minimum rating of anime recs to return
   max_score: 10.00 # Maximum rating of anime recs to return
   model_user_query: 109160 # User query for model recs if a local user is queried
-  model_recs_type: 'csv' # Artifact type of model recs ######
-  mod_recs_from_flow: True # Whether to use the same user that was used in MLflow
+  model_recs_type: 'csv' # Artifact type of model recs
+  model_ID_flow: True # Whether to use the same user that was used in MLflow
   model_random_user: False # Whether to use a random user
+  model_ID_conf: False # Whether to use the ID specified under model_user_query
