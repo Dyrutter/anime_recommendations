@@ -257,7 +257,13 @@ def go(config: DictConfig):
                 "anime_types": config["model_recs"]["anime_types"],
                 "specify_types": config["model_recs"]['specify_types'],
                 "model_genres": config["model_recs"]["model_genres"],
-                "specify_genres": config["model_recs"]["specify_genres"]})
+                "specify_genres": config["model_recs"]["specify_genres"],
+                "model_ID_flow": config["model_recs"]["model_ID_flow"],
+                "model_ID_conf": config["model_recs"]["model_ID_conf"],
+                "model_recs_type": config["model_recs"]["model_recs_type"],
+                "sypnopsis_df_type": config["data"]["synopses_artifact_type"],
+                "flow_ID": config["users"]["flow_user"],
+                "flow_ID_type": config["users"]["ID_type"]})
 
 
 if __name__ == "__main__":
