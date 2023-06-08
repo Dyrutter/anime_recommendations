@@ -31,7 +31,7 @@ entry_points:
       model_type:
         description: Neural network model's wandb artifact type
         type: str
-      user_query:
+      model_user_query:
         description: User of which to find similar animes to
         type: str
       random_user:
@@ -58,6 +58,24 @@ entry_points:
       specify_genres:
         description: Boolean of whether or not to specify genres of anime to return
         type: str
+      model_ID_flow:
+        description: Boolean of whether to use user ID artifact from mlflow
+        type: str
+      model_ID_conf:
+        description: Whether to use the ID specified under model_user_query
+        type: str
+      model_recs_type:
+        description: Type of artifact to save model recommendations as
+        type: str
+      sypnopsis_df_type:
+        description: Artifact type of sypnopsis data frame
+        type: str
+      flow_ID:
+        description: ID of MLflow artifact name to use if model_ID_flow is True
+        type: str
+      flow_ID_type:
+        description: Type of mlflow artifact user ID was saved as
+        type: str
 
     command: >-
       python model_recs.py --main_df {main_df} \
@@ -69,12 +87,18 @@ entry_points:
                               --sypnopsis_type {sypnopsis_type} \
                               --model {model} \
                               --model_type {model_type} \
-                              --user_query {user_query} \
+                              --model_user_query {model_user_query} \
                               --random_user {random_user} \
                               --model_recs_fn {model_recs_fn} \
                               --save_model_recs {save_model_recs} \
                               --model_genres {model_genres} \
-                              --specify_genres {specify_genres}
+                              --specify_genres {specify_genres} \
                               --model_num_recs {model_num_recs} \
                               --anime_types {anime_types} \
-                              --specify_types {specify_types}
+                              --specify_types {specify_types} \
+                              --model_ID_flow {model_ID_flow} \
+                              --model_ID_conf {model_ID_conf} \
+                              --model_recs_type {model_recs_type} \
+                              --sypnopsis_df_type {sypnopsis_df_type} \
+                              --flow_ID {flow_ID} \
+                              --flow_ID_type {flow_ID_type}
