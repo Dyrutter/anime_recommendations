@@ -8,6 +8,8 @@ import tensorflow as tf
 from distutils.util import strtobool
 import random
 import os
+import re
+import unicodedata
 
 
 logging.basicConfig(
@@ -22,8 +24,13 @@ logger = logging.getLogger()
 
 def get_main_df():
     """
-    Get data frame from wandb
-    Covert to same format we used for neural network
+    Load main data frame artifact from wandb
+    Outputs:
+        df: Main Pandas Data Frame of user stats, keeping the columns
+            "user_id", "anime_id", and "rating", as well as adding mapped
+            columns "user" and "anime"
+        user_to_index: enumerated IDs of format {ID: enumerated_index}
+        index_to_user: enumerated IDs of format {enumerated_index: ID}
     """
     run = wandb.init(project=args.project_name)
     logger.info("Downloading data artifact")
@@ -52,6 +59,11 @@ def get_main_df():
 
 
 def get_model():
+    """
+    Download neural network model artifact from wandb
+    Output:
+        model: TensorFlow neural network model
+    """
     run = wandb.init(project=args.project_name)
     logger.info("Downloading model")
     artifact = run.use_artifact(args.model, type=args.model_type)
@@ -61,6 +73,14 @@ def get_model():
 
 
 def get_weights():
+    """
+    Extract weights from model and apply Frobenius normalization.
+    Inputs:
+        model: neural network model
+    Outputs:
+        anime_weights: norm weights associated with anime embedding layer
+        user_weights: norm weights associated with user embedding layer
+    """
     logger.info("Getting weights")
     model = get_model()
     anime_weights = model.get_layer(args.anime_emb_name)
@@ -83,18 +103,48 @@ def get_random_user():
     return random_user
 
 
+def get_random_user(df, user_to_index, index_to_user):
+    """
+    Get a random user from all possible users
+    Inputs:
+        df: main df of cols ['user', 'anime', 'rating', 'user_id', 'anime_id']
+        user_to_index: enumerated IDs of format {ID: enumerated_index}
+        index_to_user: enumerated IDs of format {enumerated_index: ID}
+    Outputs:
+        random_user: Interger value of a random user in df
+    """
+    # Get list of possible user IDs
+    possible_users = list(user_to_index.keys())
+    # Select random user from list of IDs
+    random_user = random.choice(possible_users)
+    return random_user
+
+
 def get_anime_name(anime_id, df):
     try:
         # Get a single anime from the anime df based on ID
         name = df[df.anime_id == anime_id].eng_version.values[0]
-    except BaseException:
-        raise ValueError("ID/eng_version pair was not found in data frame!")
+    except IndexError:
+        pass
 
     try:
         if name is np.nan:
             name = df[df.anime_id == anime_id].Name.values[0]
-    except BaseException:
+    except IndexError:
         raise ValueError("Name was not found in data frame!")
+    return name
+
+
+def get_anime_name(anime_id, df):
+    """
+    Helper function for loading anime data frame
+    Inputs:
+        anime_id: The ID of an anime
+        df: anime stats data frame
+    Outputs:
+        name: The english name of anime_id
+    """
+    name = df[df.anime_id == anime_id].Name.values[0]
     return name
 
 
@@ -122,6 +172,75 @@ def get_anime_df():
                  "Source", 'Rating', 'Members']
     df = df[keep_cols]
     return df
+
+
+def get_anime_df():
+    """
+    Load data frame artifact containing info on each anime from wandb.
+    Create column of cleaned anime names for filename usage.
+    Output:
+        df: Pandas Data Frame containing all anime and their relevant stats
+    """
+    run = wandb.init(project=args.project_name)
+    artifact = run.use_artifact(args.anime_df, type=args.anime_df_type)
+    artifact_path = artifact.file()
+    df = pd.read_csv(artifact_path)
+    df = df.replace("Unknown", np.nan)
+
+    # Add "anime_id" column and remove spaces from column names
+    df['anime_id'] = df['MAL_ID']
+    df['japanese_name'] = df['Japanese name']
+    df["eng_version"] = df['English name']
+
+    # Get column of cleaned anime names
+    df['eng_version'] = df.anime_id.apply(
+        lambda x: clean(get_anime_name(x, df)).lower())
+    df.sort_values(by=['Score'],
+                   inplace=True,
+                   ascending=False,
+                   kind='quicksort',
+                   na_position='last')
+    keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
+                 "Premiered", "Studios", "japanese_name", "Name", "Type",
+                 "Source", 'Rating', 'Members']
+    df = df[keep_cols]
+    return df
+
+
+def clean(item):
+    """
+    Remove or convert all non-alphabetical characters from a string or list
+    of strings.
+    Strip all Escape characters, accents, spaces, and irregular characters
+    Inputs:
+        item: either a list of string or a string
+    Outputs:
+        translations: a list of cleaned strings if item was a list, or
+            a cleaned string if item was a string
+    """
+    translations = []
+    irregular = ['★', '♥', '☆', '♡', '½', 'ß', '²']
+    if isinstance(item, list):
+        for name in item:
+            for irr in irregular:
+                if irr in name:
+                    name = name.replace(irr, ' ')
+            x = str(name).translate({ord(c): None for c in string.whitespace})
+            x = re.sub(r'\W+', '', x)
+            x = u"".join([c for c in unicodedata.normalize('NFKD', x)
+                          if not unicodedata.combining(c)])
+            translations.append(x.lower())
+    else:
+        for irr in irregular:
+            if irr in item:
+                item = item.replace(irr, ' ')
+        x = str(item).translate({ord(c): None for c in string.whitespace})
+        x = re.sub(r'\W+', '', x)
+        x = u"".join([c for c in unicodedata.normalize('NFKD', x)
+                      if not unicodedata.combining(c)])
+        return x.lower()
+
+    return translations
 
 
 def get_fave_anime(df, anime_df, user, num_faves, TV_only):
@@ -182,11 +301,34 @@ def get_fave_anime(df, anime_df, user, num_faves, TV_only):
 pd.set_option("max_colwidth", None)
 
 
-def find_similar_users(user_id, n_users, num_faves, TV_only):
-    df, user_to_index, index_to_user = get_main_df()
-    anime_weights, user_weights = get_weights()
-    anime_df = get_anime_df()
-    weights = user_weights
+def find_similar_users(user_id, n_users, num_faves, TV_only, df,
+                       anime_df, user_to_index, index_to_user, weights):
+    """
+    Find similar IDs to an input IDs. This function is called if
+    args.recs_sim_from_flow is False, meaning no similar users Data Frame
+    artifact was imported from wandb.
+    Inputs:
+        user_id: Int, the ID of which to find similar users to.
+            If args.recs_ID_from_conf is True, input args.user_recs_query ID
+            If args.user_recs_random is True, input a random ID
+        n_users: Int, the number of similar users to find
+        num_faves: Int, number of favorite anime to return
+        TV_only: Bool, whether to only consider TV shows for favorites
+        df: Main Pandas rating data frame
+        anime_df: Pandas Data frame containing stats on all anime
+        user_to_index: dict, enumerated mapping taken from main_df_by_id()
+        index_to_user: dict, enumerated mapping taken from main_df_by_id()
+        weights: np array of user weights array taken from get_weights()
+    Outputs:
+        Frame: Pandas data frame of similar users with columns "similar_users,"
+            "similarity," and "favorite_anime"
+        filename: Name to save data frame csv file as
+        user_id: The user ID of which to find similar users
+    """
+    # df, user_to_index, index_to_user = get_main_df()
+    # anime_weights, user_weights = get_weights()
+    # anime_df = get_anime_df()
+    # weights = user_weights
 
     # Specify filename here in case the a random ID is used
     filename = 'User_' + str(user_id).translate(
@@ -225,15 +367,20 @@ def go(args):
         project=args.project_name,
         name="similar_users")
 
+    df, user_to_index, index_to_user = get_main_df()
+    anime_weights, user_weights = get_weights()
+    anime_df = get_anime_df()
+
     if args.random_user is True:
-        user_id = get_random_user()
+        user_id = get_random_user(df, user_to_index, index_to_user)
         logger.info("Using random user ID %s", user_id)
     else:
         user_id = int(args.sim_user_query)
 
     # Create data frame file
     df, filename, user_id = find_similar_users(int(user_id), int(
-        args.id_query_number), int(args.num_faves), args.TV_only)
+        args.id_query_number), int(args.num_faves), args.TV_only, df,
+        anime_df, user_to_index, index_to_user, user_weights)
     df.to_csv(filename, index=False)
 
     # Create similar users artifact
