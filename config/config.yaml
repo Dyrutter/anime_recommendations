@@ -98,15 +98,15 @@ nn_arts: # Names of main/best neural network artifacts
   weights_type: "h5" # Neural network weights artifact type
 
 similarity: # Arguments for anime-based recommendations in similar_anime.py
-  anime_query: "YuuYuu☆Hakusho" #"SilentMöbius" #"Yuu☆Yuu☆Hakusho" # Input anime to query. Change random_anime to False in order to use.
-  random_anime: False # Whether to choose a random anime to assess rather than an input anime
+  anime_query: "YuuYuu☆Hakusho!" #"SilentMöbius" # Input anime to query. Change random_anime to False in order to use.
+  random_anime: False # Whether to choose a random anime to assess rather than the anime input under anime_query
   a_query_number: 10 # Number of similar anime to return
   id_query_number: 10 # Number of similar IDs to return
   max_ratings: 600 # Limit to this many ratings if random_user is True
-  random_user: True # Whether or not to use a random user as the sample
-  genres: ["Action", "Comedy", None] # Genres to include in recommendations
+  sim_random_user: False # Whether or not to use a random user as the sample
+  genres: ["Action", "None", None] # Genres to include in recommendations, must include 3 total
   spec_genres: False # Whether or not to limit returned recommendations to specific genres
-  types: ["TV", "Movie"] # Potentially ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
+  types: ["TV", "Movie"] # Potentially ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music'] in similar_anime.py
   spec_types: True # Whether or not to specify types
   a_rec_type: 'csv' #Type of anime recommendations artifacts to local machine
   save_sim_anime: True # Whether to save anime recommendation artifacts to local machine
@@ -136,7 +136,7 @@ users: # Arguments for user-based recommendations in user_prefs.py, similar_user
   sim_users_type: 'csv' # Artifact type of similar users df
   sim_users_latest: 'similar_users.csv:latest' # Latest artifact for similar users
   ID_fn: "ID_used.csv" # from similar_users.py, the ID used for MLflow
-  flow_user: "ID_used.csv:latest" # latest artifact taken from similar_users.py, ID used for MLflow in user_prefs.py, user_recs.py, and model_recs.py
+  flow_user: "ID_used.csv:v0" # latest artifact taken from similar_users.py, ID used for MLflow in user_prefs.py, user_recs.py, and model_recs.py, v0 is 153695
   ID_type: "csv" # Type of artifact the user ID was saved as in similar_users.py
   prefs_from_flow: True # Whether to take the user ID created in mlflow as opposed to a random user or a user specified in config for user_prefs.py
   cloud_type: "png" # Type of genre and source cloud artifacts for user_prefs.py
@@ -156,8 +156,8 @@ model_recs: # For recommendations based on the ranking model
   save_model_recs: True # Whether to save ranking-based anime recs to local machine
   model_num_recs: 10 # Number of ranking-based anime recs to return
   specify_types: True # Whether to specify the types of anime to return in ranking-based recs
-  anime_types: ["TV", "Movie"] # Types of anime to return in ranking-based recs
-  model_genres: ['Action', 'Comedy', None] # Genres to include in ranking-based recs
+  anime_types: ["TV", "Movie"] # Types of anime to return in ranking-based recs, potentially ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
+  model_genres: ['Action', 'Comedy', None] # Genres to include in ranking-based recs, must include three total
   specify_genres: False # Whether to specify genres in ranking-based recs
   min_score: 0.00 # Minimum rating of anime recs to return
   max_score: 10.00 # Maximum rating of anime recs to return
