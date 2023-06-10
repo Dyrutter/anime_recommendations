@@ -62,8 +62,10 @@ def main_df_by_anime():
 
 def get_anime_df():
     """
-    Get data frame containing stats on each anime from wandb.
+    Load data frame artifact containing info on each anime from wandb.
     Create column of cleaned anime names for filename usage.
+    Output:
+        df: Pandas Data Frame containing all anime and their relevant stats
     """
     run = wandb.init(project=args.project_name)
     artifact = run.use_artifact(args.anime_df, type=args.anime_df_type)
@@ -99,23 +101,16 @@ def get_anime_name(anime_id, df):
     Outputs:
         name: The english name of anime_id
     """
-    try:
-        # Get a single anime from the anime df based on ID
-        name = df[df.anime_id == anime_id].Name.values[0]  # Was eng_version
-    except BaseException:
-        raise ValueError("ID/eng_version pair was not found in data frame!")
-
-    try:
-        if name is np.nan:
-            name = df[df.anime_id == anime_id].Name.values[0]
-    except BaseException:
-        raise ValueError("Name was not found in data frame!")
+    name = df[df.anime_id == anime_id].Name.values[0]
     return name
 
 
 def get_sypnopses_df():
     """
-    Download sypnopses df from wandb
+    Download sypnopses data frame artifact from wandb
+    Output:
+        df: Pandas Data Frame containting columns
+            ["MAL_ID", "Name", "Genres", "sypnopsis"]
     """
     run = wandb.init(project=args.project_name)
     art = run.use_artifact(args.sypnopses_df, type=args.sypnopsis_df_type)
@@ -127,7 +122,9 @@ def get_sypnopses_df():
 
 def get_model():
     """
-    Download neural network model from wandb
+    Download neural network model artifact from wandb
+    Output:
+        model: TensorFlow neural network model
     """
     run = wandb.init(project=args.project_name)
     artifact = run.use_artifact(args.model, type=args.model_type)
@@ -142,8 +139,8 @@ def get_weights(model):
     Inputs:
         model: neural network model
     Outputs:
-        anime_weights: norm weights associated with anime embedding layer
-        user_weights: norm weights associated with user embedding layer
+        anime_weights: normalized weights of anime embedding layer
+        user_weights: normalized weights of user embedding layer
     """
     anime_weights = model.get_layer(args.anime_emb_name)
     anime_weights = anime_weights.get_weights()[0]
@@ -160,7 +157,7 @@ def get_weights(model):
 def get_genres(anime_df):
     """
     Get all possible anime genres
-    Input: data frame containing anime statistics
+    Input: data frame containing anime statistics taken from get_anime_df()
     Output: All possible anime genres in list format
     """
     genres = anime_df['Genres'].unique().tolist()
@@ -179,7 +176,12 @@ def get_genres(anime_df):
 
 def get_sypnopsis(anime, sypnopsis_df):
     """
-    Get sypnopsis of an anime from the sypnopsis data frame using decoded ID
+    Helper function to get the sypnopsis of an anime in data frame format
+    Input:
+        anime: Either the string name of the anime or an int of the anime's ID
+        sypnopsis_df: Data Frame containing list of all anime
+    Output:
+        sypnopsis_df: An anime's sypnopsis in Data Frame format
     """
     if isinstance(anime, int):
         return sypnopsis_df[sypnopsis_df.MAL_ID == anime].sypnopsis.values[0]
@@ -189,7 +191,14 @@ def get_sypnopsis(anime, sypnopsis_df):
 
 def get_anime_frame(anime, df, clean=False):
     """
-    Get either the anime df containing only specified anime
+    Helper function to get a specific anime in data frame format
+    Input:
+        anime: Either the string name of the anime or an int of the anime's ID
+        df: Data Frame containing list of all anime taken from get_anime_df()
+        clean: If True, return the name of the anime cleaned with clean()
+           If False, return the anime's full name
+    Output:
+        df: An anime's name or ID in data frame format
     """
     if isinstance(anime, int):
         return df[df.anime_id == anime]
@@ -203,8 +212,12 @@ def get_anime_frame(anime, df, clean=False):
 def get_random_anime(anime_df):
     """
     Get a random anime from anime data frame
+    Input:
+        anime_df: Data frame containing all anime, taken from get_anime_df()
+    Output:
+        str, a random anime
     """
-    possible_anime = anime_df['Name'].unique().tolist()  # was eng_version
+    possible_anime = anime_df['Name'].unique().tolist()
     random_anime = random.choice(possible_anime)
     return random_anime
 
@@ -214,6 +227,11 @@ def clean(item):
     Remove or convert all non-alphabetical characters from a string or list
     of strings.
     Strip all Escape characters, accents, spaces, and irregular characters
+    Inputs:
+        item: either a list of string or a string
+    Outputs:
+        translations: a list of cleaned strings if item was a list, or
+            a cleaned string if item was a string
     """
     translations = []
     irregular = ['★', '♥', '☆', '♡', '½', 'ß', '²']
@@ -244,6 +262,11 @@ def clean(item):
 def by_genre(anime_df):
     """
     Restrict the potential anime recommendations according to genre
+    Input:
+        anime_df: Pandas Data Frame of all anime, taken from get_anime_df()
+    Output:
+        df: New anime data frame containing only anime of the type(s)
+            specified in args.genres
     """
     # Get genres to use and possible genres
     use_genres = ast.literal_eval(args.genres)
@@ -293,9 +316,12 @@ def by_genre(anime_df):
     return df
 
 
-def get_types(df):
+def get_types():
     """
-    Modify data frame to include only anime of specified genre
+    Confirm list of types input in args.types from the list
+        ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
+    Output:
+        list, types of anime to include in recommendations
     """
     possibilities = ['TV', 'OVA', 'Movie', 'Special', 'ONA', 'Music']
     use_types = ast.literal_eval(args.types)
@@ -314,13 +340,20 @@ pd.set_option("max_colwidth", None)
 def anime_recs(name, count, anime_df):
     """
     Get anime recommendations based on similar anime.
-    Count is the number of similar anime to return based on highest score
+    Inputs:
+        name: Str, name of the anime to find similar recommendations for
+        count: Int, number of recommendations to include
+        anime_df: Pandas Data Frame of all anime, taken from get_anime_df()
+    Outputs:
+        Frame: Pandas data frame containing anime recommendations
+        filename: Name of wandb artifact to create
+        translated: cleaned anime name
     """
     sypnopsis_df = get_sypnopses_df()
     model = get_model()
     weights, _ = get_weights(model)
     rating_df, anime_to_index, index_to_anime = main_df_by_anime()
-    use_types = get_types(anime_df)
+    use_types = get_types()
 
     translated = clean(name)
     filename = translated + '.csv'
@@ -355,7 +388,7 @@ def anime_recs(name, count, anime_df):
         # Some anime do not have sypnopses
         try:
             sypnopsis = get_sypnopsis(decoded_id, sypnopsis_df)
-        except BaseException:
+        except IndexError:
             sypnopsis = "None"
 
         # Get desired column values for anime
