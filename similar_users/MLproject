@@ -34,7 +34,7 @@ entry_points:
       max_ratings:
         description: Maximum ratings you want a random user to have
         type: str
-      random_user:
+      sim_random_user:
         description: Whether to use a random user for the input
         type: str
       num_faves:
@@ -75,7 +75,7 @@ entry_points:
                               --sim_user_query {sim_user_query} \
                               --id_query_number {id_query_number} \
                               --max_ratings {max_ratings} \
-                              --random_user {random_user} \
+                              --sim_random_user {sim_random_user} \
                               --num_faves {num_faves} \
                               --TV_only {TV_only} \
                               --sim_users_fn {sim_users_fn} \
