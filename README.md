@@ -25,9 +25,9 @@ Note: If using M1 or M2 Mac, install tensorflow with the commands:
 
 # THE DATA
 
-The data were scraped from [myanimelist.net](https://myanimelist.net), an online database containing over 18,000 anime and 350,000 users. The size of the main data set in csv format is 2.03 GB, far too large to store in github. For the sake of casual usability, I reduced the data set from 109 million rows to roughly seven million rows, taking care to ensure all anime remained included, and stored it in parquet format [here](https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet).     
+The data were scraped from [myanimelist.net](https://myanimelist.net), an online database containing over 18,000 anime and 350,000 users. The size of the main data set in csv format is 2.03 GB, far too large to store in github. For the sake of casual usability, I reduced the data set from 109 million samples to roughly seven million samples, taking care to ensure all anime remained included, and stored it in parquet format [here](https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet).     
 
-The [main data set, user_stats.parquet](https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet) contains information about 17,562 anime and the preferences of 325,772 different users. It is formatted as such:
+The [main data set, user_stats.parquet](https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet) contains information about every anime and every user. It is formatted as such:
 
 ![](https://github.com/Dyrutter/anime_recommendations/blob/main/data/main_data_set_example.png)
 
