@@ -164,7 +164,7 @@ def go(config: DictConfig):
                 "sim_user_query": config["users"]["sim_user_query"],
                 "id_query_number": config["similarity"]["id_query_number"],
                 "max_ratings": config["similarity"]["max_ratings"],
-                "random_user": config["similarity"]["random_user"],
+                "sim_random_user": config["similarity"]["sim_random_user"],
                 "num_faves": config["users"]["num_faves"],
                 "TV_only": config["users"]["TV_only"],
                 "sim_users_fn": config["users"]["sim_users_fn"],
