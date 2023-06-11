@@ -1,15 +1,14 @@
-# Save fave genres and sources df as artifact
 import argparse
 import logging
 import os
 import wandb
 import random
-import re
 import pandas as pd
 import numpy as np
 from distutils.util import strtobool
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+from collections import defaultdict
 
 
 logging.basicConfig(
@@ -62,7 +61,9 @@ def main_df_by_id():
 
 def get_anime_df():
     """
-    Get data frame containing stats on each anime
+    Load data frame artifact containing info on each anime from wandb.
+    Output:
+        df: Pandas Data Frame containing all anime and their relevant stats
     """
     run = wandb.init(project=args.project_name)
     artifact = run.use_artifact(args.anime_df, type=args.anime_df_type)
@@ -70,18 +71,10 @@ def get_anime_df():
     df = pd.read_csv(artifact_path)
     df = df.replace("Unknown", np.nan)
 
-    df['anime_id'] = df['MAL_ID']
-    df['japanese_name'] = df['Japanese name']
-    df["eng_version"] = df['English name']
+    df['anime_id'], df['eng_version'] = df['MAL_ID'], df['English name']
     df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
-    df.sort_values(by=['Score'],
-                   inplace=True,
-                   ascending=False,
-                   kind='quicksort',
-                   na_position='last')
-    keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
-                 "Premiered", "Studios", "japanese_name", "Name", "Type",
-                 "Source", 'Rating', 'Members']
+    keep_cols = ["anime_id", "eng_version", "Genres", "Name", "Type",
+                 "Source", "Rating"]
     df = df[keep_cols]
     return df
 
@@ -91,45 +84,82 @@ def get_anime_name(anime_id, df):
     Helper function for loading anime data frame
     Inputs:
         anime_id: The ID of an anime
-        df: anime stats data frame
+        df: data frame containing all anime, taken from get_anime_df()
     Outputs:
         name: The english name of anime_id
     """
-    try:
-        # Get a single anime from the anime df based on ID
-        name = df[df.anime_id == anime_id].eng_version.values[0]
-    except BaseException:
-        raise ValueError("ID/eng_version pair was not found in data frame!")
-
-    try:
-        if name is np.nan:
-            name = df[df.anime_id == anime_id].Name.values[0]
-    except BaseException:
-        raise ValueError("Name was not found in data frame!")
+    name = df[df.anime_id == anime_id].Name.values[0]
     return name
+
+
+def get_genres(anime_df):
+    """
+    Get individual anime genres in ["Genres"], repeated per anime. Currently
+    every item in anime_df's ["Genres"] is a list of genres. For example, the
+    anime "Gosick" has ["Genres"]: [Mystery, Historical, Drama, Romance]. This
+    Function takes "Mystery", "Historical", "Drama", and "Romance" and appends
+    them to a larger list which will be used to assess frequency
+    Input:
+        anime_df: data frame containing all anime, taken from get_anime_df()
+    Output:
+        genres_list: Individual anime genres in anime_df's ["Genres"],
+            repeated per anime and merged into a single list
+        all_genres: A default dict of all genres in the data frame
+    """
+    anime_df.dropna(inplace=False)
+    all_genres = defaultdict(int)
+
+    genres_list = []
+    for genres in anime_df['Genres']:
+        if isinstance(genres, str):
+            for genre in genres.split(','):
+                genres_list.append(genre)
+                all_genres[genre.strip()] += 1
+    return genres_list, all_genres
+
+
+def get_sources(anime_df):
+    """
+    Get individual anime sources in ["Sources"], repeated per anime. Currently
+    every item in anime_df's ["Sources"] is a list of sources. This function
+    appends each source to a list of all sources for every anime.
+    Input:
+        anime_df: data frame containing all anime, taken from get_anime_df()
+    Output:
+        sources_list: Individual anime sources in anime_df's ["Sources"],
+            repeated per anime and merged into a single list
+        all_sources: A defaultdict object of all sources
+    """
+    anime_df.dropna(inplace=False)
+    all_sources = defaultdict(int)
+    sources_list = []
+    for sources in anime_df['Source']:
+        if isinstance(sources, str):
+            for source in sources.split(','):
+                sources_list.append(source)
+                all_sources[source.strip()] += 1
+    return sources_list, all_sources
 
 
 def genre_cloud(anime_df, ID):
     """
     Create a word cloud of a user's favorite genres
     Inputs:
-        anime_df: anime stats data frame
+        anime_df: data frame containing all anime, taken from get_anime_df()
         ID: User ID to create cloud of
     Outputs:
         genres_cloud: A wordcloud object of the user's favorite genres
         fn: Filename wordcloud was saved as
     If args.show_cloud is True, cloud will show at runtime
     """
-    genres = get_genres(anime_df)
-    genres = (" ").join(list(map(str.upper, genres)))
-
+    genres, genre_dict = get_genres(anime_df)
     cloud = WordCloud(width=int(args.cloud_width),
                       height=int(args.cloud_height),
                       prefer_horizontal=0.85,
                       background_color='white',
                       contour_width=0.05,
                       colormap='spring')
-    genres_cloud = cloud.generate(genres)
+    genres_cloud = cloud.generate_from_frequencies(genre_dict)
     fn = "User_ID_" + str(ID) + '_' + args.genre_fn
     genres_cloud.to_file(fn)
     return genres_cloud, fn
@@ -139,74 +169,31 @@ def source_cloud(anime_df, ID):
     """
     Create a word cloud of a user's favorite sources
     Inputs:
-        anime_df: anime stats data frame
-        ID: User ID to create cloud of
+        anime_df: data frame containing all anime, taken from get_anime_df()
+        ID: User ID to create source preferences cloud of
     Outputs:
         source_cloud: a wordcloud object of the user's favorite sources
         fn: The filename of the word cloud
     If args.show_cloud is True, cloud will show at runtime
     """
-    source = get_sources(anime_df)
-    sources = (" ").join(list(map(str.upper, source)))
-
+    sources, source_dict = get_sources(anime_df)
     cloud = WordCloud(width=int(args.cloud_width),
                       height=int(args.cloud_height),
                       prefer_horizontal=0.85,
-                      background_color='white',
+                      background_color='gray',
                       contour_width=0.05,
-                      colormap='spring')
-    source_cloud = cloud.generate(sources)
+                      colormap='autumn')
+    source_cloud = cloud.generate_from_frequencies(source_dict)
     fn = 'User_ID_' + str(ID) + '_' + args.source_fn
     source_cloud.to_file(fn)
     return source_cloud, fn
 
 
-def get_genres(anime_df):
-    """
-    Get all possible anime genres
-    Input: data frame containing anime statistics
-    Output: All possible anime genres in list format
-    """
-    # anime_df = get_anime_df()
-    genres = anime_df['Genres'].unique().tolist()
-    # Get genres individually (instances have lists of genres)
-    possibilities = list(set(str(genres).split()))
-    # Remove non alphanumeric characters
-    possibilities = sorted(
-        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
-    # Convert incomplete categories to their proper names
-    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
-    fixed = possibilities + \
-        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
-    genre_list = sorted([i for i in fixed if i not in rem])
-    return genre_list
-
-
-def get_sources(anime_df):
-    """
-    Get all possible anime sources.
-    Input: data frame containing anime statistics
-    Output: All possible anime sources in list format
-    """
-    sources = anime_df['Source'].unique().tolist()
-    # Get genres individually (instances have lists of genres)
-    possibilities = list(set(str(sources).split()))
-    # Remove non alphanumeric characters
-    possibilities = sorted(list(
-        set([re.sub(r'[\W_]', '', e) for e in possibilities])))
-
-    remove = \
-        ['novel', "Light", "Visual", "Picture", "Card", "game", "book", "Web"]
-    fixed = possibilities + \
-        ['LightNovel', 'VisualNovel', 'PictureBook', 'CardGame', "WebNovel"]
-    source_list = sorted([i for i in fixed if i not in remove])
-    return source_list
-
-
 def show_cloud(cloud):
     """
     Helper function to desplay a word cloud.
-    Input: Either a genre or sources word cloud
+    Input:
+        cloud: Either a genre or sources word cloud object
     """
     fig = plt.figure(figsize=(8, 6))
     timer = fig.canvas.new_timer(interval=int(args.interval))
@@ -274,31 +261,29 @@ def fave_sources(user, df, anime_df):
     return pd.DataFrame(faves)
 
 
-def get_fave_df(genres, sources, ID, save):
+def get_fave_df(genres, sources, ID):
     """
     Merge data frames of a user's favorite genres and sources
     Inputs:
         genres: Pandas data frame containing a user's favorite genres
         sources: Pandas data frame containing a user's favorite sources
         ID: The user ID to be queried
-        save: Boolean of whether or not to save the data frame locally
     Outputs:
         sources: Merged Pandas data frame of favorite sources and genres
         fn: Filename data frame is saved as
     """
     genres = genres["Genres"]
     sources["Genres"] = genres
-    if save is True:
-        fn = 'User_ID_' + str(ID) + '_' + args.prefs_csv
-        sources.to_csv(fn)
-        return sources, fn
-    else:
-        return sources
+    fn = 'User_ID_' + str(ID) + '_' + args.prefs_csv
+    sources.to_csv(fn)
+    return sources, fn
 
 
 def get_ID_artifact():
     """
-    Get the user ID artifact and return its integer value
+    Get the user ID data frame artifact
+    Output:
+        ID: Int, ID that was saved as an artifact for MLflow use
     """
     run = wandb.init(project=args.project_name)
     artifact = run.use_artifact(args.flow_user, type=args.ID_type)
@@ -307,25 +292,44 @@ def get_ID_artifact():
     return df.values[0][0]
 
 
+def select_user(df, user_to_index, index_to_user):
+    """
+    Choose user to analyze based. Will be either the ID used
+        in the MLflow workflow if args.prefs_from_flow is True, the ID input
+        in the config file under the section ["Users"]["prefs_user_query"] if
+        args.pefs_local_user is True, or a random ID
+    Inputs:
+        df: Main df taken from main_df_by_id()
+        user_to_index: dict, enumerated mapping taken from main_df_by_id()
+        index_to_user: dict, enumerated mapping taken from main_df_by_id()
+    Outputs:
+        user: Integer of the user ID to analzye
+        Type: The type of user (Artifact, local, or random) for metadata use
+    """
+    if args.prefs_from_flow is True:
+        user = get_ID_artifact()
+        Type = "MLflow ID"
+        logger.info("Using %s as input use taken from MLflow", user)
+        return user, Type
+
+    elif args.prefs_local_user is True:
+        user = int(args.prefs_user_query)
+        Type = "Local Config File ID"
+        logger.info("Using %s as config file-specified input user", user)
+        return user, Type
+    else:
+        user = get_random_user(df, user_to_index, index_to_user)
+        Type = "Random User"
+        logger.info("Using %s as random input user", user)
+        return user, Type
+
+
 def go(args):
     # Initiate run and get data frames
     run = wandb.init(project=args.project_name)
     df, user_to_index, index_to_user = main_df_by_id()
     anime_df = get_anime_df()
-
-    # Establish which user to find preferences of
-    if args.pref_random_user is True:
-        user = get_random_user(df, user_to_index, index_to_user)
-        logger.info("Using %s as random input user", user)
-    elif args.prefs_local_user is True:
-        user = int(args.prefs_user_query)
-        logger.info("Using locally specified user %s as user", user)
-    elif args.prefs_from_flow is True:
-        user = get_ID_artifact()
-        logger.info("Using ID artifact %s as local user", user)
-    else:
-        logger.info("NO ID WAS INPUT")
-        raise ValueError("NO ID WAS INPUT")
+    user, Type = select_user(df, user_to_index, index_to_user)
 
     # Get the user's favorite genres and sources
     genre_df = fave_genres(user, df, anime_df)
@@ -334,8 +338,7 @@ def go(args):
     # Create genre cloud, source cloud, and preferences csv file
     genres_cloud, genre_fn = genre_cloud(genre_df, user)
     sources_cloud, source_fn = source_cloud(source_df, user)
-    fave_df, fave_fn = get_fave_df(
-        genre_df, source_df, user, args.save_faves)
+    fave_df, fave_fn = get_fave_df(genre_df, source_df, user)
 
     # Log favorite genre cloud
     logger.info("Genre Cloud artifact")
@@ -343,7 +346,7 @@ def go(args):
         name=args.genre_fn,
         type=args.cloud_type,
         description='Cloud image of favorite genres',
-        metadata={"ID": user, "Filename": genre_fn})
+        metadata={"ID": user, "User_type": Type, "Filename": genre_fn})
     genre_cloud_artifact.add_file(genre_fn)
     run.log_artifact(genre_cloud_artifact)
     logger.info("Genre cloud logged!")
@@ -355,7 +358,7 @@ def go(args):
         name=args.source_fn,
         type=args.cloud_type,
         description='Image of source cloud',
-        metadata={"ID": user, "Filename": source_fn})
+        metadata={"ID": user, "User_Type": Type, "Filename": source_fn})
     source_cloud_artifact.add_file(source_fn)
     run.log_artifact(source_cloud_artifact)
     logger.info('Source cloud logged!')
@@ -367,7 +370,7 @@ def go(args):
         name=args.prefs_csv,
         type=args.fave_art_type,
         description='Csv file of a users favorite Genres and sources',
-        metadata={"ID": user, "Filename": fave_fn})
+        metadata={"ID": user, "User_Type": Type, "Filename": fave_fn})
     favorites_artifact.add_file(fave_fn)
     run.log_artifact(favorites_artifact)
     logger.info("Favorites data frame logged!")
