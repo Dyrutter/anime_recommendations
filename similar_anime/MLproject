@@ -37,10 +37,10 @@ entry_points:
       random_anime:
         description: Boolean of whether or not to use a random anime as input
         type: str
-      genres:
+      anime_rec_genres:
         description: List of genre criteria of format ["Genre1", "Genre2", None]
         type: str
-      spec_genres:
+      an_spec_genres:
         description: Boolean of whether or not to narrow down returned anime by genre
         type: str
       types:
@@ -77,8 +77,8 @@ entry_points:
                               --anime_query {anime_query} \
                               --a_query_number {a_query_number} \
                               --random_anime {random_anime} \
-                              --genres {genres} \
-                              --spec_genres {spec_genres} \
+                              --anime_rec_genres {anime_rec_genres} \
+                              --an_spec_genres {an_spec_genres} \
                               --types {types} \
                               --spec_types {spec_types} \
                               --a_rec_type {a_rec_type} \
