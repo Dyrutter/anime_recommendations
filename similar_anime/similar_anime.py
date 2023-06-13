@@ -266,11 +266,12 @@ def by_genre(anime_df):
         anime_df: Pandas Data Frame of all anime, taken from get_anime_df()
     Output:
         df: New anime data frame containing only anime of the type(s)
-            specified in args.genres
+            specified in args.anime_rec_genres
     """
     # Get genres to use and possible genres
-    use_genres = ast.literal_eval(args.genres)
-    genres = get_genres(anime_df)
+    use_genres = clean(ast.literal_eval(args.anime_rec_genres))
+    genres = clean(get_genres(anime_df))
+
     # Ensure the input genres are valid genres
     for genre in use_genres:
         try:
@@ -286,15 +287,25 @@ def by_genre(anime_df):
     for index, row in anime_df.iterrows():
         i = 0
         # Append an anime to its specific array if it is of the desired genre
-        if g1 in str(row['Genres']) and g1 not in arr1[:i] and g1 != "None":
+        if g1 in str(row['Genres']).lower().replace(
+                " ", "") and g1 not in arr1[:i] and g1 != "none":
             arr1.append(row)
-        if g2 in str(row['Genres']) and g2 not in arr2[:i] and g2 != "None":
+
+        if g2 in str(row['Genres']).lower().replace(
+                " ", "") and g2 not in arr2[:i] and g2 != "none":
             arr2.append(row)
-        if g3 in str(row['Genres']) and g3 not in arr3[:i] and g3 != "None":
+
+        if g3 in str(row['Genres']).lower().replace(
+                " ", "") and g3 not in arr3[:i] and g3 != "none":
             arr3.append(row)
+
         i += 1
     # Initialize empty df
     df = None
+    logger.info('arr1.len is %s', len(arr1))
+    logger.info('arr2.len is %s', len(arr2))
+    logger.info('arr3.len is %s', len(arr3))
+
     # If array 1 was created, convert to data frame
     if arr1 != empty:
         df = pd.DataFrame(arr1)
@@ -313,6 +324,7 @@ def by_genre(anime_df):
             df = pd.concat([df, df3]).drop_duplicates()
         else:
             df = df3
+    logger.info("DF head is %s", df.head())
     return df
 
 
@@ -428,7 +440,7 @@ def anime_recs(name, count, anime_df):
     Frame = Frame[Frame.anime_id != index].drop(['anime_id'], axis=1)
 
     # Remove anime not of specified genre if so desired
-    if args.spec_genres is True:
+    if args.an_spec_genres is True:
         Frame = by_genre(Frame).sort_values(
             by="Similarity", ascending=False).drop(['Genres'], axis=1)
     else:
@@ -564,14 +576,14 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--genres",
+        "--anime_rec_genres",
         type=str,
         help="List of genres to narrow down return values",
         required=True
     )
 
     parser.add_argument(
-        "--spec_genres",
+        "--an_spec_genres",
         type=lambda x: bool(strtobool(x)),
         help="Boolean of whether or not to narrow down by specific genres",
         required=True
