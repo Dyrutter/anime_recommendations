@@ -78,6 +78,12 @@ entry_points:
         type: str
       recs_ID_from_conf:
         description: Whether to use the user ID specified in config file under user_recs_query
+        type: str
+      ID_rec_genres:
+        description: List of genres to include in recommendations
+        type: str
+      ID_spec_genres:
+        description: Bool of whether to only include anime of the specified genres in recommendations
         type: str 
     command: >-
       python user_recs.py --project_name {project_name} \
@@ -104,4 +110,6 @@ entry_points:
                               --sim_users_art {sim_users_art} \
                               --sim_users_art_type {sim_users_art_type} \
                               --recs_n_sim_ID {recs_n_sim_ID} \
-                              --recs_ID_from_conf {recs_ID_from_conf}
+                              --recs_ID_from_conf {recs_ID_from_conf} \
+                              --ID_rec_genres {ID_rec_genres} \
+                              --ID_spec_genres {ID_spec_genres}
