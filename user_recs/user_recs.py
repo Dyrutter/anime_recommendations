@@ -1,3 +1,5 @@
+# Add get possible genres function for selecting anime based on genre,
+# modify main function to allow for selecting anime based on genre
 import unicodedata
 import string
 import argparse
@@ -10,7 +12,9 @@ import re
 import numpy as np
 import tensorflow as tf
 import random
+import ast
 from wordcloud import WordCloud
+from collections import defaultdict
 
 
 logging.basicConfig(
@@ -195,7 +199,7 @@ def get_fave_df(genres, sources, ID):
     """
     Merge favorite sources and favorite genres data frames
     Inputs:
-        genres: Pandas data frame of a user's favorite anime and their 
+        genres: Pandas data frame of a user's favorite anime and their
             respective genres with columns ["eng_version", "Genres"]
         sources: Pandas data frame of a user's favorite anime and their
             respective source material with columns ["eng_version", "sources"]
@@ -258,50 +262,106 @@ def get_random_user(df, user_to_index, index_to_user):
     """
     # Get list of possible user IDs
     possible_users = list(user_to_index.keys())
-    # Select random user from list of IDs 
+    # Select random user from list of IDs
     random_user = random.choice(possible_users)
     return random_user
 
 
 def get_genres(anime_df):
     """
-    Get all possible anime genres
-    Input: data frame containing anime statistics taken from get_anime_df()
-    Output: All possible anime genres in list format
+    Get individual anime genres in ["Genres"], repeated per anime. Currently
+    every item in anime_df's ["Genres"] is a list of genres. For example, the
+    anime "Gosick" has ["Genres"]: [Mystery, Historical, Drama, Romance]. This
+    Function takes "Mystery", "Historical", "Drama", and "Romance" and appends
+    them to a larger list which will be used to assess frequency
+    Input:
+        anime_df: data frame containing all anime, taken from get_anime_df()
+    Output:
+        genres_list: Individual anime genres in anime_df's ["Genres"],
+            repeated per anime and merged into a single list
+        all_genres: A default dict of all genres in the data frame
     """
-    genres = anime_df['Genres'].unique().tolist()
-    # Get genres individually (instances have lists of genres)
-    possibilities = list(set(str(genres).split()))
-    # Remove non alphanumeric characters
-    possibilities = sorted(
-        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
-    # Convert incomplete categories to their proper names
-    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
-    fixed = possibilities + \
-        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
-    genre_list = sorted([i for i in fixed if i not in rem])
-    return genre_list
+    anime_df.dropna(inplace=False)
+    all_genres = defaultdict(int)
+
+    genres_list = []
+    for genres in anime_df['Genres']:
+        if isinstance(genres, str):
+            for genre in genres.split(','):
+                genres_list.append(genre)
+                all_genres[genre.strip()] += 1
+    return genres_list, all_genres
 
 
 def get_sources(anime_df):
     """
-    Get all possible anime sources.
-    Input: data frame containing anime statistics taken from get_anime_df()
-    Output: All possible anime sources in list format
+    Get individual anime sources in ["Sources"], repeated per anime. Currently
+    every item in anime_df's ["Sources"] is a list of sources. This function
+    appends each source to a list of all sources for every anime.
+    Input:
+        anime_df: data frame containing all anime, taken from get_anime_df()
+    Output:
+        sources_list: Individual anime sources in anime_df's ["Sources"],
+            repeated per anime and merged into a single list
+        all_sources: A defaultdict object of all sources
     """
-    sources = anime_df['Source'].unique().tolist()
-    # Get genres individually (instances have lists of genres)
-    possibilities = list(set(str(sources).split()))
-    # Remove non alphanumeric characters
-    possibilities = sorted(list(
-        set([re.sub(r'[\W_]', '', e) for e in possibilities])))
+    anime_df.dropna(inplace=False)
+    all_sources = defaultdict(int)
+    sources_list = []
+    for sources in anime_df['Source']:
+        if isinstance(sources, str):
+            for source in sources.split(','):
+                sources_list.append(source)
+                all_sources[source.strip()] += 1
+    return sources_list, all_sources
 
-    remove = \
-        ['novel', "Light", "Visual", "Picture", "Card", "game", "book", "Web"]
-    fixed = possibilities + \
-        ['LightNovel', 'VisualNovel', 'PictureBook', 'CardGame', "WebNovel"]
-    source_list = sorted([i for i in fixed if i not in remove])
-    return source_list
+
+def genre_cloud(anime_df, ID):
+    """
+    Create a word cloud of a user's favorite genres
+    Inputs:
+        anime_df: data frame containing all anime, taken from get_anime_df()
+        ID: User ID to create cloud of
+    Outputs:
+        genres_cloud: A wordcloud object of the user's favorite genres
+        fn: Filename wordcloud was saved as
+    If args.show_cloud is True, cloud will show at runtime
+    """
+    genres, genre_dict = get_genres(anime_df)
+    cloud = WordCloud(width=int(args.cloud_width),
+                      height=int(args.cloud_height),
+                      prefer_horizontal=0.85,
+                      background_color='white',
+                      contour_width=0.05,
+                      colormap='spring')
+    genres_cloud = cloud.generate_from_frequencies(genre_dict)
+    fn = "User_ID_" + str(ID) + '_' + args.genre_fn
+    genres_cloud.to_file(fn)
+    return genres_cloud, fn
+
+
+def source_cloud(anime_df, ID):
+    """
+    Create a word cloud of a user's favorite sources
+    Inputs:
+        anime_df: data frame containing all anime, taken from get_anime_df()
+        ID: User ID to create source preferences cloud of
+    Outputs:
+        source_cloud: a wordcloud object of the user's favorite sources
+        fn: The filename of the word cloud
+    If args.show_cloud is True, cloud will show at runtime
+    """
+    sources, source_dict = get_sources(anime_df)
+    cloud = WordCloud(width=int(args.cloud_width),
+                      height=int(args.cloud_height),
+                      prefer_horizontal=0.85,
+                      background_color='gray',
+                      contour_width=0.05,
+                      colormap='autumn')
+    source_cloud = cloud.generate_from_frequencies(source_dict)
+    fn = 'User_ID_' + str(ID) + '_' + args.source_fn
+    source_cloud.to_file(fn)
+    return source_cloud, fn
 
 
 def fave_genres(user, df, anime_df):
@@ -344,56 +404,6 @@ def fave_sources(user, df, anime_df):
     faves = anime_df[anime_df["anime_id"].isin(top)]
     faves = faves[["eng_version", "Source"]]
     return pd.DataFrame(faves)
-
-
-def genre_cloud(anime_df, ID):
-    """
-    Create a word cloud of a user's favorite genres
-    Inputs:
-        anime_df: anime stats data frame
-        ID: User ID to create cloud of
-    Outputs:
-        genres_cloud: A wordcloud object of the user's favorite genres
-        fn: Filename wordcloud is saved under
-    """
-    genres = get_genres(anime_df)
-    genres = (" ").join(list(map(str.upper, genres)))
-
-    cloud = WordCloud(width=800,
-                      height=600,
-                      prefer_horizontal=0.85,
-                      background_color='white',
-                      contour_width=0.05,
-                      colormap='spring')
-    genres_cloud = cloud.generate(genres)
-    fn = "User_ID_" + str(ID) + '_user_recs_genre_cloud.png'
-    genres_cloud.to_file(fn)
-    return genres_cloud, fn
-
-
-def source_cloud(anime_df, ID):
-    """
-    Create a word cloud of a user's favorite sources
-    Inputs:
-        anime_df: anime stats data frame
-        ID: User ID to create cloud of
-    Outputs:
-        source_cloud: a wordcloud object of the user's favorite sources
-        fn: The filename the word cloud is saved under
-    """
-    source = get_sources(anime_df)
-    sources = (" ").join(list(map(str.upper, source)))
-
-    cloud = WordCloud(width=800,
-                      height=600,
-                      prefer_horizontal=0.85,
-                      background_color='white',
-                      contour_width=0.05,
-                      colormap='spring')
-    source_cloud = cloud.generate(sources)
-    fn = 'User_ID_' + str(ID) + '_user_recs_source_cloud.png'
-    source_cloud.to_file(fn)
-    return source_cloud, fn
 
 
 def find_similar_users(user_id, n_users, rating_df, user_to_index,
@@ -456,6 +466,93 @@ def get_ID_artifacts():
     sim_art_path = sim_artifact.file()
     sim_IDs = pd.read_csv(sim_art_path)
     return ID, sim_IDs
+
+
+def genres_list(anime_df):
+    """
+    Get all possible anime genres
+    Input:
+        anime_df: Pandas Data Frame of all anime, taken from get_anime_df()
+    Output:
+        genre_list: List, all possible genres
+    """
+    genres = anime_df['Genres'].unique().tolist()
+    # Get genres individually (instances have lists of genres)
+    possibilities = list(set(str(genres).split()))
+    # Remove non alphanumeric characters
+    possibilities = sorted(
+        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
+    # Convert incomplete categories to their proper names
+    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
+    fixed = possibilities + \
+        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
+    genre_list = sorted([i for i in fixed if i not in rem])
+    return genre_list
+
+
+def by_genre(anime_df):
+    """
+    Restrict the potential anime recommendations according to genre
+    Input:
+        anime_df: Pandas Data Frame of all anime, taken from get_anime_df()
+    Output:
+        df: New anime data frame containing only anime of the types
+            specified in args.anime_rec_genres
+    """
+    # Get genres to use and possible genres
+    use_genres = clean(ast.literal_eval(args.ID_rec_genres))
+    genres = clean(get_genres(anime_df))
+
+    # Ensure the input genres are valid genres
+    for genre in use_genres:
+        try:
+            assert genre in genres
+        except AssertionError:
+            return logger.info(
+                "An invalid genre was input. Select genres from %s", genres)
+
+    g1, g2, g3 = use_genres
+    arr1, arr2, arr3, empty = [], [], [], []
+
+    # Iterate through anime df & append to arrays if of the specified genre
+    for index, row in anime_df.iterrows():
+        i = 0
+        if g1 in str(row['Genres']).lower(
+        ).replace(" ", "") and g1 not in arr1[:i] and g1 != "none":
+            arr1.append(row)
+
+        if g2 in str(row['Genres']).lower(
+        ).replace(" ", "") and g2 not in arr2[:i] and g2 != "none":
+            arr2.append(row)
+
+        if g3 in str(row['Genres']).lower(
+        ).replace(" ", "") and g3 not in arr3[:i] and g3 != "none":
+            arr3.append(row)
+        i += 1
+
+    # Initialize empty df
+    df = None
+
+    # If array 1 was created, convert to data frame
+    if arr1 != empty:
+        df = pd.DataFrame(arr1)
+    # If array 2 was created, convert to data frame
+    if arr2 != empty:
+        df2 = pd.DataFrame(arr2)
+        # If the first data frame exists, concatenate with it
+        if arr1 != empty:
+            df = pd.concat([df, df2]).drop_duplicates()
+        else:
+            df = df2
+    # Create third array and concatenate in same manner
+    if arr3 != empty:
+        df3 = pd.DataFrame(arr3)
+        if df is not None:
+            df = pd.concat([df, df3]).drop_duplicates()
+        else:
+            df = df3
+    logger.info("DF head is %s", df.head())
+    return df
 
 
 def select_user(num_sim, df, user_to_index, index_to_user, user_weights):
@@ -539,9 +636,10 @@ def similar_user_recs(
         anime_list.append(pref_list.eng_version.values)
 
     anime_list = pd.DataFrame(anime_list)
+    # .head(n) ######## TRY REMOVING HEAD
     sorted_list = pd.DataFrame(
-        pd.Series(anime_list.values.ravel()).value_counts()).head(n)
-    logger.info("anime name is %s", sorted_list)
+        pd.Series(anime_list.values.ravel()).value_counts())  # .head(n)
+    # logger.info("anime name is %s", sorted_list)
 
     for i, anime_name in enumerate(sorted_list.index):
         n_pref = sorted_list[sorted_list.index == anime_name].values[0][0]
@@ -570,8 +668,17 @@ def similar_user_recs(
              "Japanese name": japanese_name, "Studios": studios,
              "Premiered": premiered, "Score": score, "Type": Type})
     filename = 'User_ID_' + str(user) + '_' + args.user_recs_fn
-    df = pd.DataFrame(recommended_animes)
-    return df, filename
+
+    Frame = pd.DataFrame(recommended_animes)
+    if args.ID_spec_genres is True:
+        Frame = by_genre(Frame)
+    try:
+        return Frame[:n], filename
+    except IndexError:
+        return Frame[:], filename
+
+    # df = pd.DataFrame(recommended_animes)
+    # return df, filename
 
 
 def go(args):
@@ -826,6 +933,20 @@ if __name__ == "__main__":
         "--recs_ID_from_conf",
         type=lambda x: bool(strtobool(x)),
         help="Whether to use the user ID from config file user_recs_query",
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_rec_genres",
+        type=str,
+        help="List of genres to narrow down return values",
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_spec_genres",
+        type=lambda x: bool(strtobool(x)),
+        help="Boolean of whether or not to narrow down by specific genres",
         required=True
     )
     args = parser.parse_args()
