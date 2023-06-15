@@ -6,6 +6,17 @@ import random
 import re
 import string
 import unicodedata
+import ast
+import logging
+
+logging.basicConfig(
+    filename='./model_recs.log',
+    level=logging.INFO,
+    filemode='a',
+    format='%(asctime)s-%(name)s - %(levelname)s - %(message)s',
+    datefmt='%d %b %Y %H:%M:%S %Z',
+    force=True)
+logger = logging.getLogger()
 
 
 def get_model(project='anime_recommendations',
@@ -191,8 +202,11 @@ def get_sypnopsis(anime, sypnopsis_df):
 
 def get_genres(anime_df):
     """
-    Get a list of all possible anime genres
-    Input is data frame containing all anime
+    Get all possible anime genres
+    Input:
+        anime_df: data frame containing all anime, taken from get_anime_df()
+    Output:
+        genre_list: All possible anime genres in list format
     """
     # anime_df = get_anime_df()
     genres = anime_df['Genres'].unique().tolist()
@@ -211,7 +225,11 @@ def get_genres(anime_df):
 
 def get_sources(anime_df):
     """
-    Get a list of all possible anime genres
+    Get all possible anime sources.
+    Input:
+        anime_df: data frame containing all anime, taken from get_anime_df()
+    Output:
+        source_list: All possible anime sources in list format
     """
     sources = anime_df['Source'].unique().tolist()
     # Get genres individually (instances have lists of genres)
@@ -219,13 +237,71 @@ def get_sources(anime_df):
     # Remove non alphanumeric characters
     possibilities = sorted(list(
         set([re.sub(r'[\W_]', '', e) for e in possibilities])))
-
     remove = \
-        ['novel', "Light", "Visual", "Picture", "Card", "game", "book", "Web"]
+        ['novel', "Light", "Visual", "Picture",
+            "Card", "game", "book", "Web", 'nan']
     fixed = possibilities + \
         ['LightNovel', 'VisualNovel', 'PictureBook', 'CardGame', "WebNovel"]
     source_list = sorted([i for i in fixed if i not in remove])
     return source_list
+
+
+def by_genre(anime_df, genres):
+    """
+    Restrict the potential anime recommendations according to genre
+    Input:
+        anime_df: Pandas Data Frame of all anime, taken from get_anime_df()
+        genres: List of string genres to include
+    Output:
+        df: New anime data frame containing only anime of the type(s)
+            specified in args.genres
+    """
+    # Get genres to use and possible genres
+    use_genres = ast.literal_eval(genres)
+    genres = get_genres(anime_df)
+    # Ensure the input genres are valid genres
+    for genre in use_genres:
+        try:
+            assert genre in genres
+        except AssertionError:
+            return logger.info(
+                "An invalid genre was input. Select genres from %s", genres)
+
+    g1, g2, g3 = use_genres
+    arr1, arr2, arr3, empty = [], [], [], []
+
+    # Iterate through anime df
+    for index, row in anime_df.iterrows():
+        i = 0
+        # Append an anime to its specific array if it is of the desired genre
+        if g1 in str(row['Genres']) and g1 not in arr1[:i] and g1 != "None":
+            arr1.append(row)
+        if g2 in str(row['Genres']) and g2 not in arr2[:i] and g2 != "None":
+            arr2.append(row)
+        if g3 in str(row['Genres']) and g3 not in arr3[:i] and g3 != "None":
+            arr3.append(row)
+        i += 1
+    # Initialize empty df
+    df = None
+    # If array 1 was created, convert to data frame
+    if arr1 != empty:
+        df = pd.DataFrame(arr1)
+    # If array 2 was created, convert to data frame
+    if arr2 != empty:
+        df2 = pd.DataFrame(arr2)
+        # If the first data frame exists, concatenate with it
+        if arr1 != empty:
+            df = pd.concat([df, df2]).drop_duplicates()
+        else:
+            df = df2
+    # Create third array and concatenate in same manner
+    if arr3 != empty:
+        df3 = pd.DataFrame(arr3)
+        if df is not None:
+            df = pd.concat([df, df3]).drop_duplicates()
+        else:
+            df = df3
+    return df
 
 
 def clean(item):
