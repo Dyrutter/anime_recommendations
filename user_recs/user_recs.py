@@ -1,5 +1,5 @@
-# Add get possible genres function for selecting anime based on genre,
-# modify main function to allow for selecting anime based on genre
+# Add functionality to use MLFlow preferences artifact
+# Assert that the same preferences ID is used for recs
 import unicodedata
 import string
 import argparse
@@ -325,17 +325,16 @@ def genre_cloud(anime_df, ID):
     Outputs:
         genres_cloud: A wordcloud object of the user's favorite genres
         fn: Filename wordcloud was saved as
-    If args.show_cloud is True, cloud will show at runtime
     """
     genres, genre_dict = get_genres(anime_df)
-    cloud = WordCloud(width=int(args.cloud_width),
-                      height=int(args.cloud_height),
+    cloud = WordCloud(width=int(600),
+                      height=int(350),
                       prefer_horizontal=0.85,
                       background_color='white',
                       contour_width=0.05,
                       colormap='spring')
     genres_cloud = cloud.generate_from_frequencies(genre_dict)
-    fn = "User_ID_" + str(ID) + '_' + args.genre_fn
+    fn = "User_ID_" + str(ID) + '_favorite_genres.png'
     genres_cloud.to_file(fn)
     return genres_cloud, fn
 
@@ -349,17 +348,16 @@ def source_cloud(anime_df, ID):
     Outputs:
         source_cloud: a wordcloud object of the user's favorite sources
         fn: The filename of the word cloud
-    If args.show_cloud is True, cloud will show at runtime
     """
     sources, source_dict = get_sources(anime_df)
-    cloud = WordCloud(width=int(args.cloud_width),
-                      height=int(args.cloud_height),
+    cloud = WordCloud(width=int(600),
+                      height=int(350),
                       prefer_horizontal=0.85,
                       background_color='gray',
                       contour_width=0.05,
                       colormap='autumn')
     source_cloud = cloud.generate_from_frequencies(source_dict)
-    fn = 'User_ID_' + str(ID) + '_' + args.source_fn
+    fn = 'User_ID_' + str(ID) + '_favorite_sources.png'
     source_cloud.to_file(fn)
     return source_cloud, fn
 
@@ -466,6 +464,21 @@ def get_ID_artifacts():
     sim_art_path = sim_artifact.file()
     sim_IDs = pd.read_csv(sim_art_path)
     return ID, sim_IDs
+
+
+def get_prefs_artifact():
+    """
+    Get the user ID and similar users artifact created in similar_users.py
+    Outputs:
+        ID: Integer user ID taken from MLflow
+        sim_IDs: data frame of IDs similar to ID
+    """
+    run = wandb.init(project=args.project_name)
+    prefs_artifact = run.use_artifact(
+        args.prefs_input_fn, type=args.prefs_input_type)
+    prefs_art_path = prefs_artifact.file()
+    prefs = pd.read_csv(prefs_art_path)
+    return prefs
 
 
 def genres_list(anime_df):
@@ -622,9 +635,19 @@ def similar_user_recs(
         df: Data Frame of anime recommendations ranked by similar users
         filename: Name of wandb artifact to save df as
     """
-    user_pref, _ = get_fave_df(genre_df, source_df, user)
+
+    # Get preferences data frame
+    if args.recs_pref_from_flow is True:
+        user_pref = get_prefs_artifact()
+        eng_versions = clean(user_pref.eng_version.values.tolist())
+        logger.info('artifact eng_versions is %s', eng_versions)
+    else:
+        user_pref, _ = get_fave_df(genre_df, source_df, user)
+        eng_versions = user_pref.eng_version.values.tolist()
+    # user_pref, _ = get_fave_df(genre_df, source_df, user)
     recommended_animes, anime_list = [], []
-    eng_versions = user_pref.eng_version.values.tolist()
+    # eng_versions = user_pref.eng_version.values.tolist()
+    logger.info('created eng_versions is %s', eng_versions)
 
     # Get list of similar user IDs
     for user_id in similar_users.similar_users.values:
@@ -636,10 +659,8 @@ def similar_user_recs(
         anime_list.append(pref_list.eng_version.values)
 
     anime_list = pd.DataFrame(anime_list)
-    # .head(n) ######## TRY REMOVING HEAD
     sorted_list = pd.DataFrame(
-        pd.Series(anime_list.values.ravel()).value_counts())  # .head(n)
-    # logger.info("anime name is %s", sorted_list)
+        pd.Series(anime_list.values.ravel()).value_counts())
 
     for i, anime_name in enumerate(sorted_list.index):
         n_pref = sorted_list[sorted_list.index == anime_name].values[0][0]
@@ -677,14 +698,10 @@ def similar_user_recs(
     except IndexError:
         return Frame[:], filename
 
-    # df = pd.DataFrame(recommended_animes)
-    # return df, filename
-
 
 def go(args):
     # Initialize run
-    run = wandb.init(project=args.project_name,
-                     name="user_genre_based_preferences_recommendations")
+    run = wandb.init(project=args.project_name)
     df, ID_to_index, index_to_user = main_df_by_id()
     anime_df = get_anime_df()
     sypnopsis_df = get_sypnopses_df()
@@ -708,7 +725,7 @@ def go(args):
     logger.info("Creating similar user based recs artifact")
     description = "Anime recs based on user prefs: " + str(user)
     artifact = wandb.Artifact(
-        name=filename,
+        name=args.user_recs_fn,
         type=args.user_recs_type,
         description=description,
         metadata={"Queried user: ": user})
@@ -721,7 +738,7 @@ def go(args):
     logger.info("Genre Cloud artifact")
     genre_cloud_artifact = wandb.Artifact(
         name=genre_fn,
-        type="image",
+        type="png",
         description='Cloud image of favorite genres',
         metadata={'Queried user: ': user})
     genre_cloud_artifact.add_file(genre_fn)
@@ -733,7 +750,7 @@ def go(args):
     logger.info("Creating source cloud artifact")
     source_cloud_artifact = wandb.Artifact(
         name=source_fn,
-        type='cloud',
+        type='png',
         description='Image of source cloud')
     source_cloud_artifact.add_file(source_fn)
     run.log_artifact(source_cloud_artifact)
@@ -949,5 +966,27 @@ if __name__ == "__main__":
         help="Boolean of whether or not to narrow down by specific genres",
         required=True
     )
+
+    parser.add_argument(
+        "--recs_pref_from_flow",
+        type=lambda x: bool(strtobool(x)),
+        help="whether to use user prefs artifact from user_prefs.py as input",
+        required=True
+    )
+
+    parser.add_argument(
+        "--prefs_input_fn",
+        type=str,
+        help="Filename of latest fave pref artifact created in user_prefs.py",
+        required=True
+    )
+
+    parser.add_argument(
+        "--prefs_input_type",
+        type=str,
+        help="Type of latest fave pref artifact created in user_prefs.py",
+        required=True
+    )
+
     args = parser.parse_args()
     go(args)
