@@ -140,8 +140,8 @@ def go(config: DictConfig):
                 "anime_query": config["similarity"]["anime_query"],
                 "a_query_number": config["similarity"]["a_query_number"],
                 "random_anime": config["similarity"]["random_anime"],
-                "genres": config["similarity"]["genres"],
-                "spec_genres": config["similarity"]["spec_genres"],
+                "anime_rec_genres": config["similarity"]["anime_rec_genres"],
+                "an_spec_genres": config["similarity"]["an_spec_genres"],
                 "types": config["similarity"]["types"],
                 "spec_types": config["similarity"]["spec_types"],
                 "a_rec_type": config["similarity"]["a_rec_type"],
@@ -233,7 +233,12 @@ def go(config: DictConfig):
                 "sim_users_art": config["users"]["sim_users_latest"],
                 "sim_users_art_type": config["users"]["sim_users_type"],
                 "recs_n_sim_ID": config["users"]["recs_n_sim_ID"],
-                "recs_ID_from_conf": config["users"]["recs_ID_from_conf"]})
+                "recs_ID_from_conf": config["users"]["recs_ID_from_conf"],
+                "ID_rec_genres": config["users"]["ID_rec_genres"],
+                "ID_spec_genres": config["users"]["ID_spec_genres"],
+                "recs_pref_from_flow": config["users"]["recs_pref_from_flow"],
+                "prefs_input_fn": config["users"]["prefs_input_fn"],
+                "prefs_input_type": config["users"]["prefs_input_type"]})
 
     if "model_recs" in steps_to_execute:
         _ = mlflow.run(
