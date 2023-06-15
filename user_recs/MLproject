@@ -84,7 +84,17 @@ entry_points:
         type: str
       ID_spec_genres:
         description: Bool of whether to only include anime of the specified genres in recommendations
-        type: str 
+        type: str
+      recs_pref_from_flow:
+        description: Bool, whether to use preferences csv file artifact created in user_prefs.py as input
+        type: str
+      prefs_input_fn:
+        description: Version name of csv file artifact created in user_prefs.py to use as input
+        type: str
+      prefs_input_type:
+        description: Type of version of csv file artifact created in user_prefs.py for use in user_recs.py
+        type: str
+
     command: >-
       python user_recs.py --project_name {project_name} \
                               --main_df {main_df} \
@@ -112,4 +122,7 @@ entry_points:
                               --recs_n_sim_ID {recs_n_sim_ID} \
                               --recs_ID_from_conf {recs_ID_from_conf} \
                               --ID_rec_genres {ID_rec_genres} \
-                              --ID_spec_genres {ID_spec_genres}
+                              --ID_spec_genres {ID_spec_genres} \
+                              --recs_pref_from_flow {recs_pref_from_flow} \
+                              --prefs_input_fn {prefs_input_fn} \
+                              --prefs_input_type {prefs_input_type}
