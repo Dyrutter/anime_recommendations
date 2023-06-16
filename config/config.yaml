@@ -101,7 +101,7 @@ similarity: # Arguments for anime-based recommendations in similar_anime.py
   anime_query: "YuuYuu☆Hakusho!" #"SilentMöbius" # Input anime to query. Change random_anime to False in order to use.
   random_anime: False # Whether to choose a random anime to assess rather than the anime input under anime_query
   a_query_number: 10 # Number of similar anime to return
-  id_query_number: 10 # Number of similar IDs to return in similar_users.py
+  id_query_number: 10 # Number of similar IDs to return in similar_users.py, MUST BE SAME AS ['users']['recs_n_sim_ID'] IF MLflow IS USED
   max_ratings: 600 # Limit to this many ratings if random_user is True
   sim_random_user: False # Whether or not to use a random user as the sample
   anime_rec_genres: [None, "SLiceOF life", "va#mpire"] # Genres to include in recommendations, must include 3 total
@@ -145,12 +145,12 @@ users: # Arguments for user-based recommendations in user_prefs.py, similar_user
   recs_sim_from_flow: True # Whether to get user recommendations from the latest similar users artifact in user_recs.py
   user_recs_type: 'csv' # Artifact type of user-based recommendations csv file in user_recs.py
   recs_ID_from_flow: True # Whether to use the user ID artifact created in MLflow
-  recs_n_sim_ID: 10 # Number of similar users to include in user_recs.py
+  recs_n_sim_ID: 10 # Number of similar users to include in user_recs.py, MUST BE SAME AS ['similarity']['ID_query_number'] IF MLFLOW IS USED
   recs_ID_from_conf: False # Whether to use the user ID specified in config file under user_recs_query
   save_sim_locally: True # Whether to save data frame of similar users to local machine in similar_users.py
   ID_rec_genres: ["Action", "None", None] # Genres to include in recommendations in user_recs.py, must include 3 total
   ID_spec_genres: False #Bool, whether to limit returned recommendations to anime of specified genres
-  recs_pref_from_flow: False # Bool, whether to use preferences csv file artifact created in user_prefs.py as input for user_recs.py
+  recs_pref_from_flow: True # Bool, whether to use preferences csv file artifact created in user_prefs.py as input for user_recs.py
   prefs_input_fn: 'user_prefs.csv:latest' # version of Name of csv file artifact created in user_prefs.py to use as input in user_recs.py
   prefs_input_type: 'csv' # Type of version of csv file artifact created in user_prefs.py for use in user_recs.py  
 
