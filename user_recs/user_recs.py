@@ -121,11 +121,6 @@ def get_anime_df():
     # Get column of cleaned anime names
     df['eng_version'] = df.anime_id.apply(
         lambda x: clean(get_anime_name(x, df)).lower())
-    df.sort_values(by=['Score'],
-                   inplace=True,
-                   ascending=False,
-                   kind='quicksort',
-                   na_position='last')
     keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
                  "Premiered", "Studios", "japanese_name", "Name", "Type",
                  "Source", 'Rating', 'Members']
@@ -636,18 +631,19 @@ def similar_user_recs(
         filename: Name of wandb artifact to save df as
     """
 
-    # Get preferences data frame
-    if args.recs_pref_from_flow is True:
-        user_pref = get_prefs_artifact()
-        eng_versions = clean(user_pref.eng_version.values.tolist())
-        logger.info('artifact eng_versions is %s', eng_versions)
+    # Get preferences data frame, must be sure prefs ID match with input ID
+    if args.recs_pref_from_flow is True and args.recs_ID_from_flow is True:
+        flow_ID, _ = get_ID_artifacts()
+        if flow_ID == user:
+            user_pref = get_prefs_artifact()
+            eng_versions = clean(user_pref.eng_version.values.tolist())
+            logger.info('using artifact for %s', flow_ID)
     else:
         user_pref, _ = get_fave_df(genre_df, source_df, user)
         eng_versions = user_pref.eng_version.values.tolist()
-    # user_pref, _ = get_fave_df(genre_df, source_df, user)
+        logger.info('created eng_versions is %s', eng_versions)
+
     recommended_animes, anime_list = [], []
-    # eng_versions = user_pref.eng_version.values.tolist()
-    logger.info('created eng_versions is %s', eng_versions)
 
     # Get list of similar user IDs
     for user_id in similar_users.similar_users.values:
@@ -717,8 +713,9 @@ def go(args):
         index_to_user, anime_df, int(args.user_num_recs), genre_df, source_df)
     users_recs_df.to_csv(filename, index=False)
 
-    genres_cloud, genre_fn = genre_cloud(anime_df, user)
-    sources_cloud, source_fn = source_cloud(anime_df, user)
+    # Create clouds using user's favorite genres and sources
+    genres_cloud, genre_fn = genre_cloud(genre_df, user)
+    sources_cloud, source_fn = source_cloud(source_df, user)
     fave_df, fave_fn = get_fave_df(genre_df, source_df, user)
 
     # Create artifact
@@ -767,6 +764,7 @@ def go(args):
     run.log_artifact(favorites_csv)
     logger.info("Favorites data frame logged!")
     favorites_csv.wait()
+
     if args.save_user_recs is False:
         os.remove(filename)
         os.remove(source_fn)
@@ -914,7 +912,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--flow_ID",
         type=str,
-        help='ID of MLflow artifact name to use if recs_ID_from_flow is True',
+        help='MLflow ID artifact name to use if recs_ID_from_flow is True',
         required=True
     )
 
