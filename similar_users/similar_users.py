@@ -96,13 +96,6 @@ def get_weights():
     return anime_weights, user_weights
 
 
-def get_random_user():
-    df, user_to_index, index_to_user = get_main_df()
-    possible_users = list(user_to_index.keys())
-    random_user = random.choice(possible_users)
-    return random_user
-
-
 def get_random_user(df, user_to_index, index_to_user):
     """
     Get a random user from all possible users
@@ -121,21 +114,6 @@ def get_random_user(df, user_to_index, index_to_user):
 
 
 def get_anime_name(anime_id, df):
-    try:
-        # Get a single anime from the anime df based on ID
-        name = df[df.anime_id == anime_id].eng_version.values[0]
-    except IndexError:
-        pass
-
-    try:
-        if name is np.nan:
-            name = df[df.anime_id == anime_id].Name.values[0]
-    except IndexError:
-        raise ValueError("Name was not found in data frame!")
-    return name
-
-
-def get_anime_name(anime_id, df):
     """
     Helper function for loading anime data frame
     Inputs:
@@ -146,32 +124,6 @@ def get_anime_name(anime_id, df):
     """
     name = df[df.anime_id == anime_id].Name.values[0]
     return name
-
-
-def get_anime_df():
-    """
-    Get data frame containing stats on each anime
-    """
-    run = wandb.init(project=args.project_name)
-    artifact = run.use_artifact(args.anime_df, type=args.anime_df_type)
-    artifact_path = artifact.file()
-    df = pd.read_csv(artifact_path)
-    df = df.replace("Unknown", np.nan)
-
-    df['anime_id'] = df['MAL_ID']
-    df['japanese_name'] = df['Japanese name']
-    df["eng_version"] = df['English name']
-    df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
-    df.sort_values(by=['Score'],
-                   inplace=True,
-                   ascending=False,
-                   kind='quicksort',
-                   na_position='last')
-    keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
-                 "Premiered", "Studios", "japanese_name", "Name", "Type",
-                 "Source", 'Rating', 'Members']
-    df = df[keep_cols]
-    return df
 
 
 def get_anime_df():
@@ -246,15 +198,16 @@ def clean(item):
 def get_fave_anime(df, anime_df, user, num_faves, TV_only):
     """
     Get a user's favorite anime. If more than one anime has the
-    maxium rating, select the anime with the most episodes watched.
+    maxium rating and TV_only is True, select the anime with the
+    most episodes watched.
     Inputs:
         df: main pandas data frame
         anime_df: pandas data frame with anime statistics
-        user: interger ID of the user in question
-        num_faves: interger of favorite animes to return
-        TV_only: Boolean of whether to only include TV shows as favorite anime
+        user: Int, ID of the user in question
+        num_faves: Int, of favorite animes to return
+        TV_only: Bool, rank equally-rated animes by number of episodes
     Outputs:
-        String of num_faves favorite anime
+        String, num_faves favorite anime
     """
     # Get the IDs of all anime a user has watched and narrow to max rated
     fave_df = df[df.user_id == user]
@@ -325,11 +278,6 @@ def find_similar_users(user_id, n_users, num_faves, TV_only, df,
         filename: Name to save data frame csv file as
         user_id: The user ID of which to find similar users
     """
-    # df, user_to_index, index_to_user = get_main_df()
-    # anime_weights, user_weights = get_weights()
-    # anime_df = get_anime_df()
-    # weights = user_weights
-
     # Specify filename here in case the a random ID is used
     filename = 'User_' + str(user_id).translate(
         {ord(c): None for c in string.whitespace}) + '.csv'
@@ -363,15 +311,13 @@ def find_similar_users(user_id, n_users, num_faves, TV_only, df,
 
 def go(args):
     # Initialize run
-    run = wandb.init(
-        project=args.project_name,
-        name="similar_users")
+    run = wandb.init(project=args.project_name, name="similar_users")
 
     df, user_to_index, index_to_user = get_main_df()
     anime_weights, user_weights = get_weights()
     anime_df = get_anime_df()
 
-    if args.random_user is True:
+    if args.sim_random_user is True:
         user_id = get_random_user(df, user_to_index, index_to_user)
         logger.info("Using random user ID %s", user_id)
     else:
@@ -390,7 +336,7 @@ def go(args):
         name=args.sim_users_fn,
         type=args.sim_users_type,
         description=description,
-        metadata={"Queried user: ": user_id, "Filename: ": filename})
+        metadata={"Queried user": user_id, "Filename": filename})
     # Upload to wandb
     artifact.add_file(filename)
     logger.info("Logging similar users artifact")
@@ -407,18 +353,15 @@ def go(args):
         name=args.ID_fn,
         type=args.ID_type,
         description=description,
-        metadata={"Queried user ": user_id, "Filename ": fn})
+        metadata={"Queried user": user_id, "Filename": fn})
     artifact.add_file(fn)
     logger.info("Logger user id")
     run.log_artifact(artifact)
     artifact.wait()
 
     if args.save_sim_locally is False:
-        try:
-            os.remove(filename)
-            os.remove(fn)
-        except FileNotFoundError:
-            pass
+        os.remove(filename)
+        os.remove(fn)
 
 
 if __name__ == "__main__":
@@ -498,7 +441,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--random_user",
+        "--sim_random_user",
         type=lambda x: bool(strtobool(x)),
         help="Decide whether or not to use a random user id",
         required=True
