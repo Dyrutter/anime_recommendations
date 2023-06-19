@@ -122,9 +122,9 @@ users: # Arguments for user-based recommendations in user_prefs.py, similar_user
   save_faves: True # Whether to save clouds and CSV file from user_prefs.py to local machine
   latest_user_prefs: 'user_prefs.csv:latest' # Csv file of latest user preferences
   sim_user_type: 'csv' # Type of wandb artifact the list of similar users csv file was saved as
-  sim_user_query: 109160 # A User ID to query if use_local_user is True in similar_users.py
+  sim_user_query: 153695 # A User ID to query if use_local_user is True in similar_users.py
   prefs_local_user: False # boolean of whether to use the user_query found in config file for user_prefs.py
-  prefs_user_query: 109160 # Query to user in user_prefs.py
+  prefs_user_query: 153695 # Query to user in user_prefs.py
   user_recs_fn: "user_recs.csv" # Artifact name of user recommendations in user_recs.py
   save_user_recs: True # Boolean of whether to save users recommendations in user_recs.py
   user_num_recs: 10 # Number of anime recommendations to return in user_recs.py
@@ -132,27 +132,28 @@ users: # Arguments for user-based recommendations in user_prefs.py, similar_user
   TV_only: True # Whether to include only TV shows in user_recs.py
   sim_users_fn: 'similar_users.csv' # Filename of similar users artifact in similar_users.py
   sim_users_type: 'csv' # Artifact type of similar users df
-  sim_users_latest: 'similar_users.csv:latest' # Latest artifact for similar users
+  sim_users_art: 'similar_users.csv:latest' # Artifact for similar users to iput in other steps
   ID_fn: "ID_used.csv" # from similar_users.py, the ID used for MLflow
-  flow_user: "ID_used.csv:v0" # latest artifact taken from similar_users.py, ID used for MLflow in user_prefs.py, user_recs.py, and model_recs.py, v0 is 153695
+  flow_user: "ID_used.csv:latest" # latest artifact taken from similar_users.py, ID used for MLflow in user_prefs.py, user_recs.py, and model_recs.py, v0 is 153695
   ID_type: "csv" # Type of artifact the user ID was saved as in similar_users.py
   prefs_from_flow: True # Whether to take the user ID created in mlflow as opposed to a random user or a user specified in config for user_prefs.py
   cloud_type: "png" # Type of genre and source cloud artifacts for user_prefs.py
   fave_art_type: "csv" # Type of data frame containing favorite genres and sources for user_prefs.py
   pref_random_user: False # Whether to use a random user for user_prefs.py
   user_recs_random: False # Whether to use a random user for user_recs.py
-  user_recs_query: 109160 # User to query in user_recs.py
+  user_recs_query: 153695 # User to query in user_recs.py
   recs_sim_from_flow: True # Whether to get user recommendations from the latest similar users artifact in user_recs.py
   user_recs_type: 'csv' # Artifact type of user-based recommendations csv file in user_recs.py
   recs_ID_from_flow: True # Whether to use the user ID artifact created in MLflow
   recs_n_sim_ID: 10 # Number of similar users to include in user_recs.py, MUST BE SAME AS ['similarity']['ID_query_number'] IF MLFLOW IS USED
-  recs_ID_from_conf: False # Whether to use the user ID specified in config file under user_recs_query
+  recs_ID_from_conf: True # Whether to use the user ID specified in config file under user_recs_query
   save_sim_locally: True # Whether to save data frame of similar users to local machine in similar_users.py
   ID_rec_genres: ["Action", "None", None] # Genres to include in recommendations in user_recs.py, must include 3 total
   ID_spec_genres: False #Bool, whether to limit returned recommendations to anime of specified genres
   recs_pref_from_flow: True # Bool, whether to use preferences csv file artifact created in user_prefs.py as input for user_recs.py
   prefs_input_fn: 'user_prefs.csv:latest' # version of Name of csv file artifact created in user_prefs.py to use as input in user_recs.py
-  prefs_input_type: 'csv' # Type of version of csv file artifact created in user_prefs.py for use in user_recs.py  
+  prefs_input_type: 'csv' # Type of version of csv file artifact created in user_prefs.py for use in user_recs.py
+  ID_recs_from_flow: True  # Bool, whether to use mlflow artifacts for user_recs.py
 
 model_recs: # For recommendations based on the ranking model
   model_recs_fn: 'model_recs.csv' # Artifact filename for ranking-based anime recommendations
