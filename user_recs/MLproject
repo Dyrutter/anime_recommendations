@@ -94,6 +94,18 @@ entry_points:
       prefs_input_type:
         description: Type of version of csv file artifact created in user_prefs.py for use in user_recs.py
         type: str
+      ID_recs_from_flow:
+        description: Bool, whether to use mlflow artifacts for user_recs.py
+        type: str
+      raise_flow_error:
+        description: Bool, set to True if you desire to raise an error if artifact user ID's are not consistent between steps
+        type: str
+      ID_recs_faves_fn:
+        description: Artifact name to save user preferences data frame as
+        type: str
+      ID_recs_faves_type:
+        description: Type of artifact to save user preferences
+        type: str
 
     command: >-
       python user_recs.py --project_name {project_name} \
@@ -125,4 +137,8 @@ entry_points:
                               --ID_spec_genres {ID_spec_genres} \
                               --recs_pref_from_flow {recs_pref_from_flow} \
                               --prefs_input_fn {prefs_input_fn} \
-                              --prefs_input_type {prefs_input_type}
+                              --prefs_input_type {prefs_input_type} \
+                              --ID_recs_from_flow {ID_recs_from_flow} \
+                              --raise_flow_error {raise_flow_error} \
+                              --ID_recs_faves_fn {ID_recs_faves_fn} \
+                              --ID_recs_faves_type {ID_recs_faves_type}
