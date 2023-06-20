@@ -230,7 +230,7 @@ def go(config: DictConfig):
                 "recs_ID_from_flow": config["users"]["recs_ID_from_flow"],
                 "flow_ID": config["users"]["flow_user"],
                 "flow_ID_type": config["users"]["ID_type"],
-                "sim_users_art": config["users"]["sim_users_latest"],
+                "sim_users_art": config["users"]["sim_users_art"],
                 "sim_users_art_type": config["users"]["sim_users_type"],
                 "recs_n_sim_ID": config["users"]["recs_n_sim_ID"],
                 "recs_ID_from_conf": config["users"]["recs_ID_from_conf"],
@@ -238,7 +238,11 @@ def go(config: DictConfig):
                 "ID_spec_genres": config["users"]["ID_spec_genres"],
                 "recs_pref_from_flow": config["users"]["recs_pref_from_flow"],
                 "prefs_input_fn": config["users"]["prefs_input_fn"],
-                "prefs_input_type": config["users"]["prefs_input_type"]})
+                "prefs_input_type": config["users"]["prefs_input_type"],
+                "ID_recs_from_flow": config["users"]["ID_recs_from_flow"],
+                "raise_flow_error": config["main"]["raise_flow_error"],
+                "ID_recs_faves_fn": config["users"]["ID_recs_faves_fn"],
+                "ID_recs_faves_type": config["users"]["ID_recs_faves_type"]})
 
     if "model_recs" in steps_to_execute:
         _ = mlflow.run(
