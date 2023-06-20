@@ -14,6 +14,7 @@ main:
     # - API
   random_seed: 42
   interval: 3000 # Time in milliseconds to display any figures on local machine
+  raise_flow_error: True # Bool, set to True if you desire to raise an error if artifact user ID's are not consistent between steps 
 
 data: # Data artifacts
   stats_url: "https://github.com/Dyrutter/anime_recommendations/blob/main/data/user_stats.parquet?raw=True"
@@ -154,6 +155,8 @@ users: # Arguments for user-based recommendations in user_prefs.py, similar_user
   prefs_input_fn: 'user_prefs.csv:latest' # version of Name of csv file artifact created in user_prefs.py to use as input in user_recs.py
   prefs_input_type: 'csv' # Type of version of csv file artifact created in user_prefs.py for use in user_recs.py
   ID_recs_from_flow: True  # Bool, whether to use mlflow artifacts for user_recs.py
+  ID_recs_faves_fn: "user_recs_preferences.csv" # artifact name to save user preferences as in user_recs.py
+  ID_recs_faves_type: "csv" # Type of artifact to save user preferences as in user_recs.py
 
 model_recs: # For recommendations based on the ranking model
   model_recs_fn: 'model_recs.csv' # Artifact filename for ranking-based anime recommendations
