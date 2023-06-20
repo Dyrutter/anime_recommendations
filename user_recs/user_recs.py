@@ -1,5 +1,5 @@
-# Add functionality to use MLFlow preferences artifact
-# Assert that the same preferences ID is used for recs
+# Assert number of similar users is same consistently
+# Add names and types for clouds
 import unicodedata
 import string
 import argparse
@@ -117,10 +117,7 @@ def get_anime_df():
     df['anime_id'] = df['MAL_ID']
     df['japanese_name'] = df['Japanese name']
     df["eng_version"] = df['English name']
-
-    # Get column of cleaned anime names
-    df['eng_version'] = df.anime_id.apply(
-        lambda x: clean(get_anime_name(x, df)).lower())
+    df['eng_version'] = df.anime_id.apply(lambda x: get_anime_name(x, df))
     keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
                  "Premiered", "Studios", "japanese_name", "Name", "Type",
                  "Source", 'Rating', 'Members']
@@ -188,26 +185,6 @@ def get_weights(model):
     user_weights = user_weights / np.linalg.norm(
         user_weights, axis=1).reshape((-1, 1))
     return anime_weights, user_weights
-
-
-def get_fave_df(genres, sources, ID):
-    """
-    Merge favorite sources and favorite genres data frames
-    Inputs:
-        genres: Pandas data frame of a user's favorite anime and their
-            respective genres with columns ["eng_version", "Genres"]
-        sources: Pandas data frame of a user's favorite anime and their
-            respective source material with columns ["eng_version", "sources"]
-    Outputs:
-        sources: Merged data frame with columns
-            ["eng_version", "Genres", "Sources"]
-        fn: Filename to save Data Frame under
-    """
-    genres = genres["Genres"]
-    sources["Genres"] = genres
-    fn = 'User_ID_' + str(ID) + '_user_recs_faves.csv'
-    sources.to_csv(fn)
-    return sources, fn
 
 
 def get_anime_frame(anime, df, clean=False):
@@ -311,52 +288,6 @@ def get_sources(anime_df):
     return sources_list, all_sources
 
 
-def genre_cloud(anime_df, ID):
-    """
-    Create a word cloud of a user's favorite genres
-    Inputs:
-        anime_df: data frame containing all anime, taken from get_anime_df()
-        ID: User ID to create cloud of
-    Outputs:
-        genres_cloud: A wordcloud object of the user's favorite genres
-        fn: Filename wordcloud was saved as
-    """
-    genres, genre_dict = get_genres(anime_df)
-    cloud = WordCloud(width=int(600),
-                      height=int(350),
-                      prefer_horizontal=0.85,
-                      background_color='white',
-                      contour_width=0.05,
-                      colormap='spring')
-    genres_cloud = cloud.generate_from_frequencies(genre_dict)
-    fn = "User_ID_" + str(ID) + '_favorite_genres.png'
-    genres_cloud.to_file(fn)
-    return genres_cloud, fn
-
-
-def source_cloud(anime_df, ID):
-    """
-    Create a word cloud of a user's favorite sources
-    Inputs:
-        anime_df: data frame containing all anime, taken from get_anime_df()
-        ID: User ID to create source preferences cloud of
-    Outputs:
-        source_cloud: a wordcloud object of the user's favorite sources
-        fn: The filename of the word cloud
-    """
-    sources, source_dict = get_sources(anime_df)
-    cloud = WordCloud(width=int(600),
-                      height=int(350),
-                      prefer_horizontal=0.85,
-                      background_color='gray',
-                      contour_width=0.05,
-                      colormap='autumn')
-    source_cloud = cloud.generate_from_frequencies(source_dict)
-    fn = 'User_ID_' + str(ID) + '_favorite_sources.png'
-    source_cloud.to_file(fn)
-    return source_cloud, fn
-
-
 def fave_genres(user, df, anime_df):
     """
     Get the favorite genres of a user
@@ -399,6 +330,69 @@ def fave_sources(user, df, anime_df):
     return pd.DataFrame(faves)
 
 
+def get_fave_df(genres, sources):
+    """
+    Merge favorite sources and favorite genres data frames
+    Inputs:
+        genres: Pandas data frame of a user's favorite anime and their
+            respective genres with columns ["eng_version", "Genres"]
+        sources: Pandas data frame of a user's favorite anime and their
+            respective source material with columns ["eng_version", "sources"]
+    Outputs:
+        sources: Merged data frame with columns
+        ["eng_version", "Genres", "Sources"]
+    """
+    genres = genres["Genres"]
+    sources["Genres"] = genres
+    return sources
+
+
+def genre_cloud(anime_df, ID):
+    """
+    Create a word cloud of a user's favorite genres
+    Inputs:
+        anime_df: data frame containing all anime, taken from get_anime_df()
+        ID: User ID to create cloud of
+    Outputs:
+        genres_cloud: A wordcloud object of the user's favorite genres
+        fn: Filename wordcloud was saved as
+    """
+    genres, genre_dict = get_genres(anime_df)
+    cloud = WordCloud(width=int(600),
+                      height=int(350),
+                      prefer_horizontal=0.85,
+                      background_color='white',
+                      contour_width=0.05,
+                      colormap='spring')
+    genres_cloud = cloud.generate_from_frequencies(genre_dict)
+    fn = "User_ID_" + str(ID) + '_recs_favorite_genres.png'
+    genres_cloud.to_file(fn)
+    return genres_cloud, fn
+
+
+def source_cloud(anime_df, ID):
+    """
+    Create a word cloud of a user's favorite sources
+    Inputs:
+        anime_df: data frame containing all anime, taken from get_anime_df()
+        ID: User ID to create source preferences cloud of
+    Outputs:
+        source_cloud: a wordcloud object of the user's favorite sources
+        fn: The filename of the word cloud
+    """
+    sources, source_dict = get_sources(anime_df)
+    cloud = WordCloud(width=int(600),
+                      height=int(350),
+                      prefer_horizontal=0.85,
+                      background_color='gray',
+                      contour_width=0.05,
+                      colormap='autumn')
+    source_cloud = cloud.generate_from_frequencies(source_dict)
+    fn = 'User_ID_' + str(ID) + '_recs_favorite_sources.png'
+    source_cloud.to_file(fn)
+    return source_cloud, fn
+
+
 def find_similar_users(user_id, n_users, rating_df, user_to_index,
                        index_to_user, user_weights):
     """
@@ -427,7 +421,6 @@ def find_similar_users(user_id, n_users, rating_df, user_to_index,
     closest = sorted_dists[-n_users:]
 
     sm_arr = []
-
     for close in closest:
         similarity = dists[close]
         decoded_id = index_to_user.get(close)
@@ -435,38 +428,28 @@ def find_similar_users(user_id, n_users, rating_df, user_to_index,
             sm_arr.append(
                 {"similar_users": decoded_id,
                  "similarity": similarity})
-
-    Frame = pd.DataFrame(sm_arr).sort_values(by="similarity", ascending=False)
-
-    return Frame
+    return pd.DataFrame(sm_arr).sort_values(by="similarity", ascending=False)
 
 
-def get_ID_artifacts():
+def get_ID_artifact():
     """
     Get the user ID and similar users artifact created in similar_users.py
     Outputs:
         ID: Integer user ID taken from MLflow
-        sim_IDs: data frame of IDs similar to ID
     """
     run = wandb.init(project=args.project_name)
     artifact = run.use_artifact(args.flow_ID, type=args.flow_ID_type)
     artifact_path = artifact.file()
     ID_df = pd.read_csv(artifact_path)
     ID = ID_df.values[0][0]
-
-    sim_artifact = run.use_artifact(
-        args.sim_users_art, type=args.sim_users_art_type)
-    sim_art_path = sim_artifact.file()
-    sim_IDs = pd.read_csv(sim_art_path)
-    return ID, sim_IDs
+    return ID
 
 
 def get_prefs_artifact():
     """
-    Get the user ID and similar users artifact created in similar_users.py
+    Get the user preferences artifact from user_prefs.py
     Outputs:
-        ID: Integer user ID taken from MLflow
-        sim_IDs: data frame of IDs similar to ID
+        prefs: preferences data frame
     """
     run = wandb.init(project=args.project_name)
     prefs_artifact = run.use_artifact(
@@ -559,43 +542,150 @@ def by_genre(anime_df):
             df = pd.concat([df, df3]).drop_duplicates()
         else:
             df = df3
-    logger.info("DF head is %s", df.head())
     return df
 
 
-def select_user(num_sim, df, user_to_index, index_to_user, user_weights):
+def select_user():
     """
-    Choose user to analyze based. Will be either the ID used
-        in the MLflow workflow, or the ID input in the config file under
-        the section ["Users"]["user_recs_query"], or a random ID
+    Choose user to analyze. Will be either the ID from the MLflow workflow if
+    args.ID_recs_from_flow is True, the ID in the config file specified under
+    ["Users"]["user_recs_query"] if recs_ID_from_conf is True, or a random ID
+    Note: args.ID_recs_from_flow supercedes args.recs_ID_from_conf,
+        which supercedes using a random user. To select a random user,
+        args.ID_recs_from_flow and args.recs_ID_from_conf must be set
+        to False in Mlflow hydra config file. To select a user specified
+        in the config file under "user_recs_query", "recs_ID_from_flow"
+        must be set to False.
+    Outputs:
+        user: Integer of the user ID to analzye
+    """
+    if args.ID_recs_from_flow is True:
+        user = get_ID_artifact()
+        logger.info("Using %s as input from MLflow in select_user()", user)
+    elif args.recs_ID_from_conf is True:
+        user = int(args.user_recs_query)
+        logger.info("Using %s as config specified in select_user()", user)
+    else:
+        user = get_random_user()
+        logger.info("Using %s as random input user in select_user()", user)
+    return user
+
+
+def select_sim_users(
+        ID, num_sim, df, user_to_index, index_to_user, weights, flow=False):
+    """
+    Get a similar users data frame. Will be an artifact downloaded from wandb
+    if args.recs_sim_from_flow is True, otherwise, the frame will be created
+    using find_similar_users()
     Inputs:
+        ID: int, User ID to query
         num_sim: int, num of similar users to return
         df: Main df taken from main_df_by_id()
         user_to_index: dict, enumerated mapping taken from main_df_by_id()
         index_to_user: dict, enumerated mapping taken from main_df_by_id()
         user_weights: np array of user weights array taken from get_weights()
+        flow: bool, whether or not to use MLflow, used in go()
     Outputs:
-        User_ID: Integer of the user ID to analzye
         sim_df: Pandas Data Frame of Similar IDs with columns "similar_users"
              and "similarity"
     """
-    if args.recs_ID_from_flow is True:
-        user, sim_df = get_ID_artifacts()
-        logger.info("Using %s as input use taken from MLflow", user)
-        return user, sim_df
-
-    elif args.recs_ID_from_conf is True:
-        user = int(args.user_recs_query)
-        sim_df = find_similar_users(
-            user, num_sim, df, user_to_index, index_to_user, user_weights)
-        logger.info("Using %s as config file-specified input user", user)
-        return user, sim_df
+    if flow is True:
+        # Download and load similar users Data Frame artifact
+        run = wandb.init(project=args.project_name)
+        sim_artifact = run.use_artifact(
+            args.sim_users_art, type=args.sim_users_art_type)
+        sim_art_path = sim_artifact.file()
+        sim_df = pd.read_csv(sim_art_path)
+        # Get similar user IDs from similar users data frame
+        sim_users = sim_df.similar_users.values
+        logger.info("Using sim users artifact, sim users are %s", sim_users)
     else:
-        user = get_random_user()
-        logger.info("Using %s as random input user", user)
+        logger.info("Similar users artifact was chosen not to be used.")
         sim_df = find_similar_users(
-            user, num_sim, df, user_to_index, index_to_user, user_weights)
-        return user, sim_df
+            ID, num_sim, df, user_to_index, index_to_user, weights)
+    return sim_df
+
+
+def select_user_prefs(ID, df, anime_df, flow=False):
+    """
+    Get a user preferences data frame. Is an artifact downloaded from wandb
+    if flow is True, otherwise, new preference data frames are created
+    which correspond to the input ID.
+    Inputs:
+        ID: int, user ID to find preferences of
+        df: Main pandas df taken from main_df_by_id()
+        anime_df: Pandas Data Frame of all anime, taken from get_anime_df()
+        flow: bool, whether or not to use MLflow artifact, used in go()
+    Outputs:
+        pref_df: Pandas data frame of a user's source and genre preferences
+        fave_genres: Pandas data frame of a user's genre preferences
+        fave_sources: Pandas data frame of a user's source preferences
+    """
+    if flow is True:
+        # Get preferences data frame from wandb
+        run = wandb.init(project=args.project_name)
+        prefs_artifact = run.use_artifact(
+            args.prefs_input_fn, type=args.prefs_input_type)
+        prefs_art_path = prefs_artifact.file()
+        pref_df = pd.read_csv(prefs_art_path)
+
+        # Create new data frames of favorite genres and sources columns
+        fave_genre = pd.DataFrame(pref_df[["eng_version", "Genres"]])
+        fave_source = pd.DataFrame(pref_df[["eng_version", "Source"]])
+        logger.info("Using pref users artifact in select_user_prefs()")
+
+    else:
+        logger.info("User prefs artifact was chosen not to be used")
+        # Create new data frames
+        fave_genre = fave_genres(ID, df, anime_df)
+        fave_source = fave_sources(ID, df, anime_df)
+        pref_df = get_fave_df(fave_genre, fave_source)
+        logger.info("pref eng version is %s", pref_df["eng_version"].head())
+    return pref_df, fave_genre, fave_source
+
+
+def assert_flow(ID, prefs_df, sim_users_df):
+    """
+    If args.ID_recs_from_flow is True, confirms that the same user ID
+    is used for every step of the MLflow process, including:
+        1) Finding similar users
+        2) Getting user preferences
+        3) Getting user recommendations
+    Input:
+        ID: int, user ID to be carried though entire MLflow run
+        prefs_df: Pandas Data Frame of user genre and source preferences
+        sim_users_df: Pandas data frame of similar users
+    Output:
+        Boolean, whether the assertions were successful
+    """
+    # Get ID artifact created in similar users step
+    ID_artifact = get_ID_artifact()
+
+    # Get similar users artifact object
+    sim_api = wandb.Api()
+    sim_artifact = sim_api.artifact(
+        os.path.join(args.project_name, args.sim_users_art))
+    # Get ID associated with similar users artifact
+    sim_ID = sim_artifact.metadata["Queried user"]
+
+    # Get prefs artifact object
+    prefs_api = wandb.Api()
+    prefs_artifact = prefs_api.artifact(
+        os.path.join(args.project_name, args.prefs_input_fn))
+    # Get ID associated with prefs artifact
+    prefs_ID = int(prefs_artifact.metadata["ID"])
+
+    try:
+        assert ID == ID_artifact == sim_ID == prefs_ID
+        logger.info("ID %s is consistent in assert_flow(), using MLflow", ID)
+        return True
+    except AssertionError:
+        logger.info("MLflow failed assert_flow()! IDs were inconsistent!")
+        logger.info("Input ID was %s", ID)
+        logger.info("ID artifact was %s", ID_artifact)
+        logger.info("Similar users ID was %s", sim_ID)
+        logger.info("User prefs ID was %s", prefs_ID)
+        return False
 
 
 def similar_user_recs(
@@ -608,7 +698,8 @@ def similar_user_recs(
         anime_df,
         n,
         genre_df,
-        source_df):
+        source_df,
+        user_pref):
     """
     Recommend anime to a user based on anime that similar IDs have favoirted.
     The more commonly favorited those anime were by similar users, the higher
@@ -626,31 +717,22 @@ def similar_user_recs(
         n: Int, number of anime recommendations to return
         genre_df: Pandas Data Frame of favorite genres from fave_genres()
         source_df: Pandas Data Frame of favorite sources from fave_sources()
+        user_pref: Pandas Data Frame of a user's favorite genres and sources
     Outputs:
         df: Data Frame of anime recommendations ranked by similar users
         filename: Name of wandb artifact to save df as
     """
-
-    # Get preferences data frame, must be sure prefs ID match with input ID
-    if args.recs_pref_from_flow is True and args.recs_ID_from_flow is True:
-        flow_ID, _ = get_ID_artifacts()
-        if flow_ID == user:
-            user_pref = get_prefs_artifact()
-            eng_versions = clean(user_pref.eng_version.values.tolist())
-            logger.info('using artifact for %s', flow_ID)
-    else:
-        user_pref, _ = get_fave_df(genre_df, source_df, user)
-        eng_versions = user_pref.eng_version.values.tolist()
-        logger.info('created eng_versions is %s', eng_versions)
-
+    # Get list of anime a user has seen
+    eng_versions = list(user_pref.eng_version.values)
     recommended_animes, anime_list = [], []
+    logger.info("similar_users are %s", similar_users.similar_users.values)
 
     # Get list of similar user IDs
     for user_id in similar_users.similar_users.values:
         genre_df = fave_genres(user_id, rating_df, anime_df)
         source_df = fave_sources(user_id, rating_df, anime_df)
-        pref_list, _ = get_fave_df(genre_df, source_df, user)
-        # Favorites of similar users that input user has not watched
+        pref_list = get_fave_df(genre_df, source_df)
+        # Favorite animes of similar users that input user has not watched
         pref_list = pref_list[~pref_list.eng_version.isin(eng_versions)]
         anime_list.append(pref_list.eng_version.values)
 
@@ -703,41 +785,79 @@ def go(args):
     sypnopsis_df = get_sypnopses_df()
     model = get_model()
     anime_weights, user_weights = get_weights(model)
-    user, similar_users = select_user(
-        int(args.recs_n_sim_ID), df, ID_to_index, index_to_user, user_weights)
-    genre_df = fave_genres(user, df, anime_df)
-    source_df = fave_sources(user, df, anime_df)
+    user = select_user()
+
+    if args.ID_recs_from_flow is True:
+        similar_users = select_sim_users(user,
+                                         int(args.recs_n_sim_ID),
+                                         df,
+                                         ID_to_index,
+                                         index_to_user,
+                                         user_weights,
+                                         flow=True)
+        fave_df, genre_df, source_df = select_user_prefs(
+            user, df, anime_df, flow=True)
+        # Confirm all IDs are equal
+        flow_was_used = assert_flow(user, fave_df, similar_users)
+        if flow_was_used is True:
+            pass
+        # Terminate process with an error if desired
+        else:
+            if args.raise_flow_error is True:
+                raise ValueError('MLflow IDs were inconsistent')
+            else:
+                return "MLflow IDs were inconsistent. Process terminated."
+
+    else:
+        similar_users = select_sim_users(user,
+                                         int(args.recs_n_sim_ID),
+                                         df,
+                                         ID_to_index,
+                                         index_to_user,
+                                         user_weights,
+                                         flow=False)
+        fave_df, genre_df, source_df = select_user_prefs(
+            user, df, anime_df, flow=False)
+        similar_users = find_similar_users(user, int(
+            args.recs_n_sim_ID), df, ID_to_index, index_to_user, user_weights)
 
     users_recs_df, filename = similar_user_recs(
-        user, similar_users, sypnopsis_df, df, ID_to_index,
-        index_to_user, anime_df, int(args.user_num_recs), genre_df, source_df)
+        user, similar_users, sypnopsis_df, df, ID_to_index, index_to_user,
+        anime_df, int(args.user_num_recs), genre_df, source_df, fave_df)
     users_recs_df.to_csv(filename, index=False)
 
     # Create clouds using user's favorite genres and sources
     genres_cloud, genre_fn = genre_cloud(genre_df, user)
     sources_cloud, source_fn = source_cloud(source_df, user)
-    fave_df, fave_fn = get_fave_df(genre_df, source_df, user)
+    fave_fn = 'User_ID_' + str(user) + "_" + args.ID_recs_faves_fn
+    fave_df.to_csv(fave_fn, index=False)
 
-    # Create artifact
+    # Create user recommendations artifact
     logger.info("Creating similar user based recs artifact")
     description = "Anime recs based on user prefs: " + str(user)
     artifact = wandb.Artifact(
         name=args.user_recs_fn,
         type=args.user_recs_type,
         description=description,
-        metadata={"Queried user: ": user})
+        metadata={"Queried user": user,
+                  "Flow ID used": args.ID_recs_from_flow,
+                  # "Flow ID used": args.recs_ID_from_flow,
+                  # "Flow prefs used": args.recs_pref_from_flow,
+                  # "Flow similar IDs used": args.recs_sim_from_flow,
+                  "Filename": filename})
     artifact.add_file(filename)
-    logger.info("Logging artifact for user %s", user)
+    logger.info("Logging recs artifact for user %s", user)
     run.log_artifact(artifact)
     artifact.wait()
 
     # Log favorite genre cloud
-    logger.info("Genre Cloud artifact")
+    logger.info("Creating genre cloud artifact")
     genre_cloud_artifact = wandb.Artifact(
         name=genre_fn,
         type="png",
         description='Cloud image of favorite genres',
-        metadata={'Queried user: ': user})
+        metadata={'Queried user': user,
+                  'Filename': genre_fn})
     genre_cloud_artifact.add_file(genre_fn)
     run.log_artifact(genre_cloud_artifact)
     logger.info("Genre cloud logged!")
@@ -748,7 +868,9 @@ def go(args):
     source_cloud_artifact = wandb.Artifact(
         name=source_fn,
         type='png',
-        description='Image of source cloud')
+        description='Image of source cloud',
+        metadata={'Queried user': user,
+                  'Filename': source_fn})
     source_cloud_artifact.add_file(source_fn)
     run.log_artifact(source_cloud_artifact)
     logger.info('Source cloud logged!')
@@ -757,9 +879,11 @@ def go(args):
     # Log favorites csv file
     logger.info("Creating favorites csv")
     favorites_csv = wandb.Artifact(
-        name=fave_fn,
-        type='data',
-        description='Csv file of a users favorite Genres and sources')
+        name=args.ID_recs_faves_fn,
+        type=args.ID_recs_faves_type,
+        description='Csv file of a users favorite Genres and sources',
+        metadata={'Queried user': user,
+                  'Filename': fave_fn})
     favorites_csv.add_file(fave_fn)
     run.log_artifact(favorites_csv)
     logger.info("Favorites data frame logged!")
@@ -983,6 +1107,34 @@ if __name__ == "__main__":
         "--prefs_input_type",
         type=str,
         help="Type of latest fave pref artifact created in user_prefs.py",
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_recs_from_flow",
+        type=lambda x: bool(strtobool(x)),
+        help="Bool, whether to use mlflow artifacts for user_recs.py",
+        required=True
+    )
+
+    parser.add_argument(
+        "--raise_flow_error",
+        type=lambda x: bool(strtobool(x)),
+        help="Bool, raise error if IDs arent consistent across MLflow steps",
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_recs_faves_fn",
+        type=str,
+        help="Filename of favorites data frame to save",
+        required=True
+    )
+
+    parser.add_argument(
+        "--ID_recs_faves_type",
+        type=str,
+        help="Type of favorites data frame to save artifact as",
         required=True
     )
 
