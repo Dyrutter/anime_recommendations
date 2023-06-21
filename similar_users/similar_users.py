@@ -336,7 +336,9 @@ def go(args):
         name=args.sim_users_fn,
         type=args.sim_users_type,
         description=description,
-        metadata={"Queried user": user_id, "Filename": filename})
+        metadata={"Queried user": user_id,
+                  "Filename": filename,
+                  "num_sim_users": args.id_query_number})
     # Upload to wandb
     artifact.add_file(filename)
     logger.info("Logging similar users artifact")
