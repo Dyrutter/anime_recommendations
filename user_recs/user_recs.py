@@ -187,6 +187,34 @@ def get_weights(model):
     return anime_weights, user_weights
 
 
+def get_ID_artifact():
+    """
+    Get the user ID and similar users artifact created in similar_users.py
+    Outputs:
+        ID: Integer user ID taken from MLflow
+    """
+    run = wandb.init(project=args.project_name)
+    artifact = run.use_artifact(args.flow_ID, type=args.flow_ID_type)
+    artifact_path = artifact.file()
+    ID_df = pd.read_csv(artifact_path)
+    ID = ID_df.values[0][0]
+    return ID
+
+
+def get_prefs_artifact():
+    """
+    Get the user preferences artifact from user_prefs.py
+    Outputs:
+        prefs: preferences data frame
+    """
+    run = wandb.init(project=args.project_name)
+    prefs_artifact = run.use_artifact(
+        args.prefs_input_fn, type=args.prefs_input_type)
+    prefs_art_path = prefs_artifact.file()
+    prefs = pd.read_csv(prefs_art_path)
+    return prefs
+
+
 def get_anime_frame(anime, df, clean=False):
     """
     Helper function to get a specific anime in data frame format
@@ -237,6 +265,28 @@ def get_random_user(df, user_to_index, index_to_user):
     # Select random user from list of IDs
     random_user = random.choice(possible_users)
     return random_user
+
+
+def genres_list(anime_df):
+    """
+    Get all possible anime genres
+    Input:
+        anime_df: Pandas Data Frame of all anime, taken from get_anime_df()
+    Output:
+        genre_list: List, all possible genres
+    """
+    genres = anime_df['Genres'].unique().tolist()
+    # Get genres individually (instances have lists of genres)
+    possibilities = list(set(str(genres).split()))
+    # Remove non alphanumeric characters
+    possibilities = sorted(
+        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
+    # Convert incomplete categories to their proper names
+    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
+    fixed = possibilities + \
+        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
+    genre_list = sorted([i for i in fixed if i not in rem])
+    return genre_list
 
 
 def get_genres(anime_df):
@@ -397,12 +447,12 @@ def find_similar_users(user_id, n_users, rating_df, user_to_index,
                        index_to_user, user_weights):
     """
     Find similar IDs to an input IDs. This function is called if
-    args.recs_sim_from_flow is False, meaning no similar users Data Frame
+    args.ID_recs_from_flow is False, meaning no similar users Data Frame
     artifact was imported from wandb.
     Inputs:
         user_id: Int, the ID of which to find similar users to.
             If args.recs_ID_from_conf is True, input args.user_recs_query ID
-            If args.user_recs_random is True, input a random ID
+            If args.recs_ID_from_conf is False, input is a random user
         n_users: Int, the number of similar users to find
         rating_df: Main Pandas rating data frame
         user_to_index: dict, enumerated mapping taken from main_df_by_id()
@@ -429,56 +479,6 @@ def find_similar_users(user_id, n_users, rating_df, user_to_index,
                 {"similar_users": decoded_id,
                  "similarity": similarity})
     return pd.DataFrame(sm_arr).sort_values(by="similarity", ascending=False)
-
-
-def get_ID_artifact():
-    """
-    Get the user ID and similar users artifact created in similar_users.py
-    Outputs:
-        ID: Integer user ID taken from MLflow
-    """
-    run = wandb.init(project=args.project_name)
-    artifact = run.use_artifact(args.flow_ID, type=args.flow_ID_type)
-    artifact_path = artifact.file()
-    ID_df = pd.read_csv(artifact_path)
-    ID = ID_df.values[0][0]
-    return ID
-
-
-def get_prefs_artifact():
-    """
-    Get the user preferences artifact from user_prefs.py
-    Outputs:
-        prefs: preferences data frame
-    """
-    run = wandb.init(project=args.project_name)
-    prefs_artifact = run.use_artifact(
-        args.prefs_input_fn, type=args.prefs_input_type)
-    prefs_art_path = prefs_artifact.file()
-    prefs = pd.read_csv(prefs_art_path)
-    return prefs
-
-
-def genres_list(anime_df):
-    """
-    Get all possible anime genres
-    Input:
-        anime_df: Pandas Data Frame of all anime, taken from get_anime_df()
-    Output:
-        genre_list: List, all possible genres
-    """
-    genres = anime_df['Genres'].unique().tolist()
-    # Get genres individually (instances have lists of genres)
-    possibilities = list(set(str(genres).split()))
-    # Remove non alphanumeric characters
-    possibilities = sorted(
-        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
-    # Convert incomplete categories to their proper names
-    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
-    fixed = possibilities + \
-        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
-    genre_list = sorted([i for i in fixed if i not in rem])
-    return genre_list
 
 
 def by_genre(anime_df):
@@ -554,7 +554,7 @@ def select_user():
         which supercedes using a random user. To select a random user,
         args.ID_recs_from_flow and args.recs_ID_from_conf must be set
         to False in Mlflow hydra config file. To select a user specified
-        in the config file under "user_recs_query", "recs_ID_from_flow"
+        in the config file under "user_recs_query", "ID_recs_from_flow"
         must be set to False.
     Outputs:
         user: Integer of the user ID to analzye
@@ -575,7 +575,7 @@ def select_sim_users(
         ID, num_sim, df, user_to_index, index_to_user, weights, flow=False):
     """
     Get a similar users data frame. Will be an artifact downloaded from wandb
-    if args.recs_sim_from_flow is True, otherwise, the frame will be created
+    if args.ID_recs_from_flow is True, otherwise, the frame will be created
     using find_similar_users()
     Inputs:
         ID: int, User ID to query
@@ -647,10 +647,12 @@ def select_user_prefs(ID, df, anime_df, flow=False):
 def assert_flow(ID, prefs_df, sim_users_df):
     """
     If args.ID_recs_from_flow is True, confirms that the same user ID
-    is used for every step of the MLflow process, including:
+        is used for every step of the MLflow process, including:
         1) Finding similar users
         2) Getting user preferences
         3) Getting user recommendations
+    Also confirms that the same number of similar users were established in
+        the similar_users artifact as were in similar_users_df
     Input:
         ID: int, user ID to be carried though entire MLflow run
         prefs_df: Pandas Data Frame of user genre and source preferences
@@ -667,6 +669,7 @@ def assert_flow(ID, prefs_df, sim_users_df):
         os.path.join(args.project_name, args.sim_users_art))
     # Get ID associated with similar users artifact
     sim_ID = sim_artifact.metadata["Queried user"]
+    num_sim_users = sim_artifact.metadata["num_sim_users"]
 
     # Get prefs artifact object
     prefs_api = wandb.Api()
@@ -676,15 +679,22 @@ def assert_flow(ID, prefs_df, sim_users_df):
     prefs_ID = int(prefs_artifact.metadata["ID"])
 
     try:
+        # Confirm IDs were consistent
         assert ID == ID_artifact == sim_ID == prefs_ID
         logger.info("ID %s is consistent in assert_flow(), using MLflow", ID)
+        # Confirm size of similar users data frame is consistent
+        assert int(num_sim_users) == int(args.recs_n_sim_ID)
+        logger.info("The number of similar users was consistent")
         return True
     except AssertionError:
+        # Log the IDs of each input for debugging
         logger.info("MLflow failed assert_flow()! IDs were inconsistent!")
         logger.info("Input ID was %s", ID)
         logger.info("ID artifact was %s", ID_artifact)
         logger.info("Similar users ID was %s", sim_ID)
         logger.info("User prefs ID was %s", prefs_ID)
+        logger.info("Num sim users in artifact was %s", int(num_sim_users))
+        logger.info("Input num sim users was %s", int(args.recs_n_sim_ID))
         return False
 
 
@@ -706,8 +716,8 @@ def similar_user_recs(
     they are ranked in the recommendation. For example, if 9 out of 10 similar
     users had favorited Black Lagoon, Black Lagoon would be highly ranked.
     Inputs:
-        user: Int, the user ID to find recommendations for
-        similar_users: Pandas Data Frame that must include the columns
+        user: Int, the user ID for which to find recommendations
+        similar_users: Pandas Data Frame that includes the columns
             "similar_users" and "similarity"
         sypnopsis_df: The sypnopsis data frame taken from get_sypnopsis_df()
         rating_df: The rating data frame taken from main_df_by_ID()
@@ -719,7 +729,7 @@ def similar_user_recs(
         source_df: Pandas Data Frame of favorite sources from fave_sources()
         user_pref: Pandas Data Frame of a user's favorite genres and sources
     Outputs:
-        df: Data Frame of anime recommendations ranked by similar users
+        Frame: Data Frame of anime recommendations ranked by similar users
         filename: Name of wandb artifact to save df as
     """
     # Get list of anime a user has seen
@@ -767,10 +777,10 @@ def similar_user_recs(
              "Japanese name": japanese_name, "Studios": studios,
              "Premiered": premiered, "Score": score, "Type": Type})
     filename = 'User_ID_' + str(user) + '_' + args.user_recs_fn
-
     Frame = pd.DataFrame(recommended_animes)
     if args.ID_spec_genres is True:
         Frame = by_genre(Frame)
+    # Return n recommendations if n exist, else return all recommendations
     try:
         return Frame[:n], filename
     except IndexError:
@@ -789,7 +799,7 @@ def go(args):
 
     if args.ID_recs_from_flow is True:
         similar_users = select_sim_users(user,
-                                         int(args.recs_n_sim_ID),
+                                         int(args.n_flow_sim_IDs),
                                          df,
                                          ID_to_index,
                                          index_to_user,
@@ -797,7 +807,7 @@ def go(args):
                                          flow=True)
         fave_df, genre_df, source_df = select_user_prefs(
             user, df, anime_df, flow=True)
-        # Confirm all IDs are equal
+        # Confirm IDs for input ID, simlar users, and user prefs are equal
         flow_was_used = assert_flow(user, fave_df, similar_users)
         if flow_was_used is True:
             pass
@@ -841,9 +851,6 @@ def go(args):
         description=description,
         metadata={"Queried user": user,
                   "Flow ID used": args.ID_recs_from_flow,
-                  # "Flow ID used": args.recs_ID_from_flow,
-                  # "Flow prefs used": args.recs_pref_from_flow,
-                  # "Flow similar IDs used": args.recs_sim_from_flow,
                   "Filename": filename})
     artifact.add_file(filename)
     logger.info("Logging recs artifact for user %s", user)
@@ -1006,20 +1013,6 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--user_recs_random",
-        type=lambda x: bool(strtobool(x)),
-        help="Boolean, whether to user a random user",
-        required=True
-    )
-
-    parser.add_argument(
-        "--recs_sim_from_flow",
-        type=lambda x: bool(strtobool(x)),
-        help="Boolean, whether to use similar users artifact",
-        required=True
-    )
-
-    parser.add_argument(
         "--user_recs_type",
         type=str,
         help="Type of user recs artifact to create",
@@ -1027,16 +1020,9 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--recs_ID_from_flow",
-        type=lambda x: bool(strtobool(x)),
-        help="Whether to use the User ID artifact created in MLflow",
-        required=True
-    )
-
-    parser.add_argument(
         "--flow_ID",
         type=str,
-        help='MLflow ID artifact name to use if recs_ID_from_flow is True',
+        help='MLflow ID artifact name to use if ID_recs_from_flow is True',
         required=True
     )
 
@@ -1050,7 +1036,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--sim_users_art",
         type=str,
-        help="Name of similar users artifact if recs_sim_from_flow is True",
+        help="Name of similar users artifact if ID_recs_from_flow is True",
         required=True
     )
 
@@ -1064,7 +1050,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--recs_n_sim_ID",
         type=str,
-        help="Number of similar users to include",
+        help="Number of similar users to include when finding/selecting",
         required=True
     )
 
@@ -1086,13 +1072,6 @@ if __name__ == "__main__":
         "--ID_spec_genres",
         type=lambda x: bool(strtobool(x)),
         help="Boolean of whether or not to narrow down by specific genres",
-        required=True
-    )
-
-    parser.add_argument(
-        "--recs_pref_from_flow",
-        type=lambda x: bool(strtobool(x)),
-        help="whether to use user prefs artifact from user_prefs.py as input",
         required=True
     )
 
@@ -1135,6 +1114,13 @@ if __name__ == "__main__":
         "--ID_recs_faves_type",
         type=str,
         help="Type of favorites data frame to save artifact as",
+        required=True
+    )
+
+    parser.add_argument(
+        "--n_flow_sim_IDs",
+        type=str,
+        help="Number of similar users in wandb similar users artifact",
         required=True
     )
 
