@@ -49,17 +49,8 @@ entry_points:
       model_type:
         description: Type of model artifact
         type: str
-      user_recs_random:
-        description: Boolean of whether to use a random user for recommendations
-        type: str
-      recs_sim_from_flow:
-        description: Boolean of whether to use the similar users artifact found in MLflow run
-        type: str
       user_recs_type:
         description: Type of artifact to save anime recommendations file as
-        type: str
-      recs_ID_from_flow:
-        description: Whether to use the User ID artifact created in MLflow
         type: str
       flow_ID:
         description: ID of MLflow artifact name to use if recs_ID_from_flow is True
@@ -85,9 +76,6 @@ entry_points:
       ID_spec_genres:
         description: Bool of whether to only include anime of the specified genres in recommendations
         type: str
-      recs_pref_from_flow:
-        description: Bool, whether to use preferences csv file artifact created in user_prefs.py as input
-        type: str
       prefs_input_fn:
         description: Version name of csv file artifact created in user_prefs.py to use as input
         type: str
@@ -106,6 +94,9 @@ entry_points:
       ID_recs_faves_type:
         description: Type of artifact to save user preferences
         type: str
+      n_flow_sim_IDs:
+        description: Number of similar users to assess if MLflow artifacts are being used.
+        type: str
 
     command: >-
       python user_recs.py --project_name {project_name} \
@@ -123,10 +114,7 @@ entry_points:
                               --anime_df_type {anime_df_type} \
                               --sypnopsis_df_type {sypnopsis_df_type} \
                               --model_type {model_type} \
-                              --user_recs_random {user_recs_random} \
-                              --recs_sim_from_flow {recs_sim_from_flow} \
                               --user_recs_type {user_recs_type} \
-                              --recs_ID_from_flow {recs_ID_from_flow} \
                               --flow_ID {flow_ID} \
                               --flow_ID_type {flow_ID_type} \
                               --sim_users_art {sim_users_art} \
@@ -135,10 +123,10 @@ entry_points:
                               --recs_ID_from_conf {recs_ID_from_conf} \
                               --ID_rec_genres {ID_rec_genres} \
                               --ID_spec_genres {ID_spec_genres} \
-                              --recs_pref_from_flow {recs_pref_from_flow} \
                               --prefs_input_fn {prefs_input_fn} \
                               --prefs_input_type {prefs_input_type} \
                               --ID_recs_from_flow {ID_recs_from_flow} \
                               --raise_flow_error {raise_flow_error} \
                               --ID_recs_faves_fn {ID_recs_faves_fn} \
-                              --ID_recs_faves_type {ID_recs_faves_type}
+                              --ID_recs_faves_type {ID_recs_faves_type} \
+                              --n_flow_sim_IDs {n_flow_sim_IDs}
