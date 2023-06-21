@@ -341,7 +341,7 @@ def go(args):
     fave_df, fave_fn = get_fave_df(genre_df, source_df, user)
 
     # Log favorite genre cloud
-    logger.info("Genre Cloud artifact")
+    logger.info("Creating genre cloud artifact")
     genre_cloud_artifact = wandb.Artifact(
         name=args.genre_fn,
         type=args.cloud_type,
@@ -353,7 +353,7 @@ def go(args):
     genre_cloud_artifact.wait()
 
     # Log favorite source cloud
-    logger.info("creating source cloud artifact")
+    logger.info("Creating source cloud artifact")
     source_cloud_artifact = wandb.Artifact(
         name=args.source_fn,
         type=args.cloud_type,
@@ -423,13 +423,6 @@ if __name__ == "__main__":
         "--prefs_user_query",
         type=str,
         help="input user id to query",
-        required=True
-    )
-
-    parser.add_argument(
-        "--pref_random_user",
-        type=lambda x: bool(strtobool(x)),
-        help="Decide whether or not to use a random user id",
         required=True
     )
 
