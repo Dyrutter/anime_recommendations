@@ -185,7 +185,6 @@ def go(config: DictConfig):
                 "project_name": config["main"]["project_name"],
                 "anime_df": config["data"]["all_anime_artifact_latest"],
                 "prefs_user_query": config["users"]["prefs_user_query"],
-                "pref_random_user": config["users"]["pref_random_user"],
                 "favorite_percentile": config["users"]["favorite_percentile"],
                 "show_clouds": config["users"]["show_clouds"],
                 "genre_fn": config["users"]["genre_fn"],
@@ -224,10 +223,7 @@ def go(config: DictConfig):
                 "main_df_type": config["data"]["preprocessed_artifact_type"],
                 "sypnopsis_df_type": config["data"]["synopses_artifact_type"],
                 "model_type": config["nn_arts"]["model_type"],
-                "user_recs_random": config["users"]["user_recs_random"],
-                "recs_sim_from_flow": config["users"]["recs_sim_from_flow"],
                 "user_recs_type": config["users"]["user_recs_type"],
-                "recs_ID_from_flow": config["users"]["recs_ID_from_flow"],
                 "flow_ID": config["users"]["flow_user"],
                 "flow_ID_type": config["users"]["ID_type"],
                 "sim_users_art": config["users"]["sim_users_art"],
@@ -236,13 +232,13 @@ def go(config: DictConfig):
                 "recs_ID_from_conf": config["users"]["recs_ID_from_conf"],
                 "ID_rec_genres": config["users"]["ID_rec_genres"],
                 "ID_spec_genres": config["users"]["ID_spec_genres"],
-                "recs_pref_from_flow": config["users"]["recs_pref_from_flow"],
                 "prefs_input_fn": config["users"]["prefs_input_fn"],
                 "prefs_input_type": config["users"]["prefs_input_type"],
                 "ID_recs_from_flow": config["users"]["ID_recs_from_flow"],
                 "raise_flow_error": config["main"]["raise_flow_error"],
                 "ID_recs_faves_fn": config["users"]["ID_recs_faves_fn"],
-                "ID_recs_faves_type": config["users"]["ID_recs_faves_type"]})
+                "ID_recs_faves_type": config["users"]["ID_recs_faves_type"],
+                "n_flow_sim_IDs": config["similarity"]["id_query_number"]})
 
     if "model_recs" in steps_to_execute:
         _ = mlflow.run(
