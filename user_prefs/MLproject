@@ -19,9 +19,6 @@ entry_points:
       prefs_user_query:
         description: User of which to find similar animes to
         type: str
-      pref_random_user:
-        description: Whether to use a random user for the input
-        type: str
       favorite_percentile:
         description: Top percentile of ratings to consider as favorite, e.g. 0.8 would mean top 20 percent
         type: str
@@ -80,7 +77,6 @@ entry_points:
                               --main_df {main_df} \
                               --anime_df {anime_df} \
                               --prefs_user_query {prefs_user_query} \
-                              --pref_random_user {pref_random_user} \
                               --favorite_percentile {favorite_percentile} \
                               --show_clouds {show_clouds} \
                               --genre_fn {genre_fn} \
