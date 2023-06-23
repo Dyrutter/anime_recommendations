@@ -109,11 +109,6 @@ def get_anime_df():
     # Get column of cleaned anime names
     df['eng_version'] = df.anime_id.apply(
         lambda x: clean(get_anime_name(x, df)).lower())
-    df.sort_values(by=['Score'],
-                   inplace=True,
-                   ascending=False,
-                   kind='quicksort',
-                   na_position='last')
     keep_cols = ["anime_id", "eng_version", "Score", "Genres", "Episodes",
                  "Premiered", "Studios", "japanese_name", "Name", "Type",
                  "Source", 'Rating', 'Members']
@@ -141,31 +136,65 @@ def get_unwatched(df, anime_df, user):
         df: Main Pandas Data Frame of user stats with columns
             ["user", "anime", "rating", "anime_id", "user_id"]
         anime_df: Pandas Data Frame with all anime and their relevant stats
-        user: The User ID to query
+        user: Int, The User ID to query
     Outputs:
-        array containing the anime IDs of all unwatched anime
+        unwatched: array containing the anime IDs of all unwatched anime
     """
+    # Get df of user rating instances, shape [number of ratings, df columns]
     watched = df[df.user_id == user]
+    # Reduce anime data frame to include only anime the user hasn't watched
     unwatched = anime_df[~anime_df['anime_id'].isin(watched.anime_id.values)]
+    # Get list of anime IDs the user hasn't watched
     anime_ids = df["anime_id"].unique().tolist()
+    # Create dict mapping {anime_id: index}
     anime_to_index = {value: count for count, value in enumerate(anime_ids)}
+    # Get list of IDs that are unwatched intersecting with existing anime IDs
     unwatched = list(set(unwatched['anime_id']).intersection(
         set(anime_to_index.keys())))
+    # Get array of indices for unwatched animes from anime_to_index dict
     unwatched = [[anime_to_index.get(x)] for x in unwatched]
     return unwatched
 
 
 def get_user_anime_arr(df, anime_df, user, unwatched):
+    """
+    Get array of anime a user hasn't watched formatted for neural network
+        predictions.
+    Inputs:
+        df: Main Pandas Data Frame of user stats with columns
+            ["user", "anime", "rating", "anime_id", "user_id"]
+        anime_df: Pandas Data Frame with all anime and their relevant stats
+        user: Int, The User ID to query
+        unwatched: Nested list of indices of enumerated unwatched anime IDs
+            [[anime index], [anime_index], [anime_index]...]
+    Outputs:
+        unwatched: list of two 1D arrays, the first a repeated list of the
+            input user's index among an enumerated list of all unique user
+            IDs found in df, the second a list of the enumerated
+            indices of animes the user hasn't watched, formatted as:
+            [array([user_ind, user_ind...]), array([anime_ind, anime_ind]...)]
+    """
+    # Get list of unique user IDs
     user_ids = df["user_id"].unique().tolist()
+    # Get dict mapping of {user ID: Index}
     user_to_index = {value: count for count, value in enumerate(user_ids)}
-    user_encoder = user_to_index.get(user)
-    arr = np.hstack(([[user_encoder]] * len(unwatched), unwatched))
-    return [arr[:, 0], arr[:, 1]]
+    # Get user's associated index
+    user_encoded = user_to_index.get(user)
+    # Get array of the repeated user ID with length of # of unwatched anime
+    same_user_arr = [[user_encoded]] * len(unwatched)
+    # Get 2D array of format [[user_ind, anime_ind], [user_ind, anime_ind]...]
+    combined = np.hstack((same_user_arr, unwatched))
+    # Create 1D array of format array([user_ind, user_ind, user_ind...])
+    user_arr = combined[:, 0]
+    # Create 1D array of format array([anime_ind, anime_ind, anime_ind...])
+    unwatched_arr = combined[:, 1]
+    # Return list containing user array and unwatched anime array
+    return [user_arr, unwatched_arr]
 
 
 def get_model():
     """
-    Download neural network model artifact from wandb
+    Download neural network h5 model artifact from wandb
     Output:
         model: TensorFlow neural network model
     """
@@ -199,8 +228,11 @@ def get_random_user(df):
     Outputs:
         random_user: Integer value of a random user's ID
     """
+    # Get unique user IDs
     user_ids = df["user_id"].unique().tolist()
+    # Get dict mapping User IDs to their Index {ID: Index}
     user_to_index = {value: count for count, value in enumerate(user_ids)}
+    # Get list of keys (IDs) and select a random ID
     possible_users = list(user_to_index.keys())
     random_user = int(random.choice(possible_users))
     return random_user
@@ -221,6 +253,27 @@ def get_sypnopsis(anime, sypnopsis_df):
         return sypnopsis_df[sypnopsis_df.Name == anime].sypnopsis.values[0]
 
 
+def get_genres(anime_df):
+    """
+    Get all possible anime genres
+    Input: data frame containing anime statistics taken from get_anime_df()
+    Output: All possible anime genres in list format
+    """
+    # anime_df = get_anime_df()
+    genres = anime_df['Genres'].unique().tolist()
+    # Get genres individually (instances have lists of genres)
+    possibilities = list(set(str(genres).split()))
+    # Remove non alphanumeric characters
+    possibilities = sorted(
+        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
+    # Convert incomplete categories to their proper names
+    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
+    fixed = possibilities + \
+        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
+    genre_list = sorted([i for i in fixed if i not in rem])
+    return genre_list
+
+
 def by_genre(anime_df):
     """
     Restrict the potential anime recommendations according to genre
@@ -231,12 +284,12 @@ def by_genre(anime_df):
            specified under args.model_genres
     """
     # Get genres to use and possible genres
-    use_genres = ast.literal_eval(args.model_genres)
-    genres = get_genres(anime_df)
+    use_genres = clean(ast.literal_eval(args.model_genres))
+    genres = clean(get_genres(anime_df))
     # Ensure the input genres are valid genres
     for genre in use_genres:
         try:
-            assert genre in genres
+            assert genre in clean(genres)
         except AssertionError:
             return logger.info(
                 "An invalid genre was input. Select genres from %s", genres)
@@ -278,28 +331,7 @@ def by_genre(anime_df):
     return df
 
 
-def get_genres(anime_df):
-    """
-    Get all possible anime genres
-    Input: data frame containing anime statistics taken from get_anime_df()
-    Output: All possible anime genres in list format
-    """
-    # anime_df = get_anime_df()
-    genres = anime_df['Genres'].unique().tolist()
-    # Get genres individually (instances have lists of genres)
-    possibilities = list(set(str(genres).split()))
-    # Remove non alphanumeric characters
-    possibilities = sorted(
-        list(set([re.sub(r'[\W_]', '', e) for e in possibilities])))
-    # Convert incomplete categories to their proper names
-    rem = ['Slice', "of", "Life", "Martial", "Arts", "Super", "Power", 'nan']
-    fixed = possibilities + \
-        ['Slice of Life', 'Super Power', 'Martial Arts', 'None']
-    genre_list = sorted([i for i in fixed if i not in rem])
-    return genre_list
-
-
-def get_ID_artifacts():
+def get_ID_artifact():
     """
     Get the user ID and similar users artifact created in similar_users.py
     Outputs:
@@ -315,16 +347,16 @@ def get_ID_artifacts():
 
 def select_user(df):
     """
-    Choose user to analyze based. Will be either the ID used
-        in the MLflow workflow, or the ID input in the config file under
-        the section ["model_recs"]["model_user_query"], or a random ID
+    Choose user to analyze. Will be either the ID used in the MLflow
+        workflow, the ID input in the config file under the section
+        ["model_recs"]["model_user_query"], or a random ID
     Inputs:
-        df: Main df taken from main_df_by_id()
+        df: Main df taken from get_full_df()
     Outputs:
         User: Integer of the user ID to analzye
     """
     if args.model_ID_flow is True:
-        user = get_ID_artifacts()
+        user = get_ID_artifact()
         logger.info("Using %s as input use taken from MLflow", user)
         return user
 
@@ -340,12 +372,24 @@ def select_user(df):
 
 def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
     """
-    Get anime recommendations based on model rating predictions
+    Get anime recommendations based on model rating predictions.
+    Inputs:
+        df: Main data frame taken from get_full_df()
+        anime_df: Anime stats data frame taken from get_anime_df()
+        syp_df: Sypnopses data frame taken from get_sypnopses_df()
+        model: Neural network model taken from get_model()
+        id_anime: ID/unwatched anime arrays taken from get_user_anime_arr()
+        unwatched: unwatched anime array taken from get_unwatched()
+        n_recs: Int, number of anime recommendations to return
+    Outputs:
+        Pandas data frame of anime recommendations
     """
     anime_ids = df["anime_id"].unique().tolist()
-    index_to_anime = {index: anime for index, anime in enumerate(anime_ids)}
-    ratings = model.predict(id_anime).flatten()
+    # Input list of two arrays, first user ID indices, second anime ID indices
+    ratings = model.predict(id_anime, verbose=2).flatten()
     top_inds = (-ratings).argsort()[:]
+
+    index_to_anime = {index: anime for index, anime in enumerate(anime_ids)}
     rec_ids = [index_to_anime.get(unwatched[x][0]) for x in top_inds]
     anime_recs, top_ids = [], []
 
@@ -485,7 +529,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--sypnopsis_type",
+        "--sypnopsis_df_type",
         type=str,
         help="Sypnopsis artifact type",
         required=True
@@ -586,13 +630,6 @@ if __name__ == "__main__":
         "--model_recs_type",
         type=str,
         help="Type of wandb artifact to save model recommendations as",
-        required=True
-    )
-
-    parser.add_argument(
-        "--sypnopsis_df_type",
-        type=str,
-        help='Artifact type of sypnopses df',
         required=True
     )
 
