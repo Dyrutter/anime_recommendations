@@ -251,7 +251,7 @@ def go(config: DictConfig):
                 "anime_df": config["data"]["all_anime_artifact_latest"],
                 "anime_df_type": config["data"]['all_anime_type'],
                 "sypnopsis_df": config["data"]["sypnopses_artifact_latest"],
-                "sypnopsis_type": config["data"]["synopses_artifact_type"],
+                "sypnopsis_df_type": config["data"]["synopses_artifact_type"],
                 "model": config["nn_arts"]["main_model"],
                 "model_type": config["nn_arts"]["model_type"],
                 "model_user_query": config["model_recs"]["model_user_query"],
@@ -266,7 +266,6 @@ def go(config: DictConfig):
                 "model_ID_flow": config["model_recs"]["model_ID_flow"],
                 "model_ID_conf": config["model_recs"]["model_ID_conf"],
                 "model_recs_type": config["model_recs"]["model_recs_type"],
-                "sypnopsis_df_type": config["data"]["synopses_artifact_type"],
                 "flow_ID": config["users"]["flow_user"],
                 "flow_ID_type": config["users"]["ID_type"]})
 
