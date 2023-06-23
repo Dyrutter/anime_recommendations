@@ -11,7 +11,7 @@ dependencies:
   - scikit-learn=1.2.1
   - IPython=8.8.0
   - pip:
-      - wandb==0.15.3
+      - wandb==0.15.4
       - setuptools==66.1.1
       - omegaconf==2.2
       - mlflow==2.1.1
