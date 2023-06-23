@@ -22,7 +22,7 @@ entry_points:
       sypnopsis_df:
         description: Artifact name of sypnopsis data frame
         type: str
-      sypnopsis_type:
+      sypnopsis_df_type:
         description: Type of sypnopsis data frame artifact
         type: str
       model:
@@ -67,9 +67,6 @@ entry_points:
       model_recs_type:
         description: Type of artifact to save model recommendations as
         type: str
-      sypnopsis_df_type:
-        description: Artifact type of sypnopsis data frame
-        type: str
       flow_ID:
         description: ID of MLflow artifact name to use if model_ID_flow is True
         type: str
@@ -84,7 +81,7 @@ entry_points:
                               --anime_df {anime_df} \
                               --anime_df_type {anime_df_type} \
                               --sypnopsis_df {sypnopsis_df} \
-                              --sypnopsis_type {sypnopsis_type} \
+                              --sypnopsis_df_type {sypnopsis_df_type} \
                               --model {model} \
                               --model_type {model_type} \
                               --model_user_query {model_user_query} \
@@ -99,6 +96,5 @@ entry_points:
                               --model_ID_flow {model_ID_flow} \
                               --model_ID_conf {model_ID_conf} \
                               --model_recs_type {model_recs_type} \
-                              --sypnopsis_df_type {sypnopsis_df_type} \
                               --flow_ID {flow_ID} \
                               --flow_ID_type {flow_ID_type}
