@@ -99,7 +99,7 @@ nn_arts: # Names of main/best neural network artifacts
   weights_type: "h5" # Neural network weights artifact type
 
 similarity: # Arguments for anime-based recommendations in similar_anime.py
-  anime_query: "YuuYuu☆Hakusho!" #"SilentMöbius" # Input anime to query. Change random_anime to False in order to use.
+  anime_query: "YuuYuu☆Hakusho!" #"SilentMöbius" # Input anime to query.
   random_anime: False # Whether to choose a random anime to assess rather than the anime input under anime_query
   a_query_number: 10 # Number of similar anime to return
   id_query_number: 10 # Number of similar IDs to return in similar_users.py, MUST BE SAME AS ['users']['recs_n_sim_ID'] IF MLflow IS USED
