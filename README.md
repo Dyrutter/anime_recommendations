@@ -5,7 +5,7 @@ The workflow is:
 
 1) Download raw data and save it as wandb artifacts 
 2) Clean and engineer the data and save it as wandb artifacts
-3) Create and train an embedding-based neural network
+3) Create and train an embedding-based neural network and save it as a wandb artifact
 4) Recommend anime according to similar anime
 5) Find users similar to an input user
 6) Find an input user's preferred genres and sources
