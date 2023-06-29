@@ -1,7 +1,7 @@
-# Still need df type, model type, history type
 import argparse
 import logging
 import wandb
+import ast
 from distutils.util import strtobool
 import pandas as pd
 import numpy as np
@@ -24,11 +24,17 @@ logger = logging.getLogger()
 
 def get_df():
     """
-    Get data frame from wandb
+    Load main data frame artifact from wandb
+    Outputs:
+        df: Main Pandas Data Frame of user stats, keeping the columns
+            "user_id", "anime_id", and "rating", as well as adding mapped
+            columns "user" and "anime"
+        n_users: number of users in data frame
+        n_anime: number of anime in data frame
     """
     run = wandb.init(project=args.project_name)
     logger.info("Downloading data artifact")
-    artifact = run.use_artifact(args.input_data, type='preprocessed_data')
+    artifact = run.use_artifact(args.input_data, type=args.main_df_type)
     artifact_path = artifact.file()
     df = pd.read_parquet(artifact_path)
 
@@ -64,7 +70,6 @@ def neural_network():
     continuous vectors.
     """
     df, n_users, n_animes = get_df()
-    # Both inputs are 1-dimensional
     user = tfkl.Input(name='user', shape=[1])
     user_embedding = tfkl.Embedding(name=args.ID_emb_name,
                                     input_dim=n_users,
@@ -76,7 +81,10 @@ def neural_network():
         input_dim=n_animes,
         output_dim=int(args.embedding_size))(anime)
 
-    # Merge layer with a dot product along second axis
+    # Merge embedding layers with a dot product
+    # Dot product of weights measures similarity between users and between
+    # Anime, so similar recommendations are provided to similar users.
+    # Shows the probability a user likes an anime
     merged = tfkl.Dot(
         name=args.merged_name,
         normalize=True,
@@ -90,7 +98,7 @@ def neural_network():
     model = tfkl.Activation(args.activation_function)(norm)
     model = Model(inputs=[user, anime], outputs=model)
     model.compile(loss=args.model_loss,
-                  metrics=["mae", "mse"],
+                  metrics=ast.literal_eval(args.model_metrics),
                   optimizer=args.optimizer)
     logger.info("Model compiled!")
     return model
@@ -98,14 +106,17 @@ def neural_network():
 
 def lrfn(epoch):
     """
-    Scheduel the learning rate for each epoch
+    Scheduel the learning rate for epoch
     """
     max_lr = float(args.max_lr)
+    # Low learning rate for first few epochs
     if epoch < int(args.rampup_epochs):
         return (float(max_lr) - float(args.start_lr)) / \
             int(args.rampup_epochs) * epoch + float(args.start_lr)
+    # Max learning rate for middle epochs
     elif epoch < int(args.rampup_epochs) + int(args.sustain_epochs):
         return float(max_lr)
+    # Learning rate for final epochs
     else:
         return (float(max_lr) - float(args.min_lr)) * float(args.exp_decay) **\
             (epoch - int(args.rampup_epochs) - int(args.sustain_epochs))\
@@ -132,8 +143,7 @@ def go(args):
 
     run = wandb.init(
         job_type="neural_network",
-        project=args.project_name,
-        name="400_nn_run")
+        project=args.project_name)
     rating_df, n_users, n_anime = get_df()
     logger.info("Data frame loaded")
 
@@ -217,17 +227,11 @@ def go(args):
     with open(hist_csv_file, mode='w') as f:
         hist_df.to_csv(f)
 
-    # Save anime weights and user weights
-    # anime_weights = extract_weights('anime_embedding', model)
-    # user_weights = extract_weights('user_embedding', model)
-    # anime_weights.tofile('./wandb_anime_weights.csv', sep=',')
-    # user_weights.tofile('./wandb_user_weights.csv', sep=',')
-
     # Log all weights
     logger.info("creating all weights artifact")
     wandb_weights_artifact = wandb.Artifact(
         name=args.weights_artifact,
-        type="h5",
+        type=args.weights_type,
         description='file containing all weights')
     wandb_weights_artifact.add_file(args.weights_artifact)
     run.log_artifact(wandb_weights_artifact)
@@ -238,7 +242,7 @@ def go(args):
     logger.info("creating history artifact")
     hist_artifact = wandb.Artifact(
         name=args.history_csv,
-        type='history_csv',
+        type=args.history_type,
         description='csv file of neural network training history')
     hist_artifact.add_file(args.history_csv)
     run.log_artifact(hist_artifact)
@@ -249,36 +253,12 @@ def go(args):
     logger.info("Creating model artifact")
     wandb_model_artifact = wandb.Artifact(
         name=args.model_artifact,
-        type='h5',
+        type=args.model_type,
         description='h5 file of trained neural network')
     wandb_model_artifact.add_file(args.model_artifact)
     run.log_artifact(wandb_model_artifact)
     logger.info("Model logged!")
     wandb_model_artifact.wait()
-    """
-
-    # Log anime weights
-    logger.info("creating anime weights artifact")
-    wandb_anime_weights_artifact = wandb.Artifact(
-        name='wandb_anime_weights.csv',
-        type='numpy_array',
-        description='numpy array of anime weights')
-    wandb_anime_weights_artifact.add_file('wandb_anime_weights.csv')
-    logger.info('Logging anime weights array')
-    run.log_artifact(wandb_anime_weights_artifact)
-    wandb_anime_weights_artifact.wait()
-
-    # Log user weights
-    logger.info("creating user weights artifact")
-    wandb_user_weights_artifact = wandb.Artifact(
-        name='wandb_user_weights.csv',
-        type='numpy_array',
-        description='numpy array of user id weights')
-    wandb_user_weights_artifact.add_file('wandb_user_weights.csv')
-    logger.info("Logging id weights array")
-    run.log_artifact(wandb_user_weights_artifact)
-    wandb_user_weights_artifact.wait()
-    """
 
     plt.plot(history.history["loss"][0:-2])
     plt.plot(history.history["val_loss"][0:-2])
@@ -515,6 +495,41 @@ if __name__ == "__main__":
         "--merged_name",
         type=str,
         help="Name of merged weight layer in neural network model",
+        required=True
+    )
+
+    parser.add_argument(
+        "--main_df_type",
+        type=str,
+        help="Type of main data frame artifact",
+        required=True
+    )
+
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        help="Type of model artifact",
+        required=True
+    )
+
+    parser.add_argument(
+        "--history_type",
+        type=str,
+        help="Type of history file artifact",
+        required=True
+    )
+
+    parser.add_argument(
+        "--weights_type",
+        type=str,
+        help="Type of weights file artifact",
+        required=True
+    )
+
+    parser.add_argument(
+        "--model_metrics",
+        type=str,
+        help="List of model metrics of format ['metric_1', 'metric_2'...]",
         required=True
     )
 
