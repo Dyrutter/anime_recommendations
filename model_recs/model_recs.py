@@ -372,7 +372,10 @@ def select_user(df):
 
 def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
     """
-    Get anime recommendations based on model rating predictions.
+    Get anime recommendations based on model rating predictions. The higher
+    the predcted rating (dot product of the estimated user and anime ID latent
+    vectors established through gradient descent), the higher the anime is
+    recommended. Only unwatched anime are included.
     Inputs:
         df: Main data frame taken from get_full_df()
         anime_df: Anime stats data frame taken from get_anime_df()
@@ -384,19 +387,24 @@ def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
     Outputs:
         Pandas data frame of anime recommendations
     """
+    # Get unique anime IDs
     anime_ids = df["anime_id"].unique().tolist()
     # Input list of two arrays, first user ID indices, second anime ID indices
     ratings = model.predict(id_anime, verbose=2).flatten()
+    # Get list of prediction indices sorrted based on top ratings
     top_inds = (-ratings).argsort()[:]
-
+    # Index anime IDs for dictionary use
     index_to_anime = {index: anime for index, anime in enumerate(anime_ids)}
+    # Get anime IDs that are unwatched
     rec_ids = [index_to_anime.get(unwatched[x][0]) for x in top_inds]
     anime_recs, top_ids = [], []
-
+    # Get predicted ratings for unwatched anime using the anime's index
     for index, anime_id in enumerate(unwatched):
+        # Ratings prediction value at a specific anime's index
         rating = ratings[index]
+        # Anime ID associated with that index
         ID = index_to_anime.get(anime_id[0])
-
+        # Append anime stats if the anime is among recommended anime
         if ID in rec_ids:
             top_ids.append(ID)
             try:
@@ -411,12 +419,14 @@ def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
                 Type = anime_df[condition]["Type"].values[0]
                 source = anime_df[condition]["Source"].values[0]
                 anime_id = anime_df[condition]["anime_id"].values[0]
+                # Some anime don't have sypnopses
                 try:
                     sypnopsis = get_sypnopsis(int(anime_id), syp_df)
                 except IndexError:
                     sypnopsis = "None"
             except IndexError:
                 continue
+            # If config file indicates to only return anime of specific types
             if args.specify_types is True:
                 if Type in ast.literal_eval(args.anime_types):
                     anime_recs.append(
@@ -433,10 +443,16 @@ def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
                      "Japanese name": japanese_name, "Studios": studios,
                      "Premiered": premiered, "Score": score, "Type": Type})
     Frame = pd.DataFrame(anime_recs)
+    # Remove anime not of specified genre if config file asserts so
     if args.specify_genres is True:
         Frame = by_genre(Frame)
+    # Sort anime data frame based on rating prediction
     Frame = Frame.sort_values(by="Prediction", ascending=False)
-    return Frame[:n_recs]
+    # Return data frame containing n_recs recommendations
+    try:
+        return Frame[:n_recs]
+    except IndexError:
+        return Frame
 
 
 def go(args):
