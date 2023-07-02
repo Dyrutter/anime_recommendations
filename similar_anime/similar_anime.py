@@ -142,15 +142,23 @@ def get_weights(model):
         anime_weights: normalized weights of anime embedding layer
         user_weights: normalized weights of user embedding layer
     """
+    # Get anime weights layer, name specified in config file
     anime_weights = model.get_layer(args.anime_emb_name)
+    # Shape of get_weights()[0] is (17560, 128) AKA (num anime, embedding dim)
     anime_weights = anime_weights.get_weights()[0]
-    anime_weights = anime_weights / np.linalg.norm(
-        anime_weights, axis=1).reshape((-1, 1))
+    # Normalized embedding vectors (1 value) for each anime, shape (17560, 1)
+    anime_norm = np.linalg.norm(anime_weights, axis=1).reshape((-1, 1))
+    # Divide anime weights by normalized embedding vector value for each anime
+    anime_weights = anime_weights / anime_norm
 
+    # Get user weights layer, name specified in config file
     user_weights = model.get_layer(args.ID_emb_name)
+    # Shape of get_weights()[0] is (91641, 128), AKA (num users, emb dim)
     user_weights = user_weights.get_weights()[0]
-    user_weights = user_weights / np.linalg.norm(
-        user_weights, axis=1).reshape((-1, 1))
+    # Normalized embedding vectors (1 value) for each user, shape (91641, 1)
+    user_norm = np.linalg.norm(user_weights, axis=1).reshape((-1, 1))
+    # Divide user weights by normalized embedding vector for each user
+    user_weights = user_weights / user_norm
     return anime_weights, user_weights
 
 
@@ -198,7 +206,7 @@ def get_anime_frame(anime, df, clean=False):
         clean: If True, return the name of the anime cleaned with clean()
            If False, return the anime's full name
     Output:
-        df: An anime's name or ID in data frame format
+        df: Pandas data frame of stats for a specific anime
     """
     if isinstance(anime, int):
         return df[df.anime_id == anime]
@@ -302,10 +310,6 @@ def by_genre(anime_df):
         i += 1
     # Initialize empty df
     df = None
-    logger.info('arr1.len is %s', len(arr1))
-    logger.info('arr2.len is %s', len(arr2))
-    logger.info('arr3.len is %s', len(arr3))
-
     # If array 1 was created, convert to data frame
     if arr1 != empty:
         df = pd.DataFrame(arr1)
@@ -324,7 +328,6 @@ def by_genre(anime_df):
             df = pd.concat([df, df3]).drop_duplicates()
         else:
             df = df3
-    logger.info("DF head is %s", df.head())
     return df
 
 
@@ -371,7 +374,7 @@ def anime_recs(name, count, anime_df):
     filename = translated + '.csv'
     logger.info('filename is %s', filename)
 
-    # Get ID and encoded index of input anime
+    # Get encoded index of input anime
     try:
         index = get_anime_frame(translated, anime_df).anime_id.values[0]
     except IndexError:
@@ -383,18 +386,25 @@ def anime_recs(name, count, anime_df):
             index = get_anime_frame(
                 translated, anime_df, clean=True).anime_id.values[0]
 
-    logger.info('index is %s', index)
+    # Get input anime's index
     encoded_index = anime_to_index.get(index)
-
-    # Get and sort dists
+    # Take dot product of weights array and input anime's embedding vector
+    # Higher values indicate closer similarity
+    # weights.shape is (num anime, embedding length) e.g. (17560, 128)
+    # weights[encoded_index].shape is (1, embedding length)
     dists = np.dot(weights, weights[encoded_index])
+
+    # Get indices of values that are the highest dists and sort
+    # E.g. value [20, 10, 40, 50, 30] -->  index [1, 0, 4, 2, 3]
     sorted_dists = np.argsort(dists)
     closest = sorted_dists[:]
     arr = []
 
     # Sequentially append closest animes to empty array
     for close in closest:
+        # Get anime associated with dist index
         decoded_id = index_to_anime.get(close)
+        # Get df of anime stats
         anime_frame = get_anime_frame(decoded_id, anime_df)
 
         # Some anime do not have sypnopses
@@ -445,7 +455,12 @@ def anime_recs(name, count, anime_df):
             by="Similarity", ascending=False).drop(['Genres'], axis=1)
     else:
         Frame = Frame.sort_values(by="Similarity", ascending=False)
-    return Frame[:count], filename, translated
+
+    try:
+        return Frame[:count], filename, translated
+    # If there aren't enough (count) similar anime, return all similar anime
+    except IndexError:
+        return Frame[:]
 
 
 def go(args):
