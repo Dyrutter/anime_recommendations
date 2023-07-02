@@ -72,27 +72,32 @@ def get_model():
     return model
 
 
-def get_weights():
+def get_weights(model):
     """
     Extract weights from model and apply Frobenius normalization.
     Inputs:
         model: neural network model
     Outputs:
-        anime_weights: norm weights associated with anime embedding layer
-        user_weights: norm weights associated with user embedding layer
+        anime_weights: normalized weights of anime embedding layer
+        user_weights: normalized weights of user embedding layer
     """
-    logger.info("Getting weights")
-    model = get_model()
+    # Get anime weights layer, name specified in config file
     anime_weights = model.get_layer(args.anime_emb_name)
+    # Shape of get_weights()[0] is (17560, 128) AKA (num anime, embedding dim)
     anime_weights = anime_weights.get_weights()[0]
-    anime_weights = anime_weights / np.linalg.norm(
-        anime_weights, axis=1).reshape((-1, 1))
+    # Normalized embedding vectors (1 value) for each anime, shape (17560, 1)
+    anime_norm = np.linalg.norm(anime_weights, axis=1).reshape((-1, 1))
+    # Divide anime weights by normalized embedding vector value for each anime
+    anime_weights = anime_weights / anime_norm
 
+    # Get user weights layer, name specified in config file
     user_weights = model.get_layer(args.ID_emb_name)
+    # Shape of get_weights()[0] is (91641, 128), AKA (num users, emb dim)
     user_weights = user_weights.get_weights()[0]
-    user_weights = user_weights / np.linalg.norm(
-        user_weights, axis=1).reshape((-1, 1))
-    logger.info("Weights extracted!")
+    # Normalized embedding vectors (1 value) for each user, shape (91641, 1)
+    user_norm = np.linalg.norm(user_weights, axis=1).reshape((-1, 1))
+    # Divide user weights by normalized embedding vector for each user
+    user_weights = user_weights / user_norm
     return anime_weights, user_weights
 
 
