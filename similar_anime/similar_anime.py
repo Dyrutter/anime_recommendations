@@ -135,7 +135,16 @@ def get_model():
 
 def get_weights(model):
     """
-    Extract weights from model and apply Frobenius normalization.
+    Extract model weights and apply Frobenius normalization. Normalization
+    accounts for magnitude differences in embedding/feature vectors,
+    ensuring users/anime with large embeddings don't dominate and instead
+    reflect the relative relationships.
+
+    Later, the dot product of either weight matrix can be taken with the
+    transposed version of itself (e.g. anime_weights•anime_weightsT) to find
+    similarities between animes, as each element in the dot product matrix is
+    normalized by the product of the corresponding magnitudes of the anime's
+    embeddings/characteristics.
     Inputs:
         model: neural network model
     Outputs:
