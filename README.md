@@ -1,4 +1,4 @@
-# Creating an Anime Recommendation System
+# Anime Recommendation System
 
 This is an example of an anime recommendation system. MLOps are incorporated using MLflow, Weights and Biases (wandb), and FastAPI. 
 The workflow:
