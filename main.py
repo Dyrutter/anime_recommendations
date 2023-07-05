@@ -121,7 +121,8 @@ def go(config: DictConfig):
                 "model_type": config["nn_arts"]["model_type"],
                 "history_type": config["nn_arts"]["history_type"],
                 "weights_type": config["nn_arts"]["weights_type"],
-                "model_metrics": config["model"]["model_metrics"]})
+                "model_metrics": config["model"]["model_metrics"],
+                "l2_reg_factor": config["model"]["l2_reg_factor"]})
 
     if "similar_anime" in steps_to_execute:
         _ = mlflow.run(
