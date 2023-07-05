@@ -112,6 +112,9 @@ entry_points:
       model_metrics:
         description: List of model metrics of format ['metric_1', 'metric_2'...]
         type: str
+      l2_reg_factor:
+        description: L2 regularization factor for anime and user embedding layers
+        type: str
 
     command: >-
       python neural_network.py --test_size {test_size} \
@@ -149,4 +152,5 @@ entry_points:
                               --model_type {model_type} \
                               --history_type {history_type} \
                               --weights_type {weights_type} \
-                              --model_metrics {model_metrics}
+                              --model_metrics {model_metrics} \
+                              --l2_reg_factor {l2_reg_factor}
