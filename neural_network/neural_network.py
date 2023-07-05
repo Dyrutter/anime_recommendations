@@ -70,21 +70,22 @@ def neural_network():
     continuous vectors.
     """
     df, n_users, n_animes = get_df()
+    l2_reg = tf.keras.regularizers.L2(float(args.l2_reg_factor))
     user = tfkl.Input(name='user', shape=[1])
     user_embedding = tfkl.Embedding(name=args.ID_emb_name,
                                     input_dim=n_users,
-                                    output_dim=int(args.embedding_size))(user)
+                                    output_dim=int(args.embedding_size),
+                                    embeddings_regularizer=l2_reg)(user)
 
     anime = tfkl.Input(name='anime', shape=[1])
     anime_embedding = tfkl.Embedding(
         name=args.anime_emb_name,
         input_dim=n_animes,
-        output_dim=int(args.embedding_size))(anime)
+        output_dim=int(args.embedding_size),
+        embeddings_regularizer=l2_reg)(anime)
 
     # Merge embedding layers with a dot product
-    # Dot product of weights measures similarity between users and between
-    # Anime, so similar recommendations are provided to similar users.
-    # Shows the probability a user likes an anime
+    # Dot product of weights produces ratings-based predictions
     merged = tfkl.Dot(
         name=args.merged_name,
         normalize=True,
@@ -211,18 +212,18 @@ def go(args):
         validation_data=(X_test_array, y_test),
         callbacks=model_callbacks)
 
-    # Save entire model to local machine, weights only otherwise
+    # Save entire model to local machine if desired
     if args.save_model is True:
         model.save(args.model_name)
     logger.info('model trained and saved!')
     hist_df = pd.DataFrame(history.history)
 
-    # Save history to json:
+    # Save history to json
     hist_json_file = 'history.json'
     with open(hist_json_file, mode='w') as f:
         hist_df.to_json(f)
 
-    # Save history to csv:
+    # Save history to csv
     hist_csv_file = args.history_csv
     with open(hist_csv_file, mode='w') as f:
         hist_df.to_csv(f)
@@ -254,7 +255,16 @@ def go(args):
     wandb_model_artifact = wandb.Artifact(
         name=args.model_artifact,
         type=args.model_type,
-        description='h5 file of trained neural network')
+        description='h5 file of trained neural network',
+        metadata={"Loss function": args.model_loss,
+                  "Optimizer": args.optimizer,
+                  "Activation function": args.activation_function,
+                  "Start learning rate": args.start_lr,
+                  "Min learning rate": args.min_lr,
+                  "Max learning rate": args.max_lr,
+                  "Batch size": args.batch_size,
+                  "L2 regularization factor": args.l2_reg_factor,
+                  "Monitored metrics": str(args.model_metrics)})
     wandb_model_artifact.add_file(args.model_artifact)
     run.log_artifact(wandb_model_artifact)
     logger.info("Model logged!")
@@ -530,6 +540,13 @@ if __name__ == "__main__":
         "--model_metrics",
         type=str,
         help="List of model metrics of format ['metric_1', 'metric_2'...]",
+        required=True
+    )
+
+    parser.add_argument(
+        "--l2_reg_factor",
+        type=str,
+        help="L2 regularization factor for anime and user embedding layers",
         required=True
     )
 
