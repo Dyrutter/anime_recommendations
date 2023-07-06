@@ -460,8 +460,7 @@ def anime_recs(name, count, anime_df):
 
     # Remove anime not of specified genre if so desired
     if args.an_spec_genres is True:
-        Frame = by_genre(Frame).sort_values(
-            by="Similarity", ascending=False).drop(['Genres'], axis=1)
+        Frame = by_genre(Frame).sort_values(by="Similarity", ascending=False)
     else:
         Frame = Frame.sort_values(by="Similarity", ascending=False)
 
@@ -494,10 +493,10 @@ def go(args):
         name=fn,
         type=args.a_rec_type,
         description=description,
-        metadata={"Queried anime: ": anime_name,
-                  "Model used: ": args.model,
-                  "Main data frame used: ": args.main_df,
-                  "Filename: ": fn})
+        metadata={"Queried anime": anime_name,
+                  "Model used": args.model,
+                  "Main data frame used": args.main_df,
+                  "Filename": fn})
 
     # Upload artifact to wandb
     recs_artifact.add_file(fn)
