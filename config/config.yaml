@@ -52,49 +52,47 @@ data: # Data artifacts
   local_fname: '/Applications/python_files/anime_recommendations/data/animelist.csv' # Filename of local raw data
 
 model: # Settings for neural network
-  test_size: 10000
-  kernel_initializer: 'he_normal'
-  TPU_INIT: False
-  start_lr: 0.00001
-  min_lr: 0.00001
-  max_lr: 0.00005
-  batch_size: 10000
-  rampup_epochs: 5
-  sustain_epochs: 0
-  exp_decay: 0.8
-  embedding_size: 128
-  l2_reg_factor: 0.0001
-  model_loss: 'mse'
-  optimizer: 'Adam'
-  weights_artifact: 'wandb_main_weights.h5'
-  epochs: 20
-  activation_function: 'sigmoid'
-  checkpoint_metric: 'val_loss' # Metric to monitor at checkpoints
-  save_weights_only: True
-  save_best_weights: True
-  save_freq: 'epoch'
-  save_model: True
+  test_size: 10000 # Size of test set to hold out
+  kernel_initializer: 'he_normal' # Weights matrix init, 'he_normal' draws from a truncated normal dist centered on 0 with stddev = sqrt(2 / num_weight_tensor_input_units)
+  min_lr: 0.00001 # Minimum learning rate in learning rate scheduler
+  max_lr: 0.00005 # Maximum learning rate in learning rate scheduler
+  batch_size: 10000 # Size of data batches to run through neural network in model.fit()
+  rampup_epochs: 5 # Number of beginning epochs to get a warm start
+  sustain_epochs: 0 # If epoch is less than rampup epochs + sustain epochs, use the max lr
+  exp_decay: 0.8 # Exponential decay rate in learning rate schedule
+  embedding_size: 128 # Number of feature embeddings to use in anime_id and user_id embedding layers
+  l2_reg_factor: 0.0001 # L2 regularization factor
+  model_loss: 'binary_crossentropy' # Name of loss function in model.compile()
+  optimizer: 'Adam' # Neural network optimizer in model.compile()
+  weights_artifact: 'wandb_main_weights.h5' # Artifact name to save weights as
+  epochs: 20 # Maximum number of epochs to run in model.fit(), will run fewer if optimal checkpoint metric is discovered sooner
+  activation_function: 'sigmoid' # Neural network activation function in model.compile()
+  checkpoint_metric: 'val_loss' # Metric to monitor at checkpoints in EarlyStopping() and ModelCheckpoint()
+  save_weights_only: True # Whether to save only weights at each checkpoint in ModelCheckpoint()
+  save_best_weights: True # Whether to keep only the best weights on file as opposed to the weights created at every epoch in ModelCheckpoint()
+  save_freq: 'epoch' # Checkpoint steps at which to save model during training in ModelCheckpoint() (i.e. 'epoch' to save the model at every epoch)
+  save_model: True # Whether to save final trained model to local machine
   model_name: './wandb_anime_nn.h5' # Path to use if you want to save model to your local machine
-  verbose: 1
+  verbose: 1 # Whether to print progress stats in local terminal (1=True, 0=False)
   model_artifact: 'wandb_anime_nn.h5' # Artifact name for the model
-  history_csv: 'wandb_anime_nn_history.csv'
-  monitor: 'val_loss'
-  mode: 'min'
+  history_csv: 'wandb_anime_nn_history.csv' # Artifact name for history csv
+  monitor: 'val_loss' # Checkpoint metric to monitor in ModelCheckpoint() and EarlyStopping() to decide when to stop running epochs (early stopping)
+  mode: 'min' # Overwrite checkpoint save file based on the maximization or the minimization of the config 'monitor' metric (e.g. for val_loss use 'min')
   anime_weights: 'wandb_anime_weights.csv' # Numpy array of anime weights
   user_weights: 'wandb_user_weights.csv' # Numpy array of user weights
-  an_weights_fn: './wandb_anime_weights.csv'
-  id_weights_fn: './wandb_user_weights.csv'
+  an_weights_fn: './wandb_anime_weights.csv' # Local file name to save anime weights as
+  id_weights_fn: './wandb_user_weights.csv' # Local file name to save user ID weights as
   ID_emb_name: 'user_embedding' # Name of user weights layer
   anime_emb_name: 'anime_embedding' # Name of anime weights layer
-  merged_name: 'dot_product' # Name of merged layer
-  model_metrics: ["mse", "accuracy"] # Metrics to grade in Model.compile
+  merged_name: 'dot_product' # Name of merged layer (dot product of embedding layers)
+  model_metrics: ["mse"] # Metrics to grade in Model.compile()
 
 nn_arts: # Names of main/best neural network artifacts
   main_anime_weights: "wandb_anime_weights.csv:v2" # Anime weights from main neural network model
   main_user_weights: "wandb_user_weights.csv:v2" # User weights from main neural network model
-  main_weights_art: "wandb_anime_weights.h5:v8" # All weights from main neural network model
-  main_history: "wandb_anime_nn_history.csv:v8" # Hisotry file for main neural network
-  main_model: "wandb_anime_nn.h5:v6" # Main neural network artifact name
+  main_weights_art: "wandb_main_weights.h5:v4" # All weights from main neural network model
+  main_history: "wandb_anime_nn_history.csv:v12" # Hisotry file for main neural network
+  main_model: "wandb_anime_nn.h5:v12" # Main neural network artifact name
   model_type: "h5" # Neural network model artifact type
   history_type: "history_csv" # Neural network history artifact type
   weights_type: "h5" # Neural network weights artifact type
