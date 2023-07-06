@@ -86,6 +86,7 @@ def neural_network():
 
     # Merge embedding layers with a dot product
     # Dot product of weights produces ratings-based predictions
+    # Idea is to get training predictions closest to real ratings
     merged = tfkl.Dot(
         name=args.merged_name,
         normalize=True,
@@ -126,7 +127,8 @@ def lrfn(epoch):
 
 def extract_weights(name, model):
     """
-    Extract weights from model
+    Extract weights from model and normalize by Frobenius norm to
+    account for magnitude differences in embedding vectors.
     """
     weight_layer = model.get_layer(name)
     weights = weight_layer.get_weights()[0]
