@@ -41,7 +41,5 @@ Where "watching status" includes
 
 [all_anime.csv](https://github.com/Dyrutter/anime_recommendations/blob/main/data/all_anime.csv) scontain general information of every anime including genre, average score, English name, Japanese name, type (TV, movie, OVA, Special, or ONA), Number of episodes, Broadcast date, Season premier, producers, liscensors, studios, source (Manga, light novel, book, original), episode duration, age rating, rank, popularity, members, number of favorites, watching statuses, and scores.
 
-Warning: this dataset includes information about anime for adults (hentai).
-
 Special thanks to:
 myanimelist.net for hosting the data
