@@ -1,4 +1,4 @@
-# Anime Recommendation Programs
+# Anime Recommendations
 
 MLOps are incorporated using MLflow, Weights and Biases (wandb), and FastAPI. 
 The workflow:
