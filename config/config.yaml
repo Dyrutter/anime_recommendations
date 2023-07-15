@@ -1,4 +1,4 @@
-main:
+main: # Primary run settings
   download_repository: "https://github.com/Dyrutter/anime_recommendations#download"  
   project_name: anime_recommendations
   experiment_name: development
