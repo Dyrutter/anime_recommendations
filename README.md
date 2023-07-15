@@ -1,6 +1,6 @@
 # Anime Recommendations
 
-The scripts in this project can be used to find anime recommendations. MLOps are incorporated using MLflow, Weights and Biases (wandb), and FastAPI. 
+The scripts in this project can be used to find anime recommendations. Three different systems were created. The first recommends anime based on similar anime. The second recommends anime based on the preferences of similar users. The third recommends anime based on ratings a user has assigned to previously-watched anime. MLOps are incorporated using MLflow and Weights & Biases, allowing the three systems to be run simultaneously.
 The workflow components are:
 
 1) Download: Download raw data and save it as wandb artifacts 
@@ -59,16 +59,57 @@ Note: The data were collected in early 2023. Since then, myanimelist.net has alt
 
 [run.py (segregate component)](./segregate/run.py)
 
-### [Download](./download/download.py) : Download raw data and save it as wandb artifacts 
-### [Preprocess](./preprocess/preprocess.py) : Clean and engineer the data and save it as wandb artifacts
-### [Neural Network](./neural_network/neural_network.py) : Create and train an embedding-based neural network and save it as a wandb artifact
-4) Similar Anime: Recommend anime according to similar anime (determined by weight cosine similarity)
-5) Similar Users: Find users similar to an input user (determined by weight cosine similarity)
-6) User Prefs: Find an input user's preferred genres and sources based on shows they've previously rated highly
-7) User Recs: Recommend anime based on similar users' preferences
-8) Model Recs: Recommend anime based on neural network model rankings (determined by collaborative filtering)
+### [Download](./download/download.py) 
++ Downloads data sets from url specified in [the hydra config file](./config/config.yaml)
++ Converts data sets into Weights & Biases artifacts
++ Uploads the artifacts to Weights & Biases
+    
+### [Preprocess](./preprocess/preprocess.py) 
++ Scales ratings data and performs basic cleaning
++ Drops users who have watched fewer than a certain number of anime as specified in [the hydra config file](./config/config.yaml)
++ If desired, drops instances in which a user has not watched but plans to watch a given anime
++ If desired, drops instances in which a user has watched fewer than half the total episodes of an anime
++ Converts data sets into artifacts and uploads them to Weights & Biases
+   
+### [Neural Network](./neural_network/neural_network.py)
++ Create and trains an embedding-based neural network using tensor flow
++ Produces and saves an .h5 file of the trained model, an .h5 file of the model's weights, and a csv file of the model's history
++ Converts model files into artifacts and uploads them to Weights & Biases
++ [The hydra config file](./config/config.yaml) contains several options for altering the model's structure during compilation
 
-# ROOT FILES
+### [Similar Anime](./similar_anime/similar_anime.py)
++ Downloads model artifacts and data set artifacts from Weights & Biases
++ Extracts weights and computes cosine similarity to recommend anime according to similar anime
++ If designated as such in [the hydra config file](./config/config.yaml), recommendations only include anime of specified genres and media types
++ Can recommend based on either a specified anime or a random anime
++ Creates a csv file of recommendations and uploads it as an artifact to Weights & Biases
+   
+### [Similar Users](./similar_users/similar_users.py)
++ Extracts weights from the wandb model artifact and computes cosine similarity to find a specified number users similar to an input User ID
++ The input user ID can be either designated in [the hydra config file](./config/config.yaml) file or chosen randomly
++ Creats a csv file specifying the assessed user ID and another csv file of similar users and uploads the files as artifacts to Weights & Biases
+
+### [User Prefs](./user_prefs/user_prefs.py) 
++ Find a user's preferred genres and sources based on shows they've rated highly
++ Creates word cloud images of the user's preferred genres and sources
++ Uploads preferences csv file and word clouds to Weights & Biases as artifacts
++ Input user can be either taken from the similar users artifact, newly specified in the config file, or a random user
+   
+### [User Recs](./user_recs/user_recs.py) 
++ Recommend anime based on similar users' preferences
++ Input user can be either taken from the similar users artifact, newly specified in the config file, or a random user
++ If the ID artifact from the similar users component is used, the corresponding similar users artifact and user preferences artifact are also used. Otherwise, new sets of similar users and user preferences are computed
++ Can restrict the anime recommendations to include only certain genres if desired
++ Recommendations are ranked according to the number of similar users who favorited the same anime (e.g. if 10 out of 10 similar users favorited Sword Art Online, Sword Art Online would be rated at the top of the list in conjunction with any other anime 10 out of 10 similar users had favorited)
++ Uploads recommendations csv file artifact to Weights & Biases as well as a preferences csv file and favorite genres and sources word clouds
+
+### [Model Recs](./model_recs/model_recs.py) 
++ Recommend animes based on the neural network model's predicted ratings of unwatched animes
++ Input user can be either taken from the similar users artifact, newly specified in the config file, or a random user
++ Can restrict the anime recommendations to include only certain genres and/or media types (e.g. Movies, TV shows, OVAs etc.) if desired
++ Produces csv file of a specified number of anime recommendations and uploads it as an artifact to Weights & Biases
+
+## ROOT FILES
 
 ### [main.py (Root Directory)](./main.py)
 + Defines each MLFLow component
@@ -82,6 +123,6 @@ Note: The data were collected in early 2023. Since then, myanimelist.net has alt
 + Hydra configuration file containing settings MLflow runs
 + Contains modifiable customization options for each MLflow component, nearly 200 in total
 
-### OTHER FILES
-+ A conda.yaml dependencies file exists in each component for use by MLFlow
-+ An MLproject configuration file exists in each component for use by MLFLow
+## OTHER FILES
++ conda.yaml dependencies files exist in each component and in the main directory
++ MLproject configuration files exist in each component and in the main directory
