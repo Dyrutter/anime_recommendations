@@ -55,7 +55,20 @@ Where "watching status" includes
 
 Note: The data were collected in early 2023. Since then, myanimelist.net has altered its policy such that it is no longer possible to scrape data using traditional methods. They instead produced [their own API](https://myanimelist.net/apiconfig) for accessing data. The API is (currently) in its early stages of development and is not conduit to scraping large amounts of data. As such, it is very difficult to recreate the datasets used in this project.
 
-# PRIMARY FILES
+# MLFLOW COMPONENTS:
+
+[run.py (segregate component)](./segregate/run.py)
+
+### [Download](./download/download.py) : Download raw data and save it as wandb artifacts 
+### [Preprocess](./preprocess/preprocess.py) : Clean and engineer the data and save it as wandb artifacts
+### [Neural Network](./neural_network/neural_network.py) : Create and train an embedding-based neural network and save it as a wandb artifact
+4) Similar Anime: Recommend anime according to similar anime (determined by weight cosine similarity)
+5) Similar Users: Find users similar to an input user (determined by weight cosine similarity)
+6) User Prefs: Find an input user's preferred genres and sources based on shows they've previously rated highly
+7) User Recs: Recommend anime based on similar users' preferences
+8) Model Recs: Recommend anime based on neural network model rankings (determined by collaborative filtering)
+
+# ROOT FILES
 
 ### [main.py (Root Directory)](./main.py)
 + Defines each MLFLow component
