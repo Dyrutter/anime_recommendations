@@ -92,6 +92,10 @@ Note: The data were collected in early 2023. Since then, myanimelist.net has alt
 + Creates word cloud images of the user's preferred genres and sources
 + Uploads preferences csv file and word clouds to Weights & Biases as artifacts
 + Input user can be either taken from the similar users artifact, newly specified in the config file, or a random user
+
+![](https://github.com/Dyrutter/anime_recommendations/blob/main/figure_file/User_ID_153695_favorite_genres.png)
+
+Figure: Example of a genre word cloud. Word sizes are determined according to the number of animes of each given genre a user has watched, with more shows watched corresponding to larger texts 
    
 ### [USER RECS](./user_recs/user_recs.py) 
 + Recommend anime based on similar users' preferences
