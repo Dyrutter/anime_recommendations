@@ -64,3 +64,11 @@ Note: The data were collected in early 2023. Since then, myanimelist.net has alt
 + From root directory, the workflow can be run locally with command `mlflow run .`
 + Specific components (e.g. "download") can be run locally with `mlflow run . -P hydra_options="main.execute_steps='download'"`
 + Can be run on GitHub using the command `mlflow run https://github.com/Dyrutter/anime_recommendations.git -v 1.0.2`
+
+### [config.yaml](./config/config.yaml)
++ Hydra configuration file containing settings MLflow runs
++ Contains modifiable customization options for each MLflow component, nearly 200 in total
+
+### OTHER FILES
++ A conda.yaml dependencies file exists in each component for use by MLFlow
++ An MLproject configuration file exists in each component for use by MLFLow
