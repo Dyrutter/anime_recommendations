@@ -17,18 +17,19 @@ The MLflow pipeline components are:
 
 ### PREREQUISITES
 
-+ Weights and Biases account, which can be created [here](https://wandb.ai/site)
++ Weights and Biases account, which can be created [at their website](https://wandb.ai/site)
 + GitHub account (for running)
 + Clone GitHub repo `https://github.com/Dyrutter/anime_recommendations.git`
 + A python 3.10 `conda` virtual environment
 
 ### DEPENDENCIES
 
-Install requirements found in [requirements.txt file](./requirements.txt)
+Necessary installation libraries are listed in [requirements.txt file](./requirements.txt)
  
 Due to the size of the data set (2.1 gb), the model was trained using [Tensor Processing Units/TPUs](https://www.tensorflow.org/guide/tpu), Google's application-specific integrated circuits (ASICs) which drastically accelerate machine learning workloads. If you intend to run the project using a TPU inside a Colab notebook as opposed to on your local machine, make sure that your hardware accelerator is set to TPU by checking your notebook settings: 
 
 `Runtime > Change runtime type > Hardware accelerator > TPU`
+It is also necessary to set "TPU_init" in the [config yaml file](./config/config.yaml) to True
 
 Note: If using M1 or M2 Mac, install tensorflow with the commands:
 
@@ -86,17 +87,21 @@ The full history can be seen [here](https://github.com/Dyrutter/anime_recommenda
 
 ### [SIMILAR ANIME](./similar_anime/similar_anime.py)
 + Downloads model artifacts and data set artifacts from Weights & Biases
-+ Extracts weights and computes cosine similarity to recommend anime according to similar anime
++ Extracts and analyzes weights to recommend animes based on their similarity to an input anime
 + If designated as such in the hydra config file, recommendations only include anime of specified genres and media types
 + Can recommend based on either a specified anime or a random anime
 + Creates a csv file of recommendations and uploads it as an artifact to Weights & Biases
+
+Likeness between animes was ascertained by comparing the cosine similarites between the input anime's embedding vector weights and the embedding vector weights of every other anime. The process is explained in more detail in the [model card](https://github.com/Dyrutter/anime_recommendations/blob/main/model_card.md).  
    
 ### [SIMILAR USERS](./similar_users/similar_users.py)
 + Extracts weights from the wandb model artifact and computes cosine similarity to find a specified number users similar to an input User ID
 + The input user ID can be either designated in the hydra config file file or chosen randomly
 + Creats a csv file specifying the assessed user ID and another csv file of similar users and uploads the files as artifacts to Weights & Biases
 
-### [USER PREFS](./user_prefs/user_prefs.py) 
+Likeness between users was ascertained by comparing the cosine similarites between the input user's embedding vector weights and the embedding vector weights of every other user. The process is explained in more detail in the [model card](https://github.com/Dyrutter/anime_recommendations/blob/main/model_card.md).
+
+### [USER PREFERENCES](./user_prefs/user_prefs.py) 
 + Find a user's preferred genres and sources based on shows they've rated highly
 + Creates word cloud images of the user's preferred genres and sources
 + Uploads preferences csv file and word clouds to Weights & Biases as artifacts
@@ -104,9 +109,9 @@ The full history can be seen [here](https://github.com/Dyrutter/anime_recommenda
 
 ![](https://github.com/Dyrutter/anime_recommendations/blob/main/figure_file/User_ID_153695_favorite_genres.png)
 
-Figure: Example of a genre word cloud. Word sizes are determined according to the number of animes of each given genre a user has watched, with more shows watched corresponding to larger texts 
+#### Example of a genre word cloud. Word sizes are determined according to the number of animes of each given genre a user has watched, with more shows watched corresponding to larger texts 
    
-### [USER RECS](./user_recs/user_recs.py) 
+### [USER-BASED RECOMMENDATIONS](./user_recs/user_recs.py) 
 + Recommend anime based on similar users' preferences
 + Input user can be either taken from the similar users artifact, newly specified in the config file, or a random user
 + If the ID artifact from the similar users component is used, the corresponding similar users artifact and user preferences artifact are also used. Otherwise, new sets of similar users and user preferences are computed
@@ -114,11 +119,11 @@ Figure: Example of a genre word cloud. Word sizes are determined according to th
 + Recommendations are ranked according to the number of similar users who favorited the same anime (e.g. if 10 out of 10 similar users favorited Sword Art Online, Sword Art Online would be rated at the top of the list in conjunction with any other anime 10 out of 10 similar users had favorited)
 + Uploads recommendations csv file artifact to Weights & Biases as well as a preferences csv file and favorite genres and sources word clouds
 
-### [MODEL RECS](./model_recs/model_recs.py) 
+### [MODEL RATING RECOMMENDATIONS](./model_recs/model_recs.py) 
 + Recommend animes based on the neural network model's predicted ratings of unwatched animes
 + Input user can be either taken from the similar users artifact, newly specified in the config file, or a random user
 + Can restrict the anime recommendations to include only certain genres and/or media types (e.g. Movies, TV shows, OVAs etc.) if desired
-+ Produces csv file of a specified number of anime recommendations and uploads it as an artifact to Weights & Biases
++ Produces a csv file of a specified number of anime recommendations and uploads it as an artifact to Weights & Biases
 
 ## OTHER FILES
 
@@ -148,12 +153,12 @@ Figure: Example of a genre word cloud. Word sizes are determined according to th
 + Contains figures used in the readme and model card
 
 ### [model_card.md](./model_card.md)
-+ Explains the collaborative filtering, cosine similarity, and other processes through which the recommendation systems were developed
++ Explains collaborative filtering, cosine similarity, and other processes through which the recommendation systems were developed
 + Describes the final neural network model and its settings
 + Discusses the model's creation, usage, and limitations
 
-# ADDITIONAL MATERIAL
-### RECOMMENDATIONS
+## RECOMMENDATIONS FOR IMPROVEMENT
 + Create a program for re-creating and updating this data set using myanimelist.net's new API
 + Create a front-end API for accessing the recommendation systems
 + Re-train the model using alternate weight-initialization methods and compare for best results
+
