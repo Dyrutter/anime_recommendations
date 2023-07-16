@@ -64,7 +64,7 @@ Note: The data were collected in early 2023. Since then, myanimelist.net has alt
     
 ### [PREPROCESS](./preprocess/preprocess.py) 
 + Scales ratings data and performs basic cleaning
-+ Drops users who have watched fewer than a certain number of anime as specified in [the hydra config file](./config/config.yaml)
++ Drops users who have watched fewer than a certain number of anime as specified in the hydra config file
 + If desired, drops instances in which a user has not watched but plans to watch a given anime
 + If desired, drops instances in which a user has watched fewer than half the total episodes of an anime
 + Converts data sets into artifacts and uploads them to Weights & Biases
@@ -73,18 +73,27 @@ Note: The data were collected in early 2023. Since then, myanimelist.net has alt
 + Create and trains an embedding-based neural network using tensor flow
 + Produces and saves an .h5 file of the trained model, an .h5 file of the model's weights, and a csv file of the model's history
 + Converts model files into artifacts and uploads them to Weights & Biases
-+ [The hydra config file](./config/config.yaml) contains several options for altering the model's structure during compilation
++ The hydra config file contains several options for altering the model's structure during compilation
+
+Run at 20 epochs, the model takes roughly two hours to train on an M1 Mac. If TPU option is enabled, it can be completed in under 15 minutes.
+The change in loss is visualized below.
+
+![](https://github.com/Dyrutter/anime_recommendations/blob/main/figure_file/Neural_Network_Loss.png)
+#### Output graph of neural network's loss per epoch history
+
+An optimum Mean Squared Error (MSE) of 0.05074 and validation MSE of 0.07199 was reached during epoch 14, where the learning rate was 1.5368E-05.
+The full history can be seen [here](https://github.com/Dyrutter/anime_recommendations/blob/main/figure_file/anime_nn_history.csv).
 
 ### [SIMILAR ANIME](./similar_anime/similar_anime.py)
 + Downloads model artifacts and data set artifacts from Weights & Biases
 + Extracts weights and computes cosine similarity to recommend anime according to similar anime
-+ If designated as such in [the hydra config file](./config/config.yaml), recommendations only include anime of specified genres and media types
++ If designated as such in the hydra config file, recommendations only include anime of specified genres and media types
 + Can recommend based on either a specified anime or a random anime
 + Creates a csv file of recommendations and uploads it as an artifact to Weights & Biases
    
 ### [SIMILAR USERS](./similar_users/similar_users.py)
 + Extracts weights from the wandb model artifact and computes cosine similarity to find a specified number users similar to an input User ID
-+ The input user ID can be either designated in [the hydra config file](./config/config.yaml) file or chosen randomly
++ The input user ID can be either designated in the hydra config file file or chosen randomly
 + Creats a csv file specifying the assessed user ID and another csv file of similar users and uploads the files as artifacts to Weights & Biases
 
 ### [USER PREFS](./user_prefs/user_prefs.py) 
@@ -142,3 +151,9 @@ Figure: Example of a genre word cloud. Word sizes are determined according to th
 + Explains the collaborative filtering, cosine similarity, and other processes through which the recommendation systems were developed
 + Describes the final neural network model and its settings
 + Discusses the model's creation, usage, and limitations
+
+# ADDITIONAL MATERIAL
+### RECOMMENDATIONS
++ Create a program for re-creating and updating this data set using myanimelist.net's new API
++ Create a front-end API for accessing the recommendation systems
++ Re-train the model using alternate weight-initialization methods and compare for best results
