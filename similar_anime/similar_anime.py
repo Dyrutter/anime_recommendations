@@ -397,8 +397,8 @@ def anime_recs(name, count, anime_df):
 
     # Get input anime's index
     encoded_index = anime_to_index.get(index)
-    # Take dot product of weights array and input anime's embedding vector
-    # Higher values indicate closer similarity
+    # Take dot product of weights array and input anime's embedding vector to
+    # Find cosine similarity of each. Higher values indicate closer similarity
     # weights.shape is (num anime, embedding length) e.g. (17560, 128)
     # weights[encoded_index].shape is (1, embedding length)
     dists = np.dot(weights, weights[encoded_index])
