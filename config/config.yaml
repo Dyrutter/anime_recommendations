@@ -1,4 +1,4 @@
-main: # Primary run settings
+main:
   download_repository: "https://github.com/Dyrutter/anime_recommendations#download"  
   project_name: anime_recommendations
   experiment_name: development
@@ -86,6 +86,7 @@ model: # Settings for neural network
   anime_emb_name: 'anime_embedding' # Name of anime weights layer
   merged_name: 'dot_product' # Name of merged layer (dot product of embedding layers)
   model_metrics: ["mse"] # Metrics to grade in Model.compile()
+  TPU_init: False
 
 nn_arts: # Names of main/best neural network artifacts
   main_anime_weights: "wandb_anime_weights.csv:v2" # Anime weights from main neural network model
