@@ -128,7 +128,9 @@ def lrfn(epoch):
 def extract_weights(name, model):
     """
     Extract weights from model and normalize by Frobenius norm to
-    account for magnitude differences in embedding vectors.
+    account for magnitude differences in embedding vectors. Normalization
+    also ensures the dot product between two embeddings will be the
+    cosine similarity.
     """
     weight_layer = model.get_layer(name)
     weights = weight_layer.get_weights()[0]
