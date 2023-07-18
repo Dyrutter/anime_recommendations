@@ -13,7 +13,7 @@ main:
     - model_recs
     # - API
   random_seed: 42
-  interval: 3000 # Time in milliseconds to display any figures on local machine
+  interval: 3000 # Time in milliseconds to display figures on local machine
   raise_flow_error: True # Bool, set to True if you desire to raise an error if artifact user ID's are not consistent between steps 
 
 data: # Data artifacts
