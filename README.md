@@ -2,7 +2,7 @@
 
 The scripts in this project produce anime recommendations. Three different systems were created. The first recommends anime based on similar anime. The second recommends anime based on the preferences of similar users. The third recommends anime based on ratings a user has assigned to previously-watched anime. MLOps are incorporated using MLflow and Weights & Biases, allowing the three systems to be run simultaneously.
 
-The MLflow pipeline components are:
+The MLflow components are:
 
 1) Download: Download raw data from GitHub
 2) Preprocess: Clean and engineer the data
