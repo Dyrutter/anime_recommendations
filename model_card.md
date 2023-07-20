@@ -28,6 +28,10 @@ Once trained, the weights were extracted and used to create three separate recom
 
 The entire workflow, including data collection, data preprocessing, model creation, similar-anime based recommendations, similar-user based recommendations, and rating-based recommendations is encapsulated in an MLflow and Weights and Biases framework. Each component can be run on its own or the entire workflow can be run. Furthermore, many parameters can be adjusted in the config file to customize the returned recommendations (e.g. recommendations including only shows with specific genres). It is also possible to narrow returned results to only animes of specific types (e.g. Movies, TV shows, ONAs, OVAs, Specials, and Music). Model training is also highly customizable. The complete list of options is available in the config file. Note that training the neural network can take several hours. It is possible to accelerate the process using a TPU, but a TPU is not default. It is advised to use the pre-trained model linked to wandb through the config file.  
 
++ From root directory, the workflow can be run locally with command `mlflow run .`
++ Specific components (e.g. "download") can be run locally with `mlflow run . -P hydra_options="main.execute_steps='download'"`
++ Can be run on GitHub using the command `mlflow run https://github.com/Dyrutter/anime_recommendations.git -v 1.0.0`
+
 Ideas for improvement:
 
 Try alternative weights kernel initializers and learning rate functions
