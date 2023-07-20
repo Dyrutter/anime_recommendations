@@ -168,9 +168,9 @@ def get_user_anime_arr(df, anime_df, user, unwatched):
         unwatched: Nested list of indices of enumerated unwatched anime IDs
             [[anime index], [anime_index], [anime_index]...]
     Outputs:
-        unwatched: list of two 1D arrays, the first a repeated list of the
-            input user's index among an enumerated list of all unique user
-            IDs found in df, the second a list of the enumerated
+        [user_arr, unwatched_arr]: list of two 1D arrays, the first a repeated
+            list of the input user's index among an enumerated list of all
+            unique user IDs found in df, the second a list of the enumerated
             indices of animes the user hasn't watched, formatted as:
             [array([user_ind, user_ind...]), array([anime_ind, anime_ind]...)]
     """
@@ -373,9 +373,9 @@ def select_user(df):
 def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
     """
     Get anime recommendations based on model rating predictions. The higher
-    the predcted rating (dot product of the estimated user and anime ID latent
-    vectors established through gradient descent), the higher the anime is
-    recommended. Only unwatched anime are included.
+    the predcted rating (dot product of the estimated user ID and anime ID
+    latent vectors established through gradient descent), the higher the anime
+    is recommended. Only unwatched anime are included.
     Inputs:
         df: Main data frame taken from get_full_df()
         anime_df: Anime stats data frame taken from get_anime_df()
@@ -390,6 +390,7 @@ def recommendations(df, anime_df, syp_df, model, id_anime, unwatched, n_recs):
     # Get unique anime IDs
     anime_ids = df["anime_id"].unique().tolist()
     # Input list of two arrays, first user ID indices, second anime ID indices
+    # Predicts scores of unwatched animes
     ratings = model.predict(id_anime, verbose=2).flatten()
     # Get list of prediction indices sorrted based on top ratings
     top_inds = (-ratings).argsort()[:]
