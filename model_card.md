@@ -9,15 +9,13 @@ The matrix is quite sparse, as roughly 18,000 anime exist, and few users have ra
 Neural networks work by minimizing estimation error with a loss algorithm, in this case gradient descent. This inherent optimization capability can be used to perform matrix factorization by projecting items into a latent space. The embedding layers map high-dimensional sparse sets of discrete features to dense arrays of real numbers in continuous spaces. In the case of this model, they project (n) users and (m) anime into (d)-dimensional vectors. The weights in each embedding vector are initialized in a Tensor Flow heteronormal kernel and adjusted via gradient descent until R best approximates M. The proximity of R to M is assessed using mean-squared-error. The smaller the error between the known entries in M and their respective values in R, the better R is assumed to approximate the unknown entries in M. 
 
 The neural network is structured as follows:
-Input: Parallel arrays of user IDs and anime IDs 
 
-Embeddings: L2 regularized parallel embeddings for the user ID and anime ID
++ Input: Parallel arrays of user IDs and anime IDs 
++ Embeddings: L2 regularized parallel embeddings for the user ID and anime ID
++ Dot: Normalized dot product between user ID embedding and anime ID embedding. This is normalized so that the layer finds the cosine simliarity between embeddings.
++ Flatten: Utility layer needed to correct the shape of the dot product for dense layer input.
 
-Dot: Normalized dot product between user ID embedding and anime ID embedding. This is normalized so that the layer finds the cosine simliarity between embeddings.
-
-Flatten: Utility layer needed to correct the shape of the dot product for dense layer input.
-
-Dense: Fully connected layer with sigmoid activation function. This model is trained for classification, so a sigmoid activation function is used to squash outputs between 0 and 1. Binary crossentropy, which measures the error of predictions in classification problems, is used as the loss function to measure similarity between the two distributions. A default Adam optimizer (modified Stochastic Gradient Descent) was used to update weights after gradients were calculated through backpropogation.
++ Dense: Fully connected layer with sigmoid activation function. This model is trained for classification, so a sigmoid activation function is used to squash outputs between 0 and 1. Binary crossentropy, which measures the error of predictions in classification problems, is used as the loss function to measure similarity between the two distributions. A sigmoid activation function was applied, and a default Adam optimizer (modified Stochastic Gradient Descent) was used to update weights after gradients were calculated through backpropogation and normalized in batches.
 
 Once trained, the weights were extracted and used to create three separate recommendation systems:
 1. A system that recommends animes based on similar anime (determined through weight cosine similarity)
