@@ -160,8 +160,9 @@ Likeness between users was ascertained by comparing the cosine similarites betwe
 + Describes the final neural network model and its settings
 + Discusses the model's creation, usage, and limitations
 
-## RECOMMENDATIONS FOR IMPROVEMENT
+## IDEAS FOR IMPROVEMENT
 + Create a program for re-creating and updating this data set using myanimelist.net's new API
 + Create a front-end API for accessing the recommendation systems
 + Re-train the model using alternate weight-initialization methods and compare for best results
++ Use a deep neural network with multiple hidden layers
 
