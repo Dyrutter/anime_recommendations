@@ -8,6 +8,7 @@ The matrix is quite sparse, as roughly 18,000 anime exist, and few users have ra
 
 Neural networks work by minimizing estimation error with a loss algorithm, in this case gradient descent. This inherent optimization capability can be used to perform matrix factorization by projecting items into a latent space. The embedding layers map high-dimensional sparse sets of discrete features to dense arrays of real numbers in continuous spaces. In the case of this model, they project (n) users and (m) anime into (d)-dimensional vectors. The weights in each embedding vector are initialized in a Tensor Flow heteronormal kernel and adjusted via gradient descent until R best approximates M. The proximity of R to M is assessed using mean-squared-error. The smaller the error between the known entries in M and their respective values in R, the better R is assumed to approximate the unknown entries in M. 
 
+### MODEL ARCHITECTURE
 The neural network is structured as follows:
 
 + Input: Parallel arrays of user IDs and anime IDs 
