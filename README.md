@@ -13,6 +13,8 @@ The MLflow components are:
 7) User Recs: Recommend anime based on the preferences of similar users
 8) Model Recs: Recommend anime based on the neural network model's predicted anime ratings
 
+Further details regarding how the models were constructed can be found in the [model card](./model_card.md) 
+
 # ENVIRONMENT SETUP
 
 ### PREREQUISITES
