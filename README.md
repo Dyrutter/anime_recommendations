@@ -13,7 +13,8 @@ The MLflow components are:
 7) User Recs: Recommend anime based on the preferences of similar users
 8) Model Recs: Recommend anime based on the neural network model's predicted anime ratings
 
-Further details regarding how the models were constructed can be found in the [model card](./model_card.md) 
+Further details regarding how the models were constructed can be found in the [model card](./model_card.md).
+Individual functions and code methodologies are further detailed in each component's python script. 
 
 # ENVIRONMENT SETUP
 
@@ -113,7 +114,7 @@ Likeness between users was ascertained by comparing the cosine similarites betwe
 
 #### Example of a genre word cloud. Word sizes are determined according to the number of animes of each given genre a user has watched, with more shows watched corresponding to larger texts 
    
-### [USER-BASED RECOMMENDATIONS](./user_recs/user_recs.py) 
+### [SIMILAR USER BASED RECOMMENDATIONS](./user_recs/user_recs.py) 
 + Recommend anime based on similar users' preferences
 + Input user can be either taken from the similar users artifact, newly specified in the config file, or a random user
 + If the ID artifact from the similar users component is used, the corresponding similar users artifact and user preferences artifact are also used. Otherwise, new sets of similar users and user preferences are computed
@@ -127,7 +128,7 @@ Likeness between users was ascertained by comparing the cosine similarites betwe
 + Can restrict the anime recommendations to include only certain genres and/or media types (e.g. Movies, TV shows, OVAs etc.) if desired
 + Produces a csv file of a specified number of anime recommendations and uploads it as an artifact to Weights & Biases
 
-## OTHER FILES
+## SUPPORTING FILES
 
 ### [main.py](./main.py)
 + Defines each MLFLow component
