@@ -1,5 +1,5 @@
 # Anime Recommendation Model
-The primary approach for this model is collaborative filtering, which generates recommendations based on a user’s anime ratings. A utility matrix is constructed to assess that relationship, with each individual user a row, each anime a column, and a body consisting of scaled ratings. Recommendations are formulated by forecasting the ratings, or, filling in the blanks. 
+The  approach for this model is collaborative filtering, which generates recommendations based on a user’s anime ratings. A utility matrix is constructed to assess that relationship, with each individual user a row, each anime a column, and a body consisting of scaled ratings. Recommendations are formulated by forecasting the ratings, or, filling in the blanks. 
 
 ![](https://github.com/Dyrutter/anime_recommendations/blob/main/figure_file/readme_images/anime_ratings_matrix.png)
 #### Figure 1: A utility matrix of user IDs (y axis) and anime IDs (x axis). The blank spaces represent scores for animes a user hasn’t rated.
