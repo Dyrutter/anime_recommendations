@@ -1,6 +1,6 @@
 # ANIME RECOMMENDATION SYSTEMS
 
-The Python scripts in this project return anime recommendations. Three different systems were created. The first recommends anime based on similar anime. The second recommends anime based on the preferences of similar users. The third recommends anime based on the ratings a user has assigned to previously watched anime. MLOps are incorporated using MLflow and Weights & Biases, allowing the three systems to be run simultaneously.
+The Python scripts in this project return anime recommendations. Three different systems were created. The first recommends anime based on similar anime. The second recommends anime based on the preferences of similar users. The third recommends anime based on the ratings a user has assigned to previously watched anime. MLOps are incorporated using MLflow and Weights & Biases, allowing the three systems to be run simultaneousl.
 
 The MLflow components are:
 
