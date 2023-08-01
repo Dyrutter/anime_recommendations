@@ -4,7 +4,7 @@ The Python scripts in this project produce anime recommendations. Three differen
 
 The MLflow components are:
 
-1) Download: Download raw data to local machine from GitHub and save as WandB artifacts
+1) Download: Download raw data to local machine from GitHub and save it as WandB artifacts
 2) Preprocess: Clean and engineer the data and save as WandbB artifacts
 3) Neural Network: Create and train an embedding-based neural network
 4) Similar Anime: Recommend anime according to similar anime (determined by weight cosine similarity)
