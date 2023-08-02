@@ -10,7 +10,7 @@ The MLflow components are:
 4) Similar Anime: Recommend anime according to similar anime (determined by weight cosine similarity)
 5) Similar Users: Find users similar to an input user (determined by weight cosine similarity)
 6) User Prefs: Find an input user's preferred genres and sources based on shows they've previously watched
-7) User Recs: Recommend anime based on the preferences of similar users
+7) User Recs: Recommend anime based on the genre and source preferences of similar users
 8) Model Recs: Recommend anime based on the neural network model's predicted anime ratings
 
 Further details regarding how the models were constructed can be found in the [model card](./model_card.md).
