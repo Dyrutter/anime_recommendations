@@ -22,7 +22,7 @@ Individual functions and are explained in each component's python script.
 
 + Weights and Biases account, which can be created [at their website](https://wandb.ai/site)
 + GitHub account (for running)
-+ Clone GitHub repo `https://github.com/Dyrutter/anime_recommendations.git`
++ Clone the GitHub repo `https://github.com/Dyrutter/anime_recommendations.git`
 + A python 3.10 `conda` virtual environment
 
 ### DEPENDENCIES
