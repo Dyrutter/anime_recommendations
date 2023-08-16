@@ -5,7 +5,7 @@ The scripts in this project return anime recommendations. Three different system
 The MLflow components are:
 
 1) Download: Download raw anime data to local machine from GitHub and save it as WandB artifacts
-2) Preprocess: Clean and engineer the data and save as WandbB artifacts
+2) Preprocess: Clean and engineer the data and save it as WandbB artifacts
 3) Neural Network: Create and train an embedding-based neural network
 4) Similar Anime: Recommend anime according to similar anime (determined by weight cosine similarity)
 5) Similar Users: Find users similar to an input user (determined by weight cosine similarity)
