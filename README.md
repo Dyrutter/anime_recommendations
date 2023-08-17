@@ -74,7 +74,7 @@ Note: The data were collected in early 2023. Since then, myanimelist.net has alt
 + Converts data sets into artifacts and uploads them to Weights & Biases
    
 ### [NEURAL NETWORK](./neural_network/neural_network.py)
-+ Create and trains an embedding-based neural network using tensor flow
++ Create and trains an embedding-based neural network using Tensor Flow
 + Produces and saves an .h5 file of the trained model, an .h5 file of the model's weights, and a csv file of the model's history
 + Converts model files into artifacts and uploads them to Weights & Biases
 + The hydra config file contains several options for altering the model's structure during compilation
