@@ -21,7 +21,7 @@ Individual functions and are explained in each component's python script.
 ### PREREQUISITES
 
 + Weights and Biases account, which can be created [at their website](https://wandb.ai/site)
-+ GitHub account (for running)
++ GitHub account
 + Clone the GitHub repo `https://github.com/Dyrutter/anime_recommendations.git`
 + A python 3.10 `conda` virtual environment
 
