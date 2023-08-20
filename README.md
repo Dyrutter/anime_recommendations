@@ -70,7 +70,7 @@ Note: The data were collected in early 2023. Since then, myanimelist.net has alt
 + Scales ratings data and performs basic cleaning
 + Drops users who have watched fewer than a certain number of anime as specified in the hydra config file
 + If desired, drops instances in which a user has not watched but plans to watch a given anime
-+ If desired, drops instances in which a user has watched fewer than half the total episodes of an anime
++ If desired, drops instances in which a user has watched fewer than half the total episodes of a given anime
 + Converts data sets into artifacts and uploads them to Weights & Biases
    
 ### [NEURAL NETWORK](./neural_network/neural_network.py)
