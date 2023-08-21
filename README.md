@@ -57,7 +57,7 @@ Where "watching status" includes
 
 [all_anime.csv](https://github.com/Dyrutter/anime_recommendations/blob/main/data/all_anime.csv) contains information of every anime including genre, average score, English name, Japanese name, type (TV, movie, OVA, Special, or ONA), Number of episodes, Broadcast date, Season premier, producers, liscensors, studios, source (Manga, light novel, book, original), episode duration, age rating, rank, popularity, members, number of favorites, watching statuses, and scores.
 
-Note: The data were collected in early 2023. Since then, myanimelist.net has altered its policy such that it is no longer possible to scrape data using traditional methods. They instead produced [their own API](https://myanimelist.net/apiconfig) for accessing data. The API is (currently) in its early stages of development and is not conduit to scraping large amounts of data. As such, it is very difficult to recreate the datasets used in this project.
+Note: The data were collected in early 2023. Since then, myanimelist.net has altered its policy such that it is no longer possible to scrape data using traditional methods. They instead produced [their own API](https://myanimelist.net/apiconfig) for accessing data. The API is (currently) in its early stages of development and is not conduit to scraping large amounts of data. As such, it is very difficult to reproduce the datasets used in this project.
 
 # MLFLOW COMPONENTS:
 
