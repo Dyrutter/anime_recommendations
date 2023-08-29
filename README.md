@@ -2,7 +2,7 @@
 
 The scripts in this repository create anime recommendations. Three separate systems were created. The first recommends animes based on similar animes. The second recommends anime based on the preferences of similar users. The third recommends anime based on the ratings a user has assigned to previously watched anime. MLOps are incorporated using MLflow and Weights & Biases, allowing the three systems to be run simultaneously.
 
-The MLflow components:
+The MLflow components are:
 
 1) Download: Download raw anime data to local machine from GitHub and save it as WandB artifacts
 2) Preprocess: Clean and engineer the data and save it as WandbB artifacts
